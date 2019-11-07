@@ -37,7 +37,7 @@ LNCLI_COMMAND="cd dev; bash --init-file ${LNPATH}/dev-bashrc"
 
 
 # kill any existing tmux sessions
-tmux kill-server; sleep 1;
+tmux-kill
 
 tmux new-session -d -n btcd "$BTCD_COMMAND"
 tmux new-window -n a-lnd "$ALICE_COMMAND"
