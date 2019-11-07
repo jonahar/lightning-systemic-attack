@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+rm -rf dev/alice/* dev/bob/* dev/charlie/*
