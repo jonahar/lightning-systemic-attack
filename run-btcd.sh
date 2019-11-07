@@ -3,4 +3,4 @@
     --txindex \
     --simnet \
     --rpcuser=kek \
-    --rpcpass=ke
+    --rpcpass=kek
