@@ -1,2 +1,11 @@
 #!/usr/bin/env bash
-rm -rf dev/alice/* dev/bob/* dev/charlie/*
+
+cd $(dirname $0)
+./tmux-kill
+rm -rf dev/alice/*              \
+       dev/bob/*                \
+       dev/charlie/*            \
+       ~/.btcd                  \
+       ~/.lnd                   \
+       dev/identity-pubkey-*    \
+       dev/address.*
