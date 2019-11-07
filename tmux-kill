@@ -1,1 +1,1 @@
-tmux kill-server > /dev/null
+tmux kill-server > /dev/null 2>&1
