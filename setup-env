@@ -33,7 +33,7 @@ BTCD_COMMAND="cd ${LNPATH}; bash --init-file ${LNPATH}/dev-bashrc"
 ALICE_COMMAND="cd ${LNPATH}/dev/alice; bash --init-file ${LNPATH}/dev-bashrc"
 BOB_COMMAND="cd ${LNPATH}/dev/bob; bash --init-file ${LNPATH}/dev-bashrc"
 CHARLIE_COMMAND="cd ${LNPATH}/dev/charlie; bash --init-file ${LNPATH}/dev-bashrc"
-LNCLI_COMMAND="bash --init-file ${LNPATH}/dev-bashrc"
+LNCLI_COMMAND="cd dev; bash --init-file ${LNPATH}/dev-bashrc"
 
 
 # kill any existing tmux sessions
