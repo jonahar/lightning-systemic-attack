@@ -2,6 +2,11 @@
 
 I=$1
 
+if [[ -z $LNPATH ]]; then
+    echo "LNPATH was not set"
+    exit 1
+fi
+
 if [[ -z $I ]]; then
     echo "please specify lnd index"
     exit 1
