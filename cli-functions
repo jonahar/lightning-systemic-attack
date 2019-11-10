@@ -2,24 +2,27 @@
 
 lncli-alice(){
     builtin cd $LNPATH/dev/alice;
-    lncli --rpcserver=localhost:10001 --macaroonpath=data/chain/bitcoin/simnet/admin.macaroon $*
+    lncli --rpcserver=localhost:10001 --macaroonpath=data/chain/bitcoin/regtest/admin.macaroon $*
     builtin cd - > /dev/null # return to previous directory
 }
 export -f lncli-alice
 
+
 lncli-bob(){
     builtin cd $LNPATH/dev/bob;
-    lncli --rpcserver=localhost:10002 --macaroonpath=data/chain/bitcoin/simnet/admin.macaroon $*
+    lncli --rpcserver=localhost:10002 --macaroonpath=data/chain/bitcoin/regtest/admin.macaroon $*
     builtin cd - > /dev/null
 }
 export -f lncli-bob
 
+
 lncli-charlie(){
     builtin cd $LNPATH/dev/charlie;
-    lncli --rpcserver=localhost:10003 --macaroonpath=data/chain/bitcoin/simnet/admin.macaroon $*
+    lncli --rpcserver=localhost:10003 --macaroonpath=data/chain/bitcoin/regtest/admin.macaroon $*
     builtin cd - > /dev/null
 }
 export -f lncli-charlie
+
 
 getblockbyindex(){
     idx=$1
@@ -28,3 +31,4 @@ getblockbyindex(){
     btcctl --simnet --rpcuser=kek --rpcpass=kek getblock $(cat "$file")
 }
 export -f getblockbyindex
+
