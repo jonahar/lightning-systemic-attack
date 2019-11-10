@@ -7,6 +7,7 @@
 
 # run bitcoin node
 run-btcd
+builtin cd ~/bitcoin/src; ./bitcoind
 
 # run LN nodes
 run-lnd 1
@@ -39,10 +40,13 @@ lncli-charlie newaddress np2wkh | jq -r ".address" > address.charlie.tmp
 
 
 # funding the addresses (mine)
-btcd --simnet --txindex --rpcuser=kek --rpcpass=kek --miningaddr=$(cat $LNPATH/dev/address.alice)
+btcd --simnet --txindex --rpcuser=kek --rpcpass=kek --miningaddr=$(cat $LNPATH/dev/address.alice.tmp)
 btcctl --simnet --rpcuser=kek --rpcpass=kek generate 400  # 400 because we need at least 300 to activate segwit
-btcd --txindex --simnet --rpcuser=kek --rpcpass=kek --miningaddr=$(cat $LNPATH/dev/address.charlie)
+btcd --txindex --simnet --rpcuser=kek --rpcpass=kek --miningaddr=$(cat $LNPATH/dev/address.charlie.tmp)
 btcctl --simnet --rpcuser=kek --rpcpass=kek generate 100
+
+bitcoin-cli generatetoaddress 400 $(cat $LNPATH/dev/address.alice.tmp)
+bitcoin-cli generatetoaddress 100 $(cat $LNPATH/dev/address.charlie.tmp)
 
 
 # check wallet balance
@@ -52,18 +56,20 @@ lncli-charlie walletbalance
 
 
 # connect the nodes
-lncli-alice connect $(cat identity-pubkey-bob)@localhost:10012
-lncli-charlie connect $(cat identity-pubkey-bob)@localhost:10012
+lncli-alice connect $(cat $LNPATH/dev/identity-pubkey-bob.tmp)@localhost:10012
+lncli-charlie connect $(cat $LNPATH/dev/identity-pubkey-bob.tmp)@localhost:10012
 
 
 # open channels
-lncli-alice openchannel --node_key=$(cat $LNPATH/dev/identity-pubkey-bob) --local_amt=1000000 > funding_txid.tmp
+lncli-alice openchannel --node_key=$(cat $LNPATH/dev/identity-pubkey-bob.tmp) --local_amt=1000000 > funding_txid.tmp
 # mine six blocks so the channel is considered valid
 btcctl --simnet --rpcuser=kek --rpcpass=kek generate 6
+bitcoin-cli generatetoaddress 6 $(cat $LNPATH/dev/address.alice.tmp)  # randomly crediting alice. doesn't matter
 
-lncli-charlie openchannel --node_key=$(cat $LNPATH/dev/identity-pubkey-bob) --local_amt=800000 --push_amt=200000 funding_txid.tmp
+
+lncli-charlie openchannel --node_key=$(cat $LNPATH/dev/identity-pubkey-bob.tmp) --local_amt=800000 --push_amt=200000 > funding_txid.tmp
 btcctl --simnet --rpcuser=kek --rpcpass=kek generate 6
-
+bitcoin-cli generatetoaddress 6 $(cat $LNPATH/dev/address.alice.tmp)
 
 
 # list open channels
@@ -74,11 +80,11 @@ lncli-bob listchannels
 # create invoice (request for payment) and write the payment request to file
 lncli-bob addinvoice --amt=10000 | jq -r ".pay_req" > invoice_pay_req.tmp
 # lncli-bob listinvoices # list all invoices
-lncli-alice sendpayment --pay_req=$(cat invoice_pay_req) # make the payment
+lncli-alice sendpayment --pay_req=$(cat invoice_pay_req.tmp) # make the payment
 
 # payment with hops
 lncli-charlie addinvoice --amt=10000 | jq -r ".pay_req" > invoice_pay_req.tmp
-lncli-alice sendpayment --pay_req=$(cat invoice_pay_req)
+lncli-alice sendpayment --pay_req=$(cat invoice_pay_req.tmp)
 
 
 # close channel
@@ -88,5 +94,15 @@ lncli-alice listchannels | jq -r ".channels[0].channel_point" | cut -d':' -f2 > 
 lncli-alice closechannel --funding_txid=$(cat funding_txid.tmp) --output_index=$(cat output_idx.tmp) > closing_txid.tmp
 # mine a block with the closing transaction
 btcctl --simnet --rpcuser=kek --rpcpass=kek generate 1
+bitcoin-cli generatetoaddress 1 $(cat $LNPATH/dev/address.alice.tmp)
+
 # check bob balance was updated on the blockchain
 lncli-bob walletbalance
+
+
+# get non-wallet transaction
+gettransaction(){
+    txid=$1
+    bitcoin-cli getrawtransaction $txid > rawtransaction.tmp
+    bitcoin-cli decoderawtransaction $(cat rawtransaction.tmp)
+}
