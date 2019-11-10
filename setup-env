@@ -17,22 +17,14 @@ cp "bitcoin.conf" "$BITCOIND_CONF"
 cp "lnd.conf" "$LND_CONF"
 
 
-BTCD_COMMAND="cd ${LNPATH}; bash"
-ALICE_COMMAND="cd ${LNPATH}/dev/alice; bash"
-BOB_COMMAND="cd ${LNPATH}/dev/bob; bash"
-CHARLIE_COMMAND="cd ${LNPATH}/dev/charlie; bash"
-LNCLI_COMMAND="cd dev; bash"
-
-
 # kill any existing tmux sessions
 tmux-kill
 
-tmux new-session -d -n btcd "$BTCD_COMMAND"
-tmux new-window -n a-lnd "$ALICE_COMMAND"
-tmux new-window -n b-lnd "$BOB_COMMAND"
-tmux new-window -n b-lnd "$CHARLIE_COMMAND"
-
-tmux new-window -n cli "$LNCLI_COMMAND"
+tmux new-session -d -n btc-daemon
+tmux new-window -n a-lnd
+tmux new-window -n b-lnd
+tmux new-window -n c-lnd
+tmux new-window -n cli
 
 tmux select-window -t 0 # select active window
 tmux attach-session
