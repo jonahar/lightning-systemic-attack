@@ -5,7 +5,5 @@ cd $(dirname $0)
 rm -rf dev/alice/*              \
        dev/bob/*                \
        dev/charlie/*            \
-       ~/.btcd                  \
-       ~/.lnd                   \
-       dev/identity-pubkey-*    \
-       dev/address.*
+       dev/*.tmp                \
+
