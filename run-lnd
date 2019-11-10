@@ -2,17 +2,21 @@
 
 I=$1
 
+usage(){
+    echo "$0 lnd_index"
+}
+
+
 if [[ -z $LNPATH ]]; then
     echo "LNPATH was not set"
     exit 1
 fi
 
-if [[ -z $I ]]; then
-    echo "please specify lnd index"
+if [[ -z $I ]] ; then
+    usage
     exit 1
 fi
 
-echo "running lnd number $I"
 
 $LNPATH/lnd/lnd \
     --rpclisten=localhost:1000${I} \
@@ -20,9 +24,4 @@ $LNPATH/lnd/lnd \
     --restlisten=localhost:800${I} \
     --datadir=data \
     --logdir=log \
-    --debuglevel=info \
-    --bitcoin.simnet \
-    --bitcoin.active \
-    --bitcoin.node=btcd \
-    --btcd.rpcuser=kek \
-    --btcd.rpcpass=kek
+    --debuglevel=info
