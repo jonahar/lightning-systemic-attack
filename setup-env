@@ -2,30 +2,7 @@
 
 export LNPATH="/cs/usr/jonahar/ln"
 
-
-lncli-alice(){
-    builtin cd $LNPATH/dev/alice;
-    lncli --rpcserver=localhost:10001 --macaroonpath=data/chain/bitcoin/simnet/admin.macaroon $*
-    builtin cd - > /dev/null # return to previous directory
-}
-
-lncli-bob(){
-    builtin cd $LNPATH/dev/bob;
-    lncli --rpcserver=localhost:10002 --macaroonpath=data/chain/bitcoin/simnet/admin.macaroon $*
-    builtin cd - > /dev/null
-}
-
-lncli-charlie(){
-    builtin cd $LNPATH/dev/charlie;
-    lncli --rpcserver=localhost:10003 --macaroonpath=data/chain/bitcoin/simnet/admin.macaroon $*
-    builtin cd - > /dev/null
-}
-
-
-# export the custom lnclis to subshells
-export -f lncli-alice
-export -f lncli-bob
-export -f lncli-charlie
+source cli-functions
 
 
 # commands to run in the different tmux windows
@@ -44,7 +21,7 @@ tmux new-window -n a-lnd "$ALICE_COMMAND"
 tmux new-window -n b-lnd "$BOB_COMMAND"
 tmux new-window -n b-lnd "$CHARLIE_COMMAND"
 
-tmux new-window -n lncli "$LNCLI_COMMAND"
+tmux new-window -n cli "$LNCLI_COMMAND"
 
 tmux select-window -t 0 # select active window
 tmux attach-session
