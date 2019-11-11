@@ -23,12 +23,3 @@ lncli-charlie(){
 }
 export -f lncli-charlie
 
-
-getblockbyindex(){
-    idx=$1
-    file="block_${idx}_hash.tmp"
-    btcctl --simnet --rpcuser=kek --rpcpass=kek getblockhash $idx > "$file"
-    btcctl --simnet --rpcuser=kek --rpcpass=kek getblock $(cat "$file")
-}
-export -f getblockbyindex
-
