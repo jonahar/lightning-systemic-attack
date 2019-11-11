@@ -17,8 +17,10 @@ if [[ -z $I ]] ; then
     exit 1
 fi
 
+mkdir -p "$LNPATH/lnd/$I"
+cd "$LNPATH/lnd/$I"
 
-$LNPATH/lnd/lnd \
+lnd \
     --rpclisten=localhost:1000${I} \
     --listen=localhost:1001${I} \
     --restlisten=localhost:800${I} \

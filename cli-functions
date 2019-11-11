@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 lncli-alice(){
-    builtin cd $LNPATH/dev/alice;
+    builtin cd $LNPATH/lnd/1;
     lncli --rpcserver=localhost:10001 --macaroonpath=data/chain/bitcoin/regtest/admin.macaroon $*
     builtin cd - > /dev/null # return to previous directory
 }
@@ -9,7 +9,7 @@ export -f lncli-alice
 
 
 lncli-bob(){
-    builtin cd $LNPATH/dev/bob;
+    builtin cd $LNPATH/lnd/2;
     lncli --rpcserver=localhost:10002 --macaroonpath=data/chain/bitcoin/regtest/admin.macaroon $*
     builtin cd - > /dev/null
 }
@@ -17,7 +17,7 @@ export -f lncli-bob
 
 
 lncli-charlie(){
-    builtin cd $LNPATH/dev/charlie;
+    builtin cd $LNPATH/lnd/3;
     lncli --rpcserver=localhost:10003 --macaroonpath=data/chain/bitcoin/regtest/admin.macaroon $*
     builtin cd - > /dev/null
 }
