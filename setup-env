@@ -13,8 +13,10 @@ source cli-functions
 # set conf files
 BITCOIND_CONF="$HOME/.bitcoin/bitcoin.conf"
 LND_CONF="$HOME/.lnd/lnd.conf"
-cp "bitcoin.conf" "$BITCOIND_CONF"
-cp "lnd.conf" "$LND_CONF"
+LIGHTNING_CONF="$HOME/.lightning/config" # lightnig conf file should be named 'config'
+cp "conf/bitcoin.conf" "$BITCOIND_CONF"
+cp "conf/lnd.conf" "$LND_CONF"
+cp "conf/lightning.conf" "$LIGHTNING_CONF"
 
 
 # kill any existing tmux sessions
