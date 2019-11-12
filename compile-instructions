@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+ROOT_DIR=$(pwd) # this MUST be an absolute path
+cd "${ROOT_DIR}"
+
+
+# Download and compile Berkeley DB (bitcoin-core dependency)
+mkdir bdb
+cd bdb
+wget https://download.oracle.com/berkeley-db/db-4.8.30.tar.gz
+tar -xvf db-4.8.30.tar.gz
+cd db-4.8.30
+mkdir -p build_unix/build
+BDB_PREFIX="$(pwd)/build_unix/build"
+chmod u+w dbinc/atomic.h # make file writeable
+sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' dbinc/atomic.h # replace function name that may conflict with another
+cd build_unix
+../dist/configure --disable-shared --enable-cxx --with-pic --prefix=$BDB_PREFIX
+make install
+cd ../../..
+
+
+# download and compile bitcoin-core
+git clone https://github.com/bitcoin/bitcoin.git
+cd bitcoin
+git checkout v0.18.1 # select the wanted version
+./autogen.sh
+./configure CPPFLAGS="-I${BDB_PREFIX}/include/ -O2" LDFLAGS="-L${BDB_PREFIX}/lib/" --with-gui
+make
+
+
