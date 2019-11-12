@@ -27,5 +27,12 @@ git checkout v0.18.1 # select the wanted version
 ./autogen.sh
 ./configure CPPFLAGS="-I${BDB_PREFIX}/include/ -O2" LDFLAGS="-L${BDB_PREFIX}/lib/" --with-gui
 make
+cd ..
 
+
+# download and compile c-lightning
+git clone https://github.com/ElementsProject/lightning.git
+cd lightning
+./configure
+make
 
