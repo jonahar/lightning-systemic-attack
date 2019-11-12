@@ -23,3 +23,10 @@ lncli-charlie(){
 }
 export -f lncli-charlie
 
+gettransaction(){
+    txid=$1
+    RAW_TRANSACTION=$(bitcoin-cli getrawtransaction $txid)
+    bitcoin-cli decoderawtransaction $RAW_TRANSACTION
+}
+export -f gettransaction
+
