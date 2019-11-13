@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+I=$1
+
+usage(){
+    echo "$0 NODE_INDEX"
+}
+
+
+if [[ -z $LNPATH ]]; then
+    echo "LNPATH was not set"
+    exit 1
+fi
+
+if [[ -z $I ]]; then
+    echo "please specify node index"
+    usage
+    exit 1
+fi
+
+mkdir -p "$LNPATH/lightning-dirs/$I"
+cd "$LNPATH/lightning-dirs"
+
+lightningd \
+    --conf=$LNPATH/conf/lightning.conf \
+    --lightning-dir=$I \
+    --addr=localhost:1000${I}

@@ -4,45 +4,60 @@
 # another command) adds a .tmp suffix. this way they can all be removed easily
 
 
+
 # run bitcoin node
-bitcoind
+run-btcd
+builtin cd ~/bitcoin/src; ./bitcoind
+
+# run LN nodes
+run-lnd 1
+run-lnd 2
+run-lnd 3
 
 
-# run lightning nodes
-run-lightningd 1
-run-lightningd 2
-run-lightningd 3
+# create wallet
+lncli-alice create
+lncli-bob create
+lncli-charlie create
+
+
+# create wallet
+lncli-alice unlock
+lncli-bob unlock
+lncli-charlie unlock
 
 
 # get the nodes identity_pubkey
-lcli-alice getinfo | jq -r ".id" > id.alice.tmp
-lcli-bob getinfo | jq -r ".id" > id.bob.tmp
-lcli-charlie getinfo | jq -r ".id" > id.charlie.tmp
+lncli-alice getinfo | jq -r ".identity_pubkey" > identity-pubkey-alice.tmp
+lncli-bob getinfo | jq -r ".identity_pubkey" > identity-pubkey-bob.tmp
+lncli-charlie getinfo | jq -r ".identity_pubkey" > identity-pubkey-charlie.tmp
 
 
 # get addresses
-lcli-alice newaddr | jq -r ".address" > address.alice.tmp
-lcli-bob newaddr | jq -r ".address" > address.bob.tmp
-lcli-charlie newaddr | jq -r ".address" > address.charlie.tmp
+lncli-alice newaddress np2wkh | jq -r ".address" > address.alice.tmp
+lncli-bob newaddress np2wkh | jq -r ".address" > address.bob.tmp
+lncli-charlie newaddress np2wkh | jq -r ".address" > address.charlie.tmp
 
 
 # funding the addresses (mine)
-bitcoin-cli generatetoaddress 400 $(cat $LNPATH/dev/address.alice.tmp) # 400 because we need at least 300 to activate segwit
+btcd --simnet --txindex --rpcuser=kek --rpcpass=kek --miningaddr=$(cat $LNPATH/dev/address.alice.tmp)
+btcctl --simnet --rpcuser=kek --rpcpass=kek generate 400  # 400 because we need at least 300 to activate segwit
+btcd --txindex --simnet --rpcuser=kek --rpcpass=kek --miningaddr=$(cat $LNPATH/dev/address.charlie.tmp)
+btcctl --simnet --rpcuser=kek --rpcpass=kek generate 100
+
+bitcoin-cli generatetoaddress 400 $(cat $LNPATH/dev/address.alice.tmp)
 bitcoin-cli generatetoaddress 100 $(cat $LNPATH/dev/address.charlie.tmp)
 
 
+# check wallet balance
+lncli-alice walletbalance
+lncli-bob walletbalance
+lncli-charlie walletbalance
+
+
 # connect the nodes
-lcli-alice connect $(cat $LNPATH/dev/id.bob.tmp) localhost:10002
-lcli-charlie connect $(cat $LNPATH/dev/id.bob.tmp) localhost:10002
-
-
-
-
-
-lcli-alice fundchannel $(cat $LNPATH/dev/id.bob.tmp)
-
-
-
+lncli-alice connect $(cat $LNPATH/dev/identity-pubkey-bob.tmp)@localhost:10012
+lncli-charlie connect $(cat $LNPATH/dev/identity-pubkey-bob.tmp)@localhost:10012
 
 
 # open channels

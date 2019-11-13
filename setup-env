@@ -11,9 +11,11 @@ source cli-functions
 
 
 # set conf files
-ln -s -f "$LNPATH/conf/bitcoin.conf" "$HOME/.bitcoin/bitcoin.conf"
-ln -s -f "$LNPATH/conf/lnd.conf" "$HOME/.lnd/lnd.conf"
-ln -s -f "$LNPATH/conf/lightning.conf" "$HOME/.lightning/config"
+mkdir -p "$HOME/.bitcoin" && ln -s -f "$LNPATH/conf/bitcoin.conf" "$HOME/.bitcoin/bitcoin.conf"
+
+alias lcli-alice="lightning-cli --lightning-dir=$LNPATH/lightning-dirs/1"
+alias lcli-bob="lightning-cli --lightning-dir=$LNPATH/lightning-dirs/2"
+alias lcli-charlie="lightning-cli --lightning-dir=$LNPATH/lightning-dirs/3"
 
 
 # kill any existing tmux sessions
