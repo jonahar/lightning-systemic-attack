@@ -19,46 +19,61 @@ lcli-alice getinfo | jq -r ".id" > id.alice.tmp
 lcli-bob getinfo | jq -r ".id" > id.bob.tmp
 lcli-charlie getinfo | jq -r ".id" > id.charlie.tmp
 
+ALICE_ID=$(cat id.alice.tmp)
+BOB_ID=$(cat id.bob.tmp)
+CHARLIE_ID=$(cat id.charlie.tmp)
+
 
 # get addresses
 lcli-alice newaddr | jq -r ".address" > address.alice.tmp
 lcli-bob newaddr | jq -r ".address" > address.bob.tmp
 lcli-charlie newaddr | jq -r ".address" > address.charlie.tmp
 
+ALICE_ADDR=$(cat address.alice.tmp)
+BOB_ADDR=$(cat address.bob.tmp)
+CHARLIE_ADDR=$(cat address.charlie.tmp)
+
 
 # funding the addresses (mine)
-bitcoin-cli generatetoaddress 400 $(cat $LNPATH/dev/address.alice.tmp) # 400 because we need at least 300 to activate segwit
-bitcoin-cli generatetoaddress 100 $(cat $LNPATH/dev/address.charlie.tmp)
+bitcoin-cli generatetoaddress 400 $ALICE_ADDR # 400 because we need at least 300 to activate segwit
+bitcoin-cli generatetoaddress 100 $CHARLIE_ADDR
+
+
+# see the UTXOs of this wallet
+lcli-alice listfunds
+lcli-bob listfunds
+lcli-charlie listfunds
 
 
 # connect the nodes
-lcli-alice connect $(cat $LNPATH/dev/id.bob.tmp) localhost:10002
-lcli-charlie connect $(cat $LNPATH/dev/id.bob.tmp) localhost:10002
-
-
-
-
-
-lcli-alice fundchannel $(cat $LNPATH/dev/id.bob.tmp)
-
-
-
+lcli-alice connect $BOB_ID localhost:10002
+lcli-charlie connect $BOB_ID localhost:10002
 
 
 # open channels
-lncli-alice openchannel --node_key=$(cat $LNPATH/dev/identity-pubkey-bob.tmp) --local_amt=1000000 > funding_txid.tmp
-# mine six blocks so the channel is considered valid
-btcctl --simnet --rpcuser=kek --rpcpass=kek generate 6
-bitcoin-cli generatetoaddress 6 $(cat $LNPATH/dev/address.alice.tmp)  # randomly crediting alice. doesn't matter
-
-
-lncli-charlie openchannel --node_key=$(cat $LNPATH/dev/identity-pubkey-bob.tmp) --local_amt=800000 --push_amt=200000 > funding_txid.tmp
-btcctl --simnet --rpcuser=kek --rpcpass=kek generate 6
-bitcoin-cli generatetoaddress 6 $(cat $LNPATH/dev/address.alice.tmp)
+lcli-alice fundchannel $BOB_ID 10000000 | jq -r ".txid" > alice.funding.txid.tmp
+bitcoin-cli generatetoaddress 6 $ALICE_ADDR # mine 6 blocks so the channel is considered valid. randomly crediting alice doesn't matter
+lcli-charlie fundchannel $BOB_ID 10000000 | jq -r ".txid" > charlie.funding.txid.tmp
+bitcoin-cli generatetoaddress 6 $ALICE_ADDR
 
 
 # list open channels
-lncli-bob listchannels
+lcli-bob listchannels
+
+
+# make payment
+lcli-bob invoice 1000000sat "label$(date +%s)" description | jq -r ".bolt11" > bolt11.tmp
+lcli-charlie pay $(cat bolt11.tmp)
+
+
+lcli-charlie invoice 1000000sat "label$(date +%s)" description | jq -r ".bolt11" > bolt11.tmp
+lcli-alice pay $(cat bolt11.tmp)
+
+
+
+
+
+
 
 
 # sending payment over channels
