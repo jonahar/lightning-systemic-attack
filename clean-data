@@ -6,4 +6,6 @@ rm -rf lnd/1              \
        lnd/2              \
        lnd/3              \
        dev/*.tmp          \
+       ~/.bitcoin/*       \
+       ~/.lightning/*     \
 
