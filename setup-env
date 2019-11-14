@@ -15,7 +15,7 @@ mkdir -p "$HOME/.bitcoin" && ln -s -f "$LNPATH/conf/bitcoin.conf" "$HOME/.bitcoi
 
 
 kill-daemons
-sleep 1
+
 
 # lightning nodes are sleeping to avoid race condition with bitcoind
 tmux new-session -d -n btc-daemon "bash -i -c 'bitcoind'"
