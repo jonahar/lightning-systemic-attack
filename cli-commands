@@ -41,9 +41,9 @@ mine(){
     BLOCKS_TO_MINE=$1
     bitcoin-cli generatetoaddress $BLOCKS_TO_MINE $ADDR_MAIN
 }
-mine 400
+mine 400 > /dev/null
 bitcoin-cli sendmany "" "{\"${ALICE_ADDR}\":1,\"${BOB_ADDR}\":1,\"${CHARLIE_ADDR}\":1}" > initial.balance.txid.tmp
-mine 1
+mine 1 > /dev/null
 
 
 # see the UTXOs of this wallet
@@ -78,26 +78,5 @@ lcli-alice pay $(cat charlie.invoice.bolt11.tmp)
 lcli-alice close $BOB_ID | jq -r ".txid" > alice-bob.closing.txid.tmp
 mine 1
 
-
-
-
-
-# close channel
-# extract channel_point: unique channel identifier
-lncli-alice listchannels | jq -r ".channels[0].channel_point" | cut -d':' -f1 > funding_txid.tmp
-lncli-alice listchannels | jq -r ".channels[0].channel_point" | cut -d':' -f2 > output_idx.tmp
-lncli-alice closechannel --funding_txid=$(cat funding_txid.tmp) --output_index=$(cat output_idx.tmp) > closing_txid.tmp
-# mine a block with the closing transaction
-btcctl --simnet --rpcuser=kek --rpcpass=kek generate 1
-bitcoin-cli generatetoaddress 1 $(cat $LNPATH/dev/address.alice.tmp)
-
-# check bob balance was updated on the blockchain
-lncli-bob walletbalance
-
-
-# get non-wallet transaction
-gettransaction(){
-    txid=$1
-    bitcoin-cli getrawtransaction $txid > rawtransaction.tmp
-    bitcoin-cli decoderawtransaction $(cat rawtransaction.tmp)
-}
+lcli-charlie close $BOB_ID | jq -r ".txid" > charlie-bob.closing.txid.tmp
+mine 1
