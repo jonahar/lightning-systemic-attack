@@ -24,4 +24,6 @@ cd "$LNPATH/lightning-dirs"
 lightningd \
     --conf=$LNPATH/conf/lightning.conf \
     --lightning-dir=$I \
-    --addr=localhost:1000${I}
+    --addr=localhost:1000${I} \
+    --alias="node-number-$I" \
+
