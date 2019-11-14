@@ -35,8 +35,8 @@ CHARLIE_ADDR=$(cat address.charlie.tmp)
 
 
 # funding
-bitcoin-cli getnewaddress > address-main
-ADDR_MAIN=$(cat address-main)
+bitcoin-cli getnewaddress > address.main.tmp
+ADDR_MAIN=$(cat address.main.tmp)
 mine(){
     BLOCKS_TO_MINE=$1
     bitcoin-cli generatetoaddress $BLOCKS_TO_MINE $ADDR_MAIN
