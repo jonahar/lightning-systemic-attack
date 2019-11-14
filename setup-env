@@ -17,11 +17,12 @@ mkdir -p "$HOME/.bitcoin" && ln -s -f "$LNPATH/conf/bitcoin.conf" "$HOME/.bitcoi
 kill-daemons
 sleep 1
 
-tmux new-session -d -n btc-daemon
-tmux new-window -n a-lnd
-tmux new-window -n b-lnd
-tmux new-window -n c-lnd
+# lightning nodes are sleeping to avoid race condition with bitcoind
+tmux new-session -d -n btc-daemon "bash -i -c 'bitcoind'"
+tmux new-window -n a-lnd "bash -i -c 'sleep 1; run-lightningd 1'"
+tmux new-window -n b-lnd "bash -i -c 'sleep 1; run-lightningd 2'"
+tmux new-window -n c-lnd "bash -i -c 'sleep 1; run-lightningd 3'"
 tmux new-window -n cli
 
-tmux select-window -t 0 # select active window
+tmux select-window -t 4 # select active window
 tmux attach-session
