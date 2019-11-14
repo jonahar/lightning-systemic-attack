@@ -34,9 +34,16 @@ BOB_ADDR=$(cat address.bob.tmp)
 CHARLIE_ADDR=$(cat address.charlie.tmp)
 
 
-# funding the addresses (mine)
-bitcoin-cli generatetoaddress 400 $ALICE_ADDR # 400 because we need at least 300 to activate segwit
-bitcoin-cli generatetoaddress 100 $CHARLIE_ADDR
+# funding
+bitcoin-cli getnewaddress > address-main
+ADDR_MAIN=$(cat address-main)
+mine(){
+    BLOCKS_TO_MINE=$1
+    bitcoin-cli generatetoaddress $BLOCKS_TO_MINE $ADDR_MAIN
+}
+mine 400
+bitcoin-cli sendmany "" "{\"${ALICE_ADDR}\":1,\"${BOB_ADDR}\":1,\"${CHARLIE_ADDR}\":1}" > initial.balance.txid.tmp
+mine 1
 
 
 # see the UTXOs of this wallet
@@ -51,10 +58,10 @@ lcli-charlie connect $BOB_ID localhost:10002
 
 
 # open channels
-lcli-alice fundchannel $BOB_ID 10000000 | jq -r ".txid" > alice.funding.txid.tmp
-bitcoin-cli generatetoaddress 6 $ALICE_ADDR # mine 6 blocks so the channel is considered valid. randomly crediting alice doesn't matter
-lcli-charlie fundchannel $BOB_ID 10000000 | jq -r ".txid" > charlie.funding.txid.tmp
-bitcoin-cli generatetoaddress 6 $ALICE_ADDR
+lcli-alice fundchannel $BOB_ID 10000000 | jq -r ".txid" > alice-bob.funding.txid.tmp
+mine 6 # mine 6 blocks so the channel is considered valid
+lcli-bob fundchannel $CHARLIE_ID 10000000 | jq -r ".txid" > bob-charlie.funding.txid.tmp
+mine 6
 
 
 # list open channels
@@ -62,29 +69,17 @@ lcli-bob listchannels
 
 
 # make payment
-lcli-bob invoice 1000000sat "label$(date +%s)" description | jq -r ".bolt11" > bolt11.tmp
-lcli-charlie pay $(cat bolt11.tmp)
+lcli-charlie invoice 1000000sat "label$(date +%s)" description | jq -r ".bolt11" > charlie.invoice.bolt11.tmp
+lcli-alice decodepay $(cat charlie.invoice.bolt11.tmp)
+lcli-alice pay $(cat charlie.invoice.bolt11.tmp)
 
 
-lcli-charlie invoice 1000000sat "label$(date +%s)" description | jq -r ".bolt11" > bolt11.tmp
-lcli-alice pay $(cat bolt11.tmp)
-
-
-
-
-
+# close channel
+lcli-alice close $BOB_ID | jq -r ".txid" > alice-bob.closing.txid.tmp
+mine 1
 
 
 
-# sending payment over channels
-# create invoice (request for payment) and write the payment request to file
-lncli-bob addinvoice --amt=10000 | jq -r ".pay_req" > invoice_pay_req.tmp
-# lncli-bob listinvoices # list all invoices
-lncli-alice sendpayment --pay_req=$(cat invoice_pay_req.tmp) # make the payment
-
-# payment with hops
-lncli-charlie addinvoice --amt=10000 | jq -r ".pay_req" > invoice_pay_req.tmp
-lncli-alice sendpayment --pay_req=$(cat invoice_pay_req.tmp)
 
 
 # close channel
