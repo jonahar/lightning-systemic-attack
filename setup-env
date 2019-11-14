@@ -14,8 +14,8 @@ source cli-functions
 mkdir -p "$HOME/.bitcoin" && ln -s -f "$LNPATH/conf/bitcoin.conf" "$HOME/.bitcoin/bitcoin.conf"
 
 
-# kill any existing tmux sessions
-tmux-kill
+kill-daemons
+sleep 1
 
 tmux new-session -d -n btc-daemon
 tmux new-window -n a-lnd

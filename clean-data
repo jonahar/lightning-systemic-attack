@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 cd $(dirname $0)
-./tmux-kill
-pkill bitcoind
+kill-daemons
+
 rm -rf lightning-dirs/1   \
        lightning-dirs/2   \
        lightning-dirs/3   \

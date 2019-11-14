@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+tmux kill-server > /dev/null 2>&1
+pkill bitcoind
