@@ -45,6 +45,8 @@ mine 400 > /dev/null
 bitcoin-cli sendmany "" "{\"${ALICE_ADDR}\":1,\"${BOB_ADDR}\":1,\"${CHARLIE_ADDR}\":1}" > initial.balance.txid.tmp
 mine 1 > /dev/null
 
+# wait a few seconds until the lightning nodes get the blocks and are fully synced
+
 
 # see the UTXOs of this wallet
 lcli-alice listfunds
@@ -58,9 +60,9 @@ lcli-charlie connect $BOB_ID localhost:10002
 
 
 # open channels
-lcli-alice fundchannel $BOB_ID 10000000 | jq -r ".txid" > alice-bob.funding.txid.tmp
+lcli-alice fundchannel $BOB_ID 10000000 | jq -r ".txid" | tee alice-bob.funding.txid.tmp
 mine 6 # mine 6 blocks so the channel is considered valid
-lcli-bob fundchannel $CHARLIE_ID 10000000 | jq -r ".txid" > bob-charlie.funding.txid.tmp
+lcli-bob fundchannel $CHARLIE_ID 10000000 | jq -r ".txid" | tee bob-charlie.funding.txid.tmp
 mine 6
 
 
@@ -69,14 +71,14 @@ lcli-bob listchannels
 
 
 # make payment
-lcli-charlie invoice 1000000sat "label$(date +%s)" description | jq -r ".bolt11" > charlie.invoice.bolt11.tmp
+lcli-charlie invoice 1000000sat "label$(date +%s)" description | jq -r ".bolt11" | tee charlie.invoice.bolt11.tmp
 lcli-alice decodepay $(cat charlie.invoice.bolt11.tmp)
 lcli-alice pay $(cat charlie.invoice.bolt11.tmp)
 
 
 # close channel
-lcli-alice close $BOB_ID | jq -r ".txid" > alice-bob.closing.txid.tmp
+lcli-alice close $BOB_ID | jq -r ".txid" | tee alice-bob.closing.txid.tmp
 mine 1
 
-lcli-charlie close $BOB_ID | jq -r ".txid" > charlie-bob.closing.txid.tmp
+lcli-charlie close $BOB_ID | jq -r ".txid" | tee charlie-bob.closing.txid.tmp
 mine 1
