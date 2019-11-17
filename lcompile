@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# lcompile ~ lightning-compile
+cd $LAB/lightning
+make -j2
+
