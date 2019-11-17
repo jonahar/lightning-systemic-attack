@@ -26,4 +26,5 @@ lightningd \
     --lightning-dir=$I \
     --addr=localhost:1000${I} \
     --alias="node-number-$I" \
+    --log-level=debug \
 
