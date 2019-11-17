@@ -11,3 +11,10 @@ gettransaction(){
 }
 export -f gettransaction
 
+getblock(){
+    blockheight=$1
+    blockhash=$(bitcoin-cli getblockhash $blockheight)
+    bitcoin-cli getblock $blockhash
+}
+export -f getblock
+
