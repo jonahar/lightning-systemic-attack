@@ -3,7 +3,7 @@
 I=$1
 
 usage(){
-    echo "$0 NODE_INDEX"
+    echo "$0 NODE_INDEX [more lightningd args]*"
 }
 
 
@@ -27,4 +27,8 @@ lightningd \
     --addr=localhost:1000${I} \
     --alias="node-number-$I" \
     --log-level=debug \
+    "${@:2}"
 
+
+# "${@:2}" gives us all the arguments starting from index 2, as separate tokens
+# "${*:2}" would pass them as a single string

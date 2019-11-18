@@ -21,7 +21,7 @@ kill-daemons
 tmux new-session -d -n btc-daemon "bash -i -c 'bitcoind'"
 tmux new-window -n a-lnd "bash -i -c 'sleep 1; run-lightningd 1'"
 tmux new-window -n b-lnd "bash -i -c 'sleep 1; run-lightningd 2'"
-tmux new-window -n c-lnd "bash -i -c 'sleep 1; run-lightningd 3'"
+tmux new-window -n c-lnd "bash -i -c 'sleep 1; run-lightningd 3 --evil'"
 tmux new-window -n cli
 
 tmux select-window -t 4 # select active window
