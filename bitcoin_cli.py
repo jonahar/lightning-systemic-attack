@@ -1,9 +1,11 @@
 import json
 import subprocess
-from typing import List
+from typing import Any, Dict, List, Optional
+
+JsonDict = Dict[str, Any]
 
 
-def decode_stdout(result: subprocess.CompletedProcess):
+def decode_stdout(result: subprocess.CompletedProcess) -> str:
     out = result.stdout.decode("utf-8")
     # remove newline at the end if exist
     if out[-1] == '\n':
@@ -11,7 +13,7 @@ def decode_stdout(result: subprocess.CompletedProcess):
     return out
 
 
-def get_transaction(txid: str):
+def get_transaction(txid: str) -> JsonDict:
     result = subprocess.run(
         ["bitcoin-cli", "getrawtransaction", txid],
         stdout=subprocess.PIPE,
@@ -21,10 +23,10 @@ def get_transaction(txid: str):
         ["bitcoin-cli", "decoderawtransaction", raw_transaction],
         stdout=subprocess.PIPE,
     )
-    return decode_stdout(result)
+    return json.loads(decode_stdout(result))
 
 
-def gen_bitcoin_address():
+def gen_bitcoin_address() -> str:
     # get a general bitcoin address to which bitcoins will be mined
     result = subprocess.run(["bitcoin-cli", "getnewaddress"], stdout=subprocess.PIPE)
     assert result.returncode == 0
@@ -34,7 +36,7 @@ def gen_bitcoin_address():
 MAIN_ADDRESS = gen_bitcoin_address()
 
 
-def mine(num_blocks: int):
+def mine(num_blocks: int) -> None:
     result = subprocess.run(
         ["bitcoin-cli", "generatetoaddress", str(num_blocks), MAIN_ADDRESS],
         stdout=subprocess.PIPE,
@@ -43,7 +45,7 @@ def mine(num_blocks: int):
         print(decode_stdout(result))
 
 
-def fund_addresses(addresses: List[str]):
+def fund_addresses(addresses: List[str]) -> Optional[str]:
     sendmany_arg = json.dumps({addr: 1 for addr in addresses})
     result = subprocess.run(
         ["bitcoin-cli", "sendmany", "", sendmany_arg],
