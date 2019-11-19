@@ -1,4 +1,5 @@
 import time
+from functools import lru_cache
 from multiprocessing import Process
 
 from lightning import LightningRpc  # pip3 install pylightning
@@ -6,6 +7,7 @@ from lightning import LightningRpc  # pip3 install pylightning
 from bitcoin_cli import mine
 
 
+@lru_cache(maxsize=100)
 def get_id(l: LightningRpc) -> str:
     return l.getinfo()['id']
 
