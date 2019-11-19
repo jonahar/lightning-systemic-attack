@@ -26,14 +26,14 @@ def get_transaction(txid: str) -> JsonDict:
     return json.loads(decode_stdout(result))
 
 
-def gen_bitcoin_address() -> str:
-    # get a general bitcoin address to which bitcoins will be mined
+def __gen_bitcoin_address() -> str:
+    # generate a bitcoin address to which bitcoins will be mined
     result = subprocess.run(["bitcoin-cli", "getnewaddress"], stdout=subprocess.PIPE)
     assert result.returncode == 0
     return decode_stdout(result)
 
 
-MAIN_ADDRESS = gen_bitcoin_address()
+MAIN_ADDRESS = __gen_bitcoin_address()
 
 
 def mine(num_blocks: int) -> None:
@@ -58,3 +58,20 @@ def fund_addresses(addresses: List[str]) -> Optional[str]:
     mine(1)
     initial_balance_txid = out
     return initial_balance_txid
+
+
+def get_block_by_hash(block_hash: str) -> JsonDict:
+    result = subprocess.run(
+        ["bitcoin-cli", "getblock", block_hash],
+        stdout=subprocess.PIPE,
+    )
+    return json.loads(decode_stdout(result))
+
+
+def get_block_by_height(height: int) -> JsonDict:
+    result = subprocess.run(
+        ["bitcoin-cli", "getblockhash", str(height)],
+        stdout=subprocess.PIPE,
+    )
+    block_hash = decode_stdout(result)
+    return get_block_by_hash(block_hash)
