@@ -1,3 +1,6 @@
+import time
+from multiprocessing import Process
+
 from lightning import LightningRpc  # pip3 install pylightning
 
 from bitcoin_cli import mine
@@ -22,7 +25,7 @@ def fund_channel(
     funder: LightningRpc,
     fundee: LightningRpc,
     num_satoshi: int,
-    blocks_to_mine=6
+    blocks_to_mine=6,
 ) -> str:
     """
     fund a channel between the two nodes with initial num_satoshi satoshis, and
@@ -36,3 +39,29 @@ def fund_channel(
     funding_txid = funder.fundchannel(node_id=get_id(fundee), satoshi=num_satoshi)['txid']
     mine(blocks_to_mine)
     return funding_txid
+
+
+def make_many_payments(
+    sender: LightningRpc,
+    receiver: LightningRpc,
+    num_payments: int,
+    msatoshi_per_payment: int,
+    timeout: int,
+) -> None:
+    # in case the receiver is evil, the secret will not be returned and the call
+    # to LightningRpc.pay will be stuck, waiting for the secret. therefore we need
+    # to run pay with a timeout
+    processes = []
+    for i in range(num_payments):
+        invoice = receiver.invoice(
+            msatoshi=msatoshi_per_payment,
+            label=f"label_{time.time()}",  # a unique label is needed
+            description="",
+        )
+        p = Process(target=LightningRpc.pay, args=(sender, invoice['bolt11']))
+        processes.append(p)
+        p.start()
+    
+    time.sleep(timeout)
+    for p in processes:
+        p.terminate()
