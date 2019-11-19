@@ -75,3 +75,7 @@ def get_block_by_height(height: int) -> JsonDict:
     )
     block_hash = decode_stdout(result)
     return get_block_by_hash(block_hash)
+
+
+def num_tx_in_block(block: JsonDict) -> int:
+    return len(block['tx'])
