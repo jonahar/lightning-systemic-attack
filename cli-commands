@@ -70,6 +70,8 @@ mine 6
 lcli-bob listchannels
 
 
+# it may take a few moments until Alice knows a route to Charlie
+
 # make payment
 lcli-charlie invoice 1000000sat "label$(date +%s)" description | jq -r ".bolt11" | tee charlie.invoice.bolt11.tmp
 lcli-alice decodepay $(cat charlie.invoice.bolt11.tmp)
