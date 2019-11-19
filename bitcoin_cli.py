@@ -21,7 +21,7 @@ def get_transaction(txid: str):
         ["bitcoin-cli", "decoderawtransaction", raw_transaction],
         stdout=subprocess.PIPE,
     )
-    decode_stdout(result)
+    return decode_stdout(result)
 
 
 def gen_bitcoin_address():
