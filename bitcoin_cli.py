@@ -1,8 +1,8 @@
 import json
 import subprocess
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
-JsonDict = Dict[str, Any]
+from datatypes import Address, Block, Json, TXID
 
 
 def decode_stdout(result: subprocess.CompletedProcess) -> str:
@@ -13,7 +13,7 @@ def decode_stdout(result: subprocess.CompletedProcess) -> str:
     return out
 
 
-def get_transaction(txid: str) -> JsonDict:
+def get_transaction(txid: TXID) -> Json:
     result = subprocess.run(
         ["bitcoin-cli", "getrawtransaction", txid],
         stdout=subprocess.PIPE,
@@ -26,7 +26,7 @@ def get_transaction(txid: str) -> JsonDict:
     return json.loads(decode_stdout(result))
 
 
-def __gen_bitcoin_address() -> str:
+def __gen_bitcoin_address() -> Address:
     # generate a bitcoin address to which bitcoins will be mined
     result = subprocess.run(["bitcoin-cli", "getnewaddress"], stdout=subprocess.PIPE)
     assert result.returncode == 0
@@ -45,7 +45,7 @@ def mine(num_blocks: int) -> None:
         print(decode_stdout(result))
 
 
-def fund_addresses(addresses: List[str]) -> Optional[str]:
+def fund_addresses(addresses: List[Address]) -> Optional[str]:
     sendmany_arg = json.dumps({addr: 1 for addr in addresses})
     result = subprocess.run(
         ["bitcoin-cli", "sendmany", "", sendmany_arg],
@@ -60,7 +60,7 @@ def fund_addresses(addresses: List[str]) -> Optional[str]:
     return initial_balance_txid
 
 
-def get_block_by_hash(block_hash: str) -> JsonDict:
+def get_block_by_hash(block_hash: str) -> Block:
     result = subprocess.run(
         ["bitcoin-cli", "getblock", block_hash],
         stdout=subprocess.PIPE,
@@ -68,7 +68,7 @@ def get_block_by_hash(block_hash: str) -> JsonDict:
     return json.loads(decode_stdout(result))
 
 
-def get_block_by_height(height: int) -> JsonDict:
+def get_block_by_height(height: int) -> Block:
     result = subprocess.run(
         ["bitcoin-cli", "getblockhash", str(height)],
         stdout=subprocess.PIPE,
@@ -77,5 +77,5 @@ def get_block_by_height(height: int) -> JsonDict:
     return get_block_by_hash(block_hash)
 
 
-def num_tx_in_block(block: JsonDict) -> int:
+def num_tx_in_block(block: Block) -> int:
     return len(block['tx'])

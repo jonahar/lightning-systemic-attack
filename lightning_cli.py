@@ -5,6 +5,7 @@ from multiprocessing import Process
 from lightning import LightningRpc  # pip3 install pylightning
 
 from bitcoin_cli import mine
+from datatypes import Address, TXID
 
 
 @lru_cache(maxsize=100)
@@ -12,7 +13,7 @@ def get_id(l: LightningRpc) -> str:
     return l.getinfo()['id']
 
 
-def get_addr(l: LightningRpc) -> str:
+def get_addr(l: LightningRpc) -> Address:
     return l.newaddr()['address']
 
 
@@ -28,7 +29,7 @@ def fund_channel(
     fundee: LightningRpc,
     num_satoshi: int,
     blocks_to_mine=6,
-) -> str:
+) -> TXID:
     """
     fund a channel between the two nodes with initial num_satoshi satoshis, and
     mine blocks_to_mine blocks.
