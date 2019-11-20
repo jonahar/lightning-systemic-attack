@@ -2,6 +2,7 @@ import os
 import time
 
 from lightning import LightningRpc  # pip3 install pylightning
+from lightning.lightning import RpcError
 
 from bitcoin_cli import (
     fund_addresses, get_block_by_height, get_transaction, mine, num_tx_in_block
@@ -24,34 +25,44 @@ def show_tx_in_block(block_height):
         print(txid)
 
 
+def wait_to_funds(n: LightningRpc) -> None:
+    while len(n.listfunds()["outputs"]) == 0:
+        time.sleep(1)
+
+
+def wait_to_route(src: LightningRpc, dest: LightningRpc, msatoshi: int) -> None:
+    found = False
+    while not found:
+        try:
+            src.getroute(node_id=get_id(dest), msatoshi=msatoshi, riskfactor=1)
+            found = True
+        except RpcError as e:
+            assert e.error["message"] == "Could not find a route", e
+            time.sleep(1)
+
+
 ln_path = os.path.expandvars("$LAB/ln")
 n1 = LightningRpc(os.path.join(ln_path, "lightning-dirs/1/lightning-rpc"))
 n2 = LightningRpc(os.path.join(ln_path, "lightning-dirs/2/lightning-rpc"))
 n3 = LightningRpc(os.path.join(ln_path, "lightning-dirs/3/lightning-rpc"))
 
-# get addresses for initial funding
-addr1 = get_addr(n1)
-addr2 = get_addr(n2)
-addr3 = get_addr(n3)
-
 mine(400)  # mine 400 to activate segwit
-initial_balance_txid = fund_addresses([addr1, addr2, addr3])
+initial_balance_txid = fund_addresses([get_addr(n1), get_addr(n2), get_addr(n3)])
 
-# wait a few seconds until the lightning nodes get the blocks and are fully synced
-time.sleep(5)
-
-# check that the node is synced if it is aware of its funding
-n2.listfunds()
+# wait until node 1 has funds so we can fund the channels
+wait_to_funds(n1)
 
 connect_nodes(n1, n2)
 connect_nodes(n2, n3)
 alice_bob_funding_txid = fund_channel(funder=n1, fundee=n2, num_satoshi=10_000_000)
 bob_charlie_funding_txid = fund_channel(funder=n2, fundee=n3, num_satoshi=10_000_000)
 
-print_json(get_transaction(alice_bob_funding_txid))
-print_json(get_transaction(bob_charlie_funding_txid))
+# print_json(get_transaction(alice_bob_funding_txid))
+# print_json(get_transaction(bob_charlie_funding_txid))
+# print(len(n2.listchannels()['channels']))
 
-print(len(n2.listchannels()['channels']))
+# wait until n1 knows a path to n3 so we can make a payment
+wait_to_route(n1, n3, msatoshi=100_000_000)
 
 make_many_payments(
     sender=n1,
