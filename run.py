@@ -41,28 +41,33 @@ def wait_to_route(src: LightningRpc, dest: LightningRpc, msatoshi: int) -> None:
             time.sleep(1)
 
 
+def init(n1: LightningRpc, n2: LightningRpc, n3: LightningRpc):
+    """
+    - fund all channels
+    -
+    :return:
+    """
+    mine(400)  # mine 400 to activate segwit
+    initial_balance_txid = fund_addresses([get_addr(n1), get_addr(n2), get_addr(n3)])
+    
+    # wait until node 1 has funds so we can fund the channels
+    wait_to_funds(n1)
+    
+    connect_nodes(n1, n2)
+    connect_nodes(n2, n3)
+    channel_1_funding_txid = fund_channel(funder=n1, fundee=n2, num_satoshi=10_000_000)
+    channel_2_funding_txid = fund_channel(funder=n2, fundee=n3, num_satoshi=10_000_000)
+    # wait until n1 knows a path to n3 so we can make a payment
+    wait_to_route(n1, n3, msatoshi=100_000_000)
+    return channel_1_funding_txid, channel_2_funding_txid
+
+
 ln_path = os.path.expandvars("$LAB/ln")
 n1 = LightningRpc(os.path.join(ln_path, "lightning-dirs/1/lightning-rpc"))
 n2 = LightningRpc(os.path.join(ln_path, "lightning-dirs/2/lightning-rpc"))
 n3 = LightningRpc(os.path.join(ln_path, "lightning-dirs/3/lightning-rpc"))
 
-mine(400)  # mine 400 to activate segwit
-initial_balance_txid = fund_addresses([get_addr(n1), get_addr(n2), get_addr(n3)])
-
-# wait until node 1 has funds so we can fund the channels
-wait_to_funds(n1)
-
-connect_nodes(n1, n2)
-connect_nodes(n2, n3)
-alice_bob_funding_txid = fund_channel(funder=n1, fundee=n2, num_satoshi=10_000_000)
-bob_charlie_funding_txid = fund_channel(funder=n2, fundee=n3, num_satoshi=10_000_000)
-
-# print_json(get_transaction(alice_bob_funding_txid))
-# print_json(get_transaction(bob_charlie_funding_txid))
-# print(len(n2.listchannels()['channels']))
-
-# wait until n1 knows a path to n3 so we can make a payment
-wait_to_route(n1, n3, msatoshi=100_000_000)
+alice_bob_funding_txid, bob_charlie_funding_txid = init(n1, n2, n3)
 
 make_many_payments(
     sender=n1,
