@@ -79,3 +79,14 @@ def get_block_by_height(height: int) -> Block:
 
 def num_tx_in_block(block: Block) -> int:
     return len(block['tx'])
+
+
+def get_tx_height(txid: TXID) -> int:
+    """return the block height to which this tx entered"""
+    result = subprocess.run(
+        ["bitcoin-cli", "getrawtransaction", txid, "1"],
+        stdout=subprocess.PIPE,
+    )
+    block_hash = json.loads(decode_stdout(result))["blockhash"]
+    block = get_block_by_hash(block_hash)
+    return block["height"]
