@@ -1,6 +1,5 @@
 import time
 from functools import lru_cache
-from multiprocessing import Process
 
 from lightning import LightningRpc  # pip3 install pylightning
 
@@ -49,22 +48,21 @@ def make_many_payments(
     receiver: LightningRpc,
     num_payments: int,
     msatoshi_per_payment: int,
-    timeout: int,
 ) -> None:
     # in case the receiver is evil, the secret will not be returned and the call
-    # to LightningRpc.pay will be stuck, waiting for the secret. therefore we need
-    # to run pay with a timeout
-    processes = []
+    # to LightningRpc.pay will be stuck, waiting for the secret. therefore we
+    # use the lower-level 'sendpay' method which doesn't wait for payment completion
+    
     for i in range(num_payments):
         invoice = receiver.invoice(
             msatoshi=msatoshi_per_payment,
             label=f"label_{time.time()}",  # a unique label is needed
             description="",
         )
-        p = Process(target=LightningRpc.pay, args=(sender, invoice["bolt11"]))
-        processes.append(p)
-        p.start()
-    
-    time.sleep(timeout)
-    for p in processes:
-        p.terminate()
+        route = sender.getroute(
+            node_id=get_id(receiver),
+            msatoshi=msatoshi_per_payment,
+            riskfactor=1,
+        )["route"]
+        
+        sender.sendpay(route=route, payment_hash=invoice["payment_hash"])

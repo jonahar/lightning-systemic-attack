@@ -72,9 +72,8 @@ alice_bob_funding_txid, bob_charlie_funding_txid = init(n1, n2, n3)
 make_many_payments(
     sender=n1,
     receiver=n3,
-    num_payments=1,
+    num_payments=5,
     msatoshi_per_payment=100_000_000,  # 0.01 BTC
-    timeout=3,
 )
 
 # shutdown node 2
