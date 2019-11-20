@@ -61,7 +61,7 @@ def make_many_payments(
             label=f"label_{time.time()}",  # a unique label is needed
             description="",
         )
-        p = Process(target=LightningRpc.pay, args=(sender, invoice['bolt11']))
+        p = Process(target=LightningRpc.pay, args=(sender, invoice["bolt11"]))
         processes.append(p)
         p.start()
     
