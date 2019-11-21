@@ -5,10 +5,21 @@ from lightning import LightningRpc  # pip3 install pylightning
 from lightning.lightning import RpcError
 
 from bitcoin_cli import (
-    fund_addresses, get_block_by_height, get_transaction, mine, num_tx_in_block
+    fund_addresses,
+    get_block_by_height,
+    get_transaction,
+    mine,
+    num_tx_in_block,
 )
 from datatypes import Block
-from lightning_cli import connect_nodes, fund_channel, get_addr, get_id, make_many_payments
+from lightning_cli import (
+    connect_nodes,
+    fund_channel,
+    get_addr,
+    get_id,
+    get_total_balance,
+    make_many_payments,
+)
 from utils import print_json
 
 
@@ -97,3 +108,7 @@ print_json(get_transaction(bob_charlie_closing_txid))
 show_num_tx_in_last_t_blocks(n=n1, t=3)
 
 show_tx_in_block(414)
+
+get_total_balance(n1)
+get_total_balance(n2)
+get_total_balance(n3)
