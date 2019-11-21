@@ -18,6 +18,8 @@ class TXSet:
                 idx = entry["vout"]  # the output index in in_txid
                 in_txid_value = get_transaction(in_txid)["vout"][idx]["value"]
                 self.graph[in_txid].append((txid, in_txid_value))
+                self.graph[txid]  # also add txid as a node. it may never be added if it wasn't spent
+                    
     
     def print(self):
         for txid in self.graph.keys():
@@ -28,11 +30,9 @@ class TXSet:
     def export_to_gexf(self, filepath: str) -> None:
         graph = open(filepath, mode="w")
         graph.write(
-            """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <gexf xmlns="http://www.gexf.net/1.2draft" xmlns:viz="http://www.gexf.net/1.1draft/viz" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd" version="1.2">
-            <graph mode="static" defaultedgetype="directed">
-            """
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<gexf xmlns="http://www.gexf.net/1.2draft" xmlns:viz="http://www.gexf.net/1.1draft/viz" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd" version="1.2">\n'
+            '<graph mode="static" defaultedgetype="directed">'
         )
         graph.write('<nodes>\n')
         
