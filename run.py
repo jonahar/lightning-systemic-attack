@@ -38,7 +38,7 @@ def wait_to_route(src: LightningRpc, dest: LightningRpc, msatoshi: int) -> None:
             found = True
         except RpcError as e:
             assert e.error["message"] == "Could not find a route", e
-            time.sleep(1)
+            time.sleep(2)
 
 
 def init(n1: LightningRpc, n2: LightningRpc, n3: LightningRpc, channel_balance_satoshi: int):
