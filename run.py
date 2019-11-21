@@ -16,6 +16,7 @@ from lightning_cli import (
     get_total_balance,
     make_many_payments,
 )
+from tx_set import TXSet
 from utils import (
     find_interesting_txids,
     print_json,
@@ -72,6 +73,7 @@ for i in range(20):
 
 current_height = n1.getinfo()['blockheight']
 txids = find_interesting_txids(block_heights=range(current_height - 30, current_height + 1))
+tx_set = TXSet(txids=txids)
 
 # see the funding transaction
 print_json(get_transaction(bob_charlie_funding_txid))
