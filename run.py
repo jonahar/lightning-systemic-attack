@@ -1,4 +1,5 @@
 import os
+import time
 
 from lightning import LightningRpc  # pip3 install pylightning
 
@@ -16,6 +17,7 @@ from lightning_cli import (
     make_many_payments,
 )
 from utils import (
+    find_interesting_txids,
     print_json,
     show_num_tx_in_last_t_blocks,
     show_tx_in_block,
@@ -63,6 +65,13 @@ make_many_payments(
 
 # shutdown node 2
 n2.stop()
+
+for i in range(20):
+    mine(1)
+    time.sleep(1)
+
+current_height = n1.getinfo()['blockheight']
+txids = find_interesting_txids(block_heights=range(current_height - 30, current_height + 1))
 
 # see the funding transaction
 print_json(get_transaction(bob_charlie_funding_txid))

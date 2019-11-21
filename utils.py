@@ -1,17 +1,13 @@
 import json
 import time
+from typing import Iterable, Set
 
 from lightning import LightningRpc  # pip3 install pylightning
 from lightning.lightning import RpcError
 
-from bitcoin_cli import (
-    get_block_by_height,
-    num_tx_in_block,
-)
-from datatypes import Block, Json
-from lightning_cli import (
-    get_id,
-)
+from bitcoin_cli import get_block_by_height, get_transaction, num_tx_in_block
+from datatypes import Block, Json, TXID
+from lightning_cli import get_id
 
 
 def print_json(o: Json):
@@ -47,3 +43,14 @@ def wait_to_route(src: LightningRpc, dest: LightningRpc, msatoshi: int) -> None:
         except RpcError as e:
             assert e.error["message"] == "Could not find a route", e
             time.sleep(2)
+
+
+def find_interesting_txids(block_heights: Iterable[int]) -> Set[TXID]:
+    """
+    return a set of TXIDs from the given blocks that are not coinbase transactions
+    """
+    return {
+        txid
+        for height in block_heights for txid in get_block_by_height(height)["tx"]
+        if "coinbase" not in get_transaction(txid)["vin"][0]
+    }
