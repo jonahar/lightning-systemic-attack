@@ -15,12 +15,7 @@ def decode_stdout(result: subprocess.CompletedProcess) -> str:
 
 def get_transaction(txid: TXID) -> Json:
     result = subprocess.run(
-        ["bitcoin-cli", "getrawtransaction", txid],
-        stdout=subprocess.PIPE,
-    )
-    raw_transaction = decode_stdout(result)
-    result = subprocess.run(
-        ["bitcoin-cli", "decoderawtransaction", raw_transaction],
+        ["bitcoin-cli", "getrawtransaction", txid, "1"],
         stdout=subprocess.PIPE,
     )
     return json.loads(decode_stdout(result))
@@ -83,10 +78,7 @@ def num_tx_in_block(block: Block) -> int:
 
 def get_tx_height(txid: TXID) -> int:
     """return the block height to which this tx entered"""
-    result = subprocess.run(
-        ["bitcoin-cli", "getrawtransaction", txid, "1"],
-        stdout=subprocess.PIPE,
-    )
-    block_hash = json.loads(decode_stdout(result))["blockhash"]
+    transaction = get_transaction(txid)
+    block_hash = transaction["blockhash"]
     block = get_block_by_hash(block_hash)
     return block["height"]
