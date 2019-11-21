@@ -1,17 +1,12 @@
 import os
-import time
 
 from lightning import LightningRpc  # pip3 install pylightning
-from lightning.lightning import RpcError
 
 from bitcoin_cli import (
     fund_addresses,
-    get_block_by_height,
     get_transaction,
     mine,
-    num_tx_in_block,
 )
-from datatypes import Block
 from lightning_cli import (
     connect_nodes,
     fund_channel,
@@ -20,43 +15,19 @@ from lightning_cli import (
     get_total_balance,
     make_many_payments,
 )
-from utils import print_json
-
-
-def show_num_tx_in_last_t_blocks(n: LightningRpc, t: int):
-    block_height = n.getinfo()['blockheight']
-    for i in range(block_height - t + 1, block_height + 1):
-        num_tx_in_block_i = num_tx_in_block(block=get_block_by_height(i))
-        print(f"number of tx in block {i}: {num_tx_in_block_i}")
-
-
-def show_tx_in_block(block_height):
-    block: Block = get_block_by_height(block_height)
-    for txid in block['tx']:
-        print(txid)
-
-
-def wait_to_funds(n: LightningRpc) -> None:
-    while len(n.listfunds()["outputs"]) == 0:
-        time.sleep(1)
-
-
-def wait_to_route(src: LightningRpc, dest: LightningRpc, msatoshi: int) -> None:
-    found = False
-    while not found:
-        try:
-            src.getroute(node_id=get_id(dest), msatoshi=msatoshi, riskfactor=1)
-            found = True
-        except RpcError as e:
-            assert e.error["message"] == "Could not find a route", e
-            time.sleep(2)
+from utils import (
+    print_json,
+    show_num_tx_in_last_t_blocks,
+    show_tx_in_block,
+    wait_to_funds,
+    wait_to_route,
+)
 
 
 def init(n1: LightningRpc, n2: LightningRpc, n3: LightningRpc, channel_balance_satoshi: int):
     """
-    - fund all channels
-    -
-    :return:
+    - fund all nodes with BTC
+    - construct and fund channels n1 <--> n2 <--> n3
     """
     mine(400)  # mine 400 to activate segwit
     initial_balance_txid = fund_addresses([get_addr(n1), get_addr(n2), get_addr(n3)])
