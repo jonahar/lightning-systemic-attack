@@ -67,6 +67,9 @@ make_many_payments(
 # shutdown node 2
 n2.stop()
 
+# force close the channel
+bob_charlie_closing_txid = n3.close(peer_id=get_id(n2), force=True, timeout=0)['txid']
+
 for i in range(20):
     mine(1)
     time.sleep(1)
@@ -80,9 +83,6 @@ print_json(get_transaction(bob_charlie_funding_txid))
 # current height
 print(n3.getinfo()['blockheight'])
 
-# force close the channel
-bob_charlie_closing_txid = n3.close(peer_id=get_id(n2), force=True)['txid']
-mine(1)
 
 # see the closing transaction
 print_json(get_transaction(bob_charlie_closing_txid))
