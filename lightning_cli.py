@@ -66,3 +66,14 @@ def make_many_payments(
         )["route"]
         
         sender.sendpay(route=route, payment_hash=invoice["payment_hash"])
+
+
+def get_total_balance(n: LightningRpc) -> float:
+    """return the total balance of this node in BTC, both in UTXOs and channels"""
+    
+    total_sat = (
+        sum(map(lambda entry: entry["value"], n.listfunds()["outputs"]))
+        +
+        sum(map(lambda entry: entry["channel_sat"], n.listfunds()["channels"]))
+    )
+    return total_sat / (10 ** 8)  # convert to BTC
