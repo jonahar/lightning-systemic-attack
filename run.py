@@ -41,7 +41,7 @@ def wait_to_route(src: LightningRpc, dest: LightningRpc, msatoshi: int) -> None:
             time.sleep(1)
 
 
-def init(n1: LightningRpc, n2: LightningRpc, n3: LightningRpc):
+def init(n1: LightningRpc, n2: LightningRpc, n3: LightningRpc, channel_balance_satoshi: int):
     """
     - fund all channels
     -
@@ -55,10 +55,10 @@ def init(n1: LightningRpc, n2: LightningRpc, n3: LightningRpc):
     
     connect_nodes(n1, n2)
     connect_nodes(n2, n3)
-    channel_1_funding_txid = fund_channel(funder=n1, fundee=n2, num_satoshi=10_000_000)
-    channel_2_funding_txid = fund_channel(funder=n2, fundee=n3, num_satoshi=10_000_000)
+    channel_1_funding_txid = fund_channel(funder=n1, fundee=n2, num_satoshi=channel_balance_satoshi)
+    channel_2_funding_txid = fund_channel(funder=n2, fundee=n3, num_satoshi=channel_balance_satoshi)
     # wait until n1 knows a path to n3 so we can make a payment
-    wait_to_route(n1, n3, msatoshi=100_000_000)
+    wait_to_route(n1, n3, msatoshi=channel_balance_satoshi * 1000 // 10)
     return channel_1_funding_txid, channel_2_funding_txid
 
 
@@ -67,13 +67,16 @@ n1 = LightningRpc(os.path.join(ln_path, "lightning-dirs/1/lightning-rpc"))
 n2 = LightningRpc(os.path.join(ln_path, "lightning-dirs/2/lightning-rpc"))
 n3 = LightningRpc(os.path.join(ln_path, "lightning-dirs/3/lightning-rpc"))
 
-alice_bob_funding_txid, bob_charlie_funding_txid = init(n1, n2, n3)
+alice_bob_funding_txid, bob_charlie_funding_txid = init(
+    n1, n2, n3,
+    channel_balance_satoshi=10_000_000,  # 0.1 BTC
+)
 
 make_many_payments(
     sender=n1,
     receiver=n3,
     num_payments=5,
-    msatoshi_per_payment=100_000_000,  # 0.01 BTC
+    msatoshi_per_payment=1_000_000_000,  # 0.01 BTC
 )
 
 # shutdown node 2
