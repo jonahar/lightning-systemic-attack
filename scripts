@@ -45,31 +45,5 @@ the last element is the encoded script:
 }
 
 
-
-
-OP_DUP
-OP_HASH160
-ea5a8bd24440c0619121b001a1041e7c277fed1f
-OP_EQUAL # Returns 1 if the inputs are exactly equal, 0 otherwise
-OP_IF # If the top stack value is not False, the statements are executed. The top stack value is removed.
-    OP_CHECKSIG
-OP_ELSE
-    032f66d517303ab12adae84fcc2c8b111a1b98cf227d961918977dfa6df2475d2c
-    OP_SWAP # The top two items on the stack are swapped
-    OP_SIZE # Pushes the string length of the top element of the stack (without popping it).
-    32
-    OP_EQUAL
-    OP_NOTIF
-        OP_DROP # Removes the top stack item
-        2
-        OP_SWAP # The top two items on the stack are swapped
-        03a441c94be5204a2abe50fdda7b352b3d6be1843d55895db94b014c911fb944df
-        2
-        OP_CHECKMULTISIG
-    OP_ELSE
-        OP_HASH160
-        84561204188748004fb8c398dc5c38207ae0b24c
-        OP_EQUALVERIFY # fail the script if top 2 items are not equal
-        OP_CHECKSIG
-    OP_ENDIF
-OP_ENDIF
+the decoded script matches the following format:
+https://github.com/lightningnetwork/lightning-rfc/blob/master/03-transactions.md#offered-htlc-outputs
