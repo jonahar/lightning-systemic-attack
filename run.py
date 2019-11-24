@@ -35,8 +35,9 @@ def init(n1: LightningRpc, n2: LightningRpc, n3: LightningRpc, channel_balance_s
     mine(400)  # mine 400 to activate segwit
     initial_balance_txid = fund_addresses([get_addr(n1), get_addr(n2), get_addr(n3)])
     
-    # wait until node 1 has funds so we can fund the channels
+    # wait until nodes 1,2 have funds so we can fund the channels
     wait_to_funds(n1)
+    wait_to_funds(n2)
     
     connect_nodes(n1, n2)
     connect_nodes(n2, n3)
@@ -60,12 +61,16 @@ alice_bob_funding_txid, bob_charlie_funding_txid = init(
 make_many_payments(
     sender=n1,
     receiver=n3,
-    num_payments=5,
+    num_payments=1,
     msatoshi_per_payment=1_000_000_000,  # 0.01 BTC
 )
 
 # shutdown node 2
 n2.stop()
+
+# force close the channel
+bob_charlie_closing_txid = n3.close(peer_id=get_id(n2), force=True, timeout=0)['txid']
+mine(1)
 
 for i in range(20):
     mine(1)
@@ -79,10 +84,6 @@ tx_set = TXSet(txids=txids)
 print_json(get_transaction(bob_charlie_funding_txid))
 # current height
 print(n3.getinfo()['blockheight'])
-
-# force close the channel
-bob_charlie_closing_txid = n3.close(peer_id=get_id(n2), force=True)['txid']
-mine(1)
 
 # see the closing transaction
 print_json(get_transaction(bob_charlie_closing_txid))
