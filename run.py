@@ -82,8 +82,6 @@ tx_set = TXSet(txids=txids)
 
 # see the funding transaction
 print_json(get_transaction(bob_charlie_funding_txid))
-# current height
-print(n3.getinfo()['blockheight'])
 
 # see the closing transaction
 print_json(get_transaction(bob_charlie_closing_txid))
