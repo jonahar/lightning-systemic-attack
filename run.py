@@ -65,31 +65,54 @@ make_many_payments(
     msatoshi_per_payment=1_000_000_000,  # 0.01 BTC
 )
 
-# shutdown node 2
-n2.stop()
+# # shutdown node 2
+# n2.stop()
+#
+# # force close the channel
+# bob_charlie_closing_txid = n3.close(peer_id=get_id(n2), force=True, timeout=0)['txid']
+# mine(1)
+#
+# for i in range(20):
+#     mine(1)
+#     time.sleep(1)
+#
+# current_height = n1.getinfo()['blockheight']
+# txids = find_interesting_txids(block_heights=range(current_height - 30, current_height + 1))
+# tx_set = TXSet(txids=txids)
+#
+# # see the funding transaction
+# print_json(get_transaction(bob_charlie_funding_txid))
+#
+# # see the closing transaction
+# print_json(get_transaction(bob_charlie_closing_txid))
+#
+# show_num_tx_in_last_t_blocks(n=n1, t=3)
+#
+# show_tx_in_block(414)
+#
+# get_total_balance(n1)
+# get_total_balance(n2)
+# get_total_balance(n3)
 
-# force close the channel
-bob_charlie_closing_txid = n3.close(peer_id=get_id(n2), force=True, timeout=0)['txid']
-mine(1)
 
-for i in range(20):
-    mine(1)
-    time.sleep(1)
+# send 0.02 to Bob
+make_many_payments(
+    sender=n1,
+    receiver=n2,
+    num_payments=1,
+    msatoshi_per_payment=2_000_000_000,
+)
 
-current_height = n1.getinfo()['blockheight']
-txids = find_interesting_txids(block_heights=range(current_height - 30, current_height + 1))
-tx_set = TXSet(txids=txids)
+# send 0.01 to Charlie, which would result in an unresolved HTLC
+make_many_payments(
+    sender=n1,
+    receiver=n3,
+    num_payments=1,
+    msatoshi_per_payment=1_000_000_000,
+)
 
-# see the funding transaction
-print_json(get_transaction(bob_charlie_funding_txid))
+# force close so we can see the commitment transaction
+ab_commitment = n1.close(peer_id=get_id(n2), force=True, timeout=0)["txid"]
 
-# see the closing transaction
-print_json(get_transaction(bob_charlie_closing_txid))
 
-show_num_tx_in_last_t_blocks(n=n1, t=3)
 
-show_tx_in_block(414)
-
-get_total_balance(n1)
-get_total_balance(n2)
-get_total_balance(n3)
