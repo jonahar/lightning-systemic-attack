@@ -5,7 +5,7 @@ from typing import Iterable, Set
 from lightning import LightningRpc  # pip3 install pylightning
 from lightning.lightning import RpcError
 
-from bitcoin_cli import get_block_by_height, get_transaction, num_tx_in_block
+from bitcoin_cli import blockchain_height, get_block_by_height, get_transaction, num_tx_in_block
 from datatypes import Block, Json, TXID
 from lightning_cli import get_id
 
@@ -14,8 +14,11 @@ def print_json(o: Json):
     print(json.dumps(o, indent=4))
 
 
-def show_num_tx_in_last_t_blocks(n: LightningRpc, t: int):
-    block_height = n.getinfo()['blockheight']
+def show_num_tx_in_last_t_blocks(t: int):
+    """
+    print the number of transactions in each of the last t blocks.
+    """
+    block_height = blockchain_height()
     for i in range(block_height - t + 1, block_height + 1):
         num_tx_in_block_i = num_tx_in_block(block=get_block_by_height(i))
         print(f"number of tx in block {i}: {num_tx_in_block_i}")
