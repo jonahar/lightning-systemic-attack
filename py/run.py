@@ -4,14 +4,10 @@ import time
 from lightning import LightningRpc  # pip3 install pylightning
 
 from bitcoin_cli import (
-    fund_addresses,
     get_transaction,
     mine,
 )
 from lightning_cli import (
-    connect_nodes,
-    fund_channel,
-    get_addr,
     get_id,
     get_total_balance,
     make_many_payments,
@@ -22,48 +18,38 @@ from utils import (
     print_json,
     show_num_tx_in_last_t_blocks,
     show_tx_in_block,
-    wait_to_funds,
-    wait_to_route,
 )
 
+lnpath = os.path.expandvars("$LNPATH")
+n1 = LightningRpc(os.path.join(lnpath, "lightning-dirs/1/lightning-rpc"))
+n2 = LightningRpc(os.path.join(lnpath, "lightning-dirs/2/lightning-rpc"))
+n3 = LightningRpc(os.path.join(lnpath, "lightning-dirs/3/lightning-rpc"))
 
-def init(n1: LightningRpc, n2: LightningRpc, n3: LightningRpc, channel_balance_satoshi: int):
-    """
-    - fund all nodes with BTC
-    - construct and fund channels n1 <--> n2 <--> n3
-    """
-    mine(400)  # mine 400 to activate segwit
-    initial_balance_txid = fund_addresses([get_addr(n1), get_addr(n2), get_addr(n3)])
-    
-    # wait until nodes 1,2 have funds so we can fund the channels
-    wait_to_funds(n1)
-    wait_to_funds(n2)
-    
-    connect_nodes(n1, n2)
-    connect_nodes(n2, n3)
-    channel_1_funding_txid = fund_channel(funder=n1, fundee=n2, num_satoshi=channel_balance_satoshi)
-    channel_2_funding_txid = fund_channel(funder=n2, fundee=n3, num_satoshi=channel_balance_satoshi)
-    # wait until n1 knows a path to n3 so we can make a payment
-    wait_to_route(n1, n3, msatoshi=channel_balance_satoshi * 1000 // 10)
-    return channel_1_funding_txid, channel_2_funding_txid
+# we assume the channels are already set-up. see setup_nodes.py
 
+ab_funding_txid = n1.listpeers(peerid=get_id(n2))["peers"][0]["channels"][0]["funding_txid"]
+bc_funding_txid = n2.listpeers(peerid=get_id(n3))["peers"][0]["channels"][0]["funding_txid"]
 
-ln_path = os.path.expandvars("$LAB/ln")
-n1 = LightningRpc(os.path.join(ln_path, "lightning-dirs/1/lightning-rpc"))
-n2 = LightningRpc(os.path.join(ln_path, "lightning-dirs/2/lightning-rpc"))
-n3 = LightningRpc(os.path.join(ln_path, "lightning-dirs/3/lightning-rpc"))
-
-alice_bob_funding_txid, bob_charlie_funding_txid = init(
-    n1, n2, n3,
-    channel_balance_satoshi=10_000_000,  # 0.1 BTC
+# send 0.02 to Bob
+make_many_payments(
+    sender=n1,
+    receiver=n2,
+    num_payments=1,
+    msatoshi_per_payment=2_000_000_000,
 )
 
+# send 0.01 to Charlie, which would result in an unresolved HTLC (assuming charlie is evil)
 make_many_payments(
     sender=n1,
     receiver=n3,
     num_payments=1,
-    msatoshi_per_payment=1_000_000_000,  # 0.01 BTC
+    msatoshi_per_payment=1_000_000_000,
 )
+
+# force close so we can see the commitment transaction
+ab_commitment = n1.close(peer_id=get_id(n2), force=True, timeout=0)["txid"]
+
+# ----------------
 
 # # shutdown node 2
 # n2.stop()
@@ -81,38 +67,15 @@ make_many_payments(
 # tx_set = TXSet(txids=txids)
 #
 # # see the funding transaction
-# print_json(get_transaction(bob_charlie_funding_txid))
+# print_json(get_transaction(bc_funding_txid))
 #
 # # see the closing transaction
 # print_json(get_transaction(bob_charlie_closing_txid))
 #
-# show_num_tx_in_last_t_blocks(n=n1, t=3)
+# show_num_tx_in_last_t_blocks(t=3)
 #
 # show_tx_in_block(414)
 #
 # get_total_balance(n1)
 # get_total_balance(n2)
 # get_total_balance(n3)
-
-
-# send 0.02 to Bob
-make_many_payments(
-    sender=n1,
-    receiver=n2,
-    num_payments=1,
-    msatoshi_per_payment=2_000_000_000,
-)
-
-# send 0.01 to Charlie, which would result in an unresolved HTLC
-make_many_payments(
-    sender=n1,
-    receiver=n3,
-    num_payments=1,
-    msatoshi_per_payment=1_000_000_000,
-)
-
-# force close so we can see the commitment transaction
-ab_commitment = n1.close(peer_id=get_id(n2), force=True, timeout=0)["txid"]
-
-
-
