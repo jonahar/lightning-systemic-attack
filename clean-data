@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cd $(dirname $0)
+cd $LNPATH
 kill-daemons
 
 rm -rf lightning-dirs/1   \
