@@ -5,7 +5,6 @@
 #   2. all daemons/clis directories are in PATH
 
 
-cd $(dirname $0)
 
 source cli-functions
 
@@ -17,6 +16,7 @@ mkdir -p "$HOME/.bitcoin" && ln -s -f "$LNPATH/conf/bitcoin.conf" "$HOME/.bitcoi
 kill-daemons
 
 
+cd $LNPATH
 # lightning nodes are sleeping to avoid race condition with bitcoind
 tmux new-session -d -n btc-daemon "bash -i -c 'bitcoind'"
 tmux new-window -n a-lnd "bash -i -c 'sleep 1; run-lightningd 1'"
