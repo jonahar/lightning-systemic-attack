@@ -23,7 +23,7 @@ tmux new-window -n a-lnd "bash -i -c 'sleep 1; run-lightningd 1'"
 tmux new-window -n b-lnd "bash -i -c 'sleep 1; run-lightningd 2'"
 tmux new-window -n c-lnd "bash -i -c 'sleep 1; run-lightningd 3 --evil'"
 tmux new-window -n b-cli
-tmux new-window -n py3 "python3"
+tmux new-window -n py3 "cd py; python3"
 
 tmux select-window -t 5 # select active window
 tmux attach-session
