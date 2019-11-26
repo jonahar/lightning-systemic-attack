@@ -1,8 +1,23 @@
 #!/usr/bin/env bash
 
-lcli-alice(){ lightning-cli --lightning-dir=$LNPATH/lightning-dirs/1 $*; }; export -f lcli-alice
-lcli-bob(){ lightning-cli --lightning-dir=$LNPATH/lightning-dirs/2 $*; }; export -f lcli-bob
-lcli-charlie(){ lightning-cli --lightning-dir=$LNPATH/lightning-dirs/3 $*; }; export -f lcli-charlie
+lcli-custom(){
+    IDX=$1
+    lightning-cli \
+        --conf=$LNPATH/conf/lightning.conf \
+        --lightning-dir="$LNPATH/lightning-dirs/$IDX" \
+        "${@:2}"
+}
+
+export -f lcli-custom
+
+lcli-alice(){ lcli-custom 1 $*; }
+export -f lcli-alice
+
+lcli-bob(){ lcli-custom 2 $*; }
+export -f lcli-bob
+
+lcli-charlie(){ lcli-custom 3 $*; }
+export -f lcli-charlie
 
 gettransaction(){
     txid=$1
