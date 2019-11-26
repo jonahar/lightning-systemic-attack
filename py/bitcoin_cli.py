@@ -90,3 +90,11 @@ def blockchain_height() -> int:
         stdout=subprocess.PIPE,
     )
     return json.loads(decode_stdout(result))["blocks"]
+
+
+def get_mempool_txids() -> List[TXID]:
+    result = subprocess.run(
+        ["bitcoin-cli", "getrawmempool"],
+        stdout=subprocess.PIPE,
+    )
+    return json.loads(decode_stdout(result))
