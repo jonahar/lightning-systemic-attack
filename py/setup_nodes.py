@@ -42,9 +42,9 @@ def init(n1: LightningRpc, n2: LightningRpc, n3: LightningRpc, channel_balance_s
 
 if __name__ == "__main__":
     lnpath = os.path.expandvars("$LNPATH")
-    n1 = LightningRpc(os.path.join(lnpath, "lightning-dirs/1/lightning-rpc"))
-    n2 = LightningRpc(os.path.join(lnpath, "lightning-dirs/2/lightning-rpc"))
-    n3 = LightningRpc(os.path.join(lnpath, "lightning-dirs/3/lightning-rpc"))
+    n1 = LightningRpc(os.path.join(lnpath, "lightning-dirs/1/regtest/lightning-rpc"))
+    n2 = LightningRpc(os.path.join(lnpath, "lightning-dirs/2/regtest/lightning-rpc"))
+    n3 = LightningRpc(os.path.join(lnpath, "lightning-dirs/3/regtest/lightning-rpc"))
     
     init(
         n1, n2, n3,

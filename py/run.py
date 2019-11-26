@@ -9,9 +9,9 @@ from lightning_cli import (
 )
 
 lnpath = os.path.expandvars("$LNPATH")
-n1 = LightningRpc(os.path.join(lnpath, "lightning-dirs/1/lightning-rpc"))
-n2 = LightningRpc(os.path.join(lnpath, "lightning-dirs/2/lightning-rpc"))
-n3 = LightningRpc(os.path.join(lnpath, "lightning-dirs/3/lightning-rpc"))
+n1 = LightningRpc(os.path.join(lnpath, "lightning-dirs/1/regtest/lightning-rpc"))
+n2 = LightningRpc(os.path.join(lnpath, "lightning-dirs/2/regtest/lightning-rpc"))
+n3 = LightningRpc(os.path.join(lnpath, "lightning-dirs/3/regtest/lightning-rpc"))
 
 # we assume the channels are already set-up. see setup_nodes.py
 
