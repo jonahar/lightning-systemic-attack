@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 
 from lightning import LightningRpc  # pip3 install pylightning
