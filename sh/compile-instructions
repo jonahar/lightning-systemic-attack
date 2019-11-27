@@ -11,7 +11,7 @@ wget https://download.oracle.com/berkeley-db/db-4.8.30.tar.gz
 tar -xvf db-4.8.30.tar.gz
 cd db-4.8.30
 mkdir -p build_unix/build
-BDB_PREFIX="$(pwd)/build_unix/build"
+BDB_PREFIX="$ROOT_DIR/bdb/db-4.8.30/build_unix/build"
 chmod u+w dbinc/atomic.h # make file writeable
 sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' dbinc/atomic.h # replace function name that may conflict with another
 cd build_unix
