@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+clean-data
+setup-env --scratch
+

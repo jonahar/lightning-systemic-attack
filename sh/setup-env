@@ -1,29 +1,18 @@
 #!/usr/bin/env bash
 
-# before running this script make sure:
-#   1. the LNPATH variable was set
-#   2. all daemons/clis directories are in PATH
-
+while [[ $# -gt 0 ]]; do
+    key="$1"
+    case $key in
+        --scratch)
+            SCRATCH="scratch"
+            shift
+            ;;
+    esac
+done
 
 
 source cli-functions
-
-
-# set conf files
-mkdir -p "$HOME/.bitcoin" && ln -s -f "$LNPATH/conf/bitcoin.conf" "$HOME/.bitcoin/bitcoin.conf"
-
-
+setup-configs
 kill-daemons
+setup-tmux $SCRATCH
 
-
-cd $LNPATH
-# lightning nodes are sleeping to avoid race condition with bitcoind
-tmux new-session -d -n btc-daemon "bash -i -c 'bitcoind'"
-tmux new-window -n a-lnd "bash -i -c 'sleep 1; run-lightningd 1'"
-tmux new-window -n b-lnd "bash -i -c 'sleep 1; run-lightningd 2'"
-tmux new-window -n c-lnd "bash -i -c 'sleep 1; run-lightningd 3 --evil'"
-tmux new-window -n b-cli "cd dev; bash"
-tmux new-window -n py3 "cd py; bash"
-
-tmux select-window -t 5 # select active window
-tmux attach-session
