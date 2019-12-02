@@ -4,16 +4,6 @@
 # another command) adds a .tmp suffix. this way they can all be removed easily
 
 
-# run bitcoin node
-bitcoind
-
-
-# run lightning nodes
-run-lightningd 1
-run-lightningd 2
-run-lightningd 3
-
-
 # get the nodes identity_pubkey
 lcli-alice getinfo | jq -r ".id" > id.alice.tmp
 lcli-bob getinfo | jq -r ".id" > id.bob.tmp
@@ -41,6 +31,7 @@ mine(){
     BLOCKS_TO_MINE=$1
     bitcoin-cli generatetoaddress $BLOCKS_TO_MINE $ADDR_MAIN
 }
+
 mine 400 > /dev/null
 bitcoin-cli sendmany "" "{\"${ALICE_ADDR}\":1,\"${BOB_ADDR}\":1,\"${CHARLIE_ADDR}\":1}" > initial.balance.txid.tmp
 mine 1 > /dev/null
