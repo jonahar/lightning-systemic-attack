@@ -77,11 +77,14 @@ def num_tx_in_block(block: Block) -> int:
 
 
 def get_tx_height(txid: TXID) -> int:
-    """return the block height to which this tx entered"""
+    """
+    return the block height to which this tx entered
+    -1 if the transaction has no height (not yet mined)
+    """
     transaction = get_transaction(txid)
     block_hash = transaction["blockhash"]
     block = get_block_by_hash(block_hash)
-    return block["height"]
+    return block["height"] if "height" in block else -1
 
 
 def blockchain_height() -> int:
@@ -98,3 +101,4 @@ def get_mempool_txids() -> List[TXID]:
         stdout=subprocess.PIPE,
     )
     return json.loads(decode_stdout(result))
+
