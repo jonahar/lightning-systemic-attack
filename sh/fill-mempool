@@ -6,7 +6,7 @@
 ADDR=$(bitcoin-cli getnewaddress)
 bitcoin-cli generatetoaddress 150 $ADDR > /dev/null  # at least 100 to unlock coinbase outputs
 
-NUM_BLOCKS=10
+NUM_BLOCKS=20
 TX_PER_BLOCK=10
 
 for i in $( seq 0 $NUM_BLOCKS ); do
