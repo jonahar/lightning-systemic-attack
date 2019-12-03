@@ -48,12 +48,14 @@ def wait_to_route(src: LightningRpc, dest: LightningRpc, msatoshi: int) -> None:
             time.sleep(2)
 
 
-def find_interesting_txids(block_heights: Iterable[int]) -> Set[TXID]:
+def find_interesting_txids_in_last_t_blocks(t: int) -> Set[TXID]:
     """
-    return a set of TXIDs from the given blocks that are not coinbase transactions
+    return a set of TXIDs from the last t blocks that are not coinbase transactions
     """
+    block_height = blockchain_height()
     return {
         txid
-        for height in block_heights for txid in get_block_by_height(height)["tx"]
+        for height in range(block_height - t + 1, block_height + 1)
+        for txid in get_block_by_height(height)["tx"]
         if "coinbase" not in get_transaction(txid)["vin"][0]
     }
