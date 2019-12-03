@@ -1,6 +1,7 @@
-from typing import Any, Dict, TypeVar
+from typing import Any, Dict
 
-Json = TypeVar("Json", bound=Dict[str, Any])
-TXID = TypeVar("TXID", bound=str)
-Address = TypeVar("Address", bound=str)
-Block = TypeVar("Block", bound=Json)
+Json = Dict[str, Any]
+TXID = str
+Address = str
+Block = Json
+BlockHeight = int
