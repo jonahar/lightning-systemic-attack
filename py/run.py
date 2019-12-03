@@ -1,12 +1,16 @@
 import os
+import pickle
+import time
 
 from lightning import LightningRpc, Millisatoshi  # pip3 install pylightning
 
-from bitcoin_cli import get_mempool_txids, get_transaction, mine
+from bitcoin_cli import mine
 from lightning_cli import (
     get_id,
     make_many_payments,
 )
+from tx_graph import TXGraph
+from utils import find_interesting_txids_in_last_t_blocks, show_num_tx_in_last_t_blocks
 
 lnpath = os.path.expandvars("$LNPATH")
 n1 = LightningRpc(os.path.join(lnpath, "lightning-dirs/1/regtest/lightning-rpc"))
@@ -28,11 +32,26 @@ make_many_payments(
     msatoshi_per_payment=amount.millisatoshis,
 )
 
-# force close so we can see the commitment transaction
-bc_commitment = n3.close(peer_id=get_id(n2), force=True, timeout=0)["txid"]
+# Alice is not responsive. Bob can't remove HTLCs gracefully
+n1.stop()
+
+# Charlie asks to close the channel
+bc_spending = n3.close(peer_id=get_id(n2))["txid"]
 mine(1)
 
-# the mempool, after bob sees the commitment tx onchain
-mempool = get_mempool_txids()
-total_size = sum(map(lambda txid: get_transaction(txid)["size"], mempool))
-total_vsize = sum(map(lambda txid: get_transaction(txid)["vsize"], mempool))
+# Bob now has to publish the commitment tx of him and Alice
+# slowly mine blocks
+for _ in range(30):
+    mine(1)
+    time.sleep(2)
+
+show_num_tx_in_last_t_blocks(t=50)
+txs = find_interesting_txids_in_last_t_blocks(t=50)
+
+graph_dot = os.path.join(lnpath, "graphs", "tx_graph.dot")
+graph_pickle = os.path.join(lnpath, "graphs", "tx_graph.pickle")
+
+g = TXGraph(txs)
+g.export_to_dot(filepath=graph_dot)
+with open(graph_pickle, mode="wb") as f:
+    pickle.dump(g, f)
