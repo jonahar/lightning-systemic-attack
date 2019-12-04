@@ -42,13 +42,25 @@ def fund_nodes_commands(topology: dict) -> None:
     
     for id in topology:
         print(f"ADDR_{id}=$(lcli {id} newaddr | jq -r '.address')")
-        amount = 1
-        print(f"bitcoin-cli sendtoaddress $ADDR_{id} {amount}")
+        
+        # We give more funds to nodes that need to open many channels.
+        # we fund these nodes with many small transactions instead of one big transaction,
+        # so they have enough outputs to funds the different channels
+        for _ in range(len(topology[id]["peers"])):
+            print(f"bitcoin-cli sendtoaddress $ADDR_{id} 1")
+    
     print("mine 10")
 
 
 def wait_for_fund_commands(topology: dict) -> None:
-    ids_list_str = " ".join(topology.keys())
+    # we need to wait only for nodes that need to fund a channel
+    ids_list_str = " ".join(
+        filter(
+            lambda id: len(topology[id]["peers"]) != 0,
+            topology.keys()
+        )
+    )
+    
     print(f"""
 for i in {ids_list_str}; do
     echo "waiting for funds of node $i"
