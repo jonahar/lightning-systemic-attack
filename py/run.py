@@ -10,7 +10,7 @@ from lightning_cli import (
     make_many_payments,
 )
 from tx_graph import TXGraph
-from utils import find_interesting_txids_in_last_t_blocks, show_num_tx_in_last_t_blocks
+from utils import find_interesting_txids_in_last_t_blocks, show_num_tx_in_last_t_blocks, wait_to_route
 
 lnpath = os.path.expandvars("$LNPATH")
 n1 = LightningRpc(os.path.join(lnpath, "lightning-dirs/1/regtest/lightning-rpc"))
@@ -23,6 +23,8 @@ ab_funding_txid = n1.listpeers(peerid=get_id(n2))["peers"][0]["channels"][0]["fu
 bc_funding_txid = n2.listpeers(peerid=get_id(n3))["peers"][0]["channels"][0]["funding_txid"]
 
 amount = Millisatoshi("0.0001btc")
+
+wait_to_route(src=n1, dest=n3, msatoshi=amount.millisatoshis)
 
 # send many payments to Charlie, which would result in unresolved HTLCs (assuming charlie is evil)
 make_many_payments(
@@ -41,9 +43,9 @@ mine(1)
 
 # Bob now has to publish the commitment tx of him and Alice
 # slowly mine blocks
-for _ in range(30):
+for _ in range(20):
     mine(1)
-    time.sleep(2)
+    time.sleep(5)
 
 show_num_tx_in_last_t_blocks(t=50)
 txs = find_interesting_txids_in_last_t_blocks(t=50)

@@ -1,18 +1,63 @@
 #!/usr/bin/env bash
 
-while [[ $# -gt 0 ]]; do
-    key="$1"
-    case $key in
-        --scratch)
-            SCRATCH="scratch"
-            shift
-            ;;
-    esac
-done
+usage(){
+    echo """setup-env --topology TOPOLOGY_FILE [OPTIONS]
+
+Setup a complete environment with bitcoin and lightning nodes running, connected
+according to a given topology
+
+Valid arguments
+--topology TOPOLOGY_FILE    topology json file. defaults to 'topology.json'
+--scratch                   setup from scratch (delete all data and establish channels
+                            from scratch)
+--help                      display this help and exit
+"""
+    exit 1
+}
 
 
-source cli-functions
+parse-args(){
+    # set default values
+    TOPOLOGY="topology.json"
+    SCRATCH="false"
+    while [[ $# -gt 0 ]]; do
+        key="$1"
+        case $key in
+            --scratch)
+                SCRATCH="true"
+                shift
+                ;;
+            --topology)
+                TOPOLOGY="$2"
+                shift 2
+                ;;
+            --help)
+                usage
+                ;;
+        esac
+    done
+}
+
+
+parse-args "$@"
+
+cd $LNPATH
+
+if [[ "$SCRATCH" == "true" ]]; then
+    clean-env
+else
+    kill-daemons
+fi
+
 setup-configs
-kill-daemons
-setup-tmux $SCRATCH
+source sh/cli-functions
+bitcoind -daemon
+python3 py/generate_node_setup_code.py "$TOPOLOGY" > generated_setup_commands
+source generated_setup_commands
 
+tmux new-session -d -n cli
+tmux new-window -n py3 "cd py; python3"
+
+ACTIVE_WINDOW=0
+tmux select-window -t $ACTIVE_WINDOW # select window on which we start when attaching
+tmux attach-session

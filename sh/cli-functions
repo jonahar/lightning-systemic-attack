@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-lcli-custom(){
+lcli(){
     IDX=$1
     lightning-cli \
         --conf=$LNPATH/conf/lightning.conf \
@@ -8,15 +8,15 @@ lcli-custom(){
         "${@:2}"
 }
 
-export -f lcli-custom
+export -f lcli
 
-lcli-alice(){ lcli-custom 1 $*; }
+lcli-alice(){ lcli 1 $*; }
 export -f lcli-alice
 
-lcli-bob(){ lcli-custom 2 $*; }
+lcli-bob(){ lcli 2 $*; }
 export -f lcli-bob
 
-lcli-charlie(){ lcli-custom 3 $*; }
+lcli-charlie(){ lcli 3 $*; }
 export -f lcli-charlie
 
 gettransaction(){
@@ -33,3 +33,8 @@ getblock(){
 }
 export -f getblock
 
+mine(){
+    BLOCKS_TO_MINE=$1
+    bitcoin-cli generatetoaddress $BLOCKS_TO_MINE $(bitcoin-cli getnewaddress) > /dev/null
+}
+export -f mine

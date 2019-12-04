@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 
 cd $LNPATH
-kill-daemons
-
-rm -rf lightning-dirs/1   \
-       lightning-dirs/2   \
-       lightning-dirs/3   \
+rm -rf lightning-dirs/*   \
        dev/*.tmp          \
        ~/.bitcoin         \
 
