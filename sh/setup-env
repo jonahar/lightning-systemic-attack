@@ -52,7 +52,7 @@ fi
 setup-configs
 source sh/cli-functions
 bitcoind -daemon
-python3 py/generate_node_setup_code.py "$TOPOLOGY" > generated_setup_commands
+python3 py/gen_node_setup_commands.py "$TOPOLOGY" > generated_setup_commands
 source generated_setup_commands
 
 tmux new-session -d -n cli
