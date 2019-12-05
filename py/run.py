@@ -17,10 +17,7 @@ n1 = LightningRpc(os.path.join(lnpath, "lightning-dirs/1/regtest/lightning-rpc")
 n2 = LightningRpc(os.path.join(lnpath, "lightning-dirs/2/regtest/lightning-rpc"))
 n3 = LightningRpc(os.path.join(lnpath, "lightning-dirs/3/regtest/lightning-rpc"))
 
-# we assume the channels are already set-up. see setup_nodes.py
-
-ab_funding_txid = n1.listpeers(peerid=get_id(n2))["peers"][0]["channels"][0]["funding_txid"]
-bc_funding_txid = n2.listpeers(peerid=get_id(n3))["peers"][0]["channels"][0]["funding_txid"]
+# we assume the channels are already set-up
 
 amount = Millisatoshi("0.0001btc")
 
@@ -34,11 +31,17 @@ make_many_payments(
     msatoshi_per_payment=amount.millisatoshis,
 )
 
+# see the number of HTLCs that node 3 have with each peer
+for i, peer in enumerate(n3.listpeers()["peers"]):
+    print(f"htlcs with peers {i}: {len(peer['channels'][0]['htlcs'])}")
+
 # Alice is not responsive. Bob can't remove HTLCs gracefully
 n1.stop()
 
-# Charlie asks to close the channel
-bc_spending = n3.close(peer_id=get_id(n2))["txid"]
+# node 3 closes all channels gracefully
+for peer in n3.listpeers()["peers"]:
+    n3.close(peer_id=peer["id"])
+
 mine(1)
 
 # Bob now has to publish the commitment tx of him and Alice
@@ -47,8 +50,8 @@ for _ in range(20):
     mine(1)
     time.sleep(5)
 
-show_num_tx_in_last_t_blocks(t=50)
-txs = find_interesting_txids_in_last_t_blocks(t=50)
+show_num_tx_in_last_t_blocks(t=30)
+txs = find_interesting_txids_in_last_t_blocks(t=30)
 
 graph_dot = os.path.join(lnpath, "graphs", "tx_graph.dot")
 graph_pickle = os.path.join(lnpath, "graphs", "tx_graph.pickle")
