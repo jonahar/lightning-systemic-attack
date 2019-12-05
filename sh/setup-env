@@ -40,20 +40,27 @@ parse-args(){
 
 
 parse-args "$@"
-
 cd $LNPATH
+source sh/cli-functions
 
 if [[ "$SCRATCH" == "true" ]]; then
     clean-env
+    setup-configs
+    bitcoind -daemon
+    python3 py/commands_generator.py \
+        --topology $TOPOLOGY \
+        --outfile generated_setup_commands \
+        --establish-channels
+    source generated_setup_commands
 else
     kill-daemons
+    bitcoind -daemon
+    python3 py/commands_generator.py \
+        --topology $TOPOLOGY \
+        --outfile generated_setup_commands
+    source generated_setup_commands
 fi
 
-setup-configs
-source sh/cli-functions
-bitcoind -daemon
-python3 py/gen_node_setup_commands.py "$TOPOLOGY" > generated_setup_commands
-source generated_setup_commands
 
 tmux new-session -d -n cli
 tmux new-window -n py3 "cd py; python3"
