@@ -12,10 +12,10 @@ from lightning_cli import (
 from tx_graph import TXGraph
 from utils import find_interesting_txids_in_last_t_blocks, show_num_tx_in_last_t_blocks, wait_to_route
 
-lnpath = os.path.expandvars("$LNPATH")
-n1 = LightningRpc(os.path.join(lnpath, "lightning-dirs/1/regtest/lightning-rpc"))
-n2 = LightningRpc(os.path.join(lnpath, "lightning-dirs/2/regtest/lightning-rpc"))
-n3 = LightningRpc(os.path.join(lnpath, "lightning-dirs/3/regtest/lightning-rpc"))
+ln = os.path.expandvars("$LN")
+n1 = LightningRpc(os.path.join(ln, "lightning-dirs/1/regtest/lightning-rpc"))
+n2 = LightningRpc(os.path.join(ln, "lightning-dirs/2/regtest/lightning-rpc"))
+n3 = LightningRpc(os.path.join(ln, "lightning-dirs/3/regtest/lightning-rpc"))
 
 # we assume the channels are already set-up
 
@@ -53,8 +53,8 @@ for _ in range(20):
 show_num_tx_in_last_t_blocks(t=30)
 txs = find_interesting_txids_in_last_t_blocks(t=30)
 
-graph_dot = os.path.join(lnpath, "graphs", "tx_graph.dot")
-graph_pickle = os.path.join(lnpath, "graphs", "tx_graph.pickle")
+graph_dot = os.path.join(ln, "graphs", "tx_graph.dot")
+graph_pickle = os.path.join(ln, "graphs", "tx_graph.pickle")
 
 g = TXGraph(txs)
 g.export_to_dot(filepath=graph_dot)

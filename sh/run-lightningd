@@ -7,8 +7,8 @@ usage(){
 }
 
 
-if [[ -z $LNPATH ]]; then
-    echo "LNPATH was not set"
+if [[ -z $LN ]]; then
+    echo "LN variable was not set"
     exit 1
 fi
 
@@ -18,11 +18,11 @@ if [[ -z $I ]]; then
     exit 1
 fi
 
-mkdir -p "$LNPATH/lightning-dirs/$I"
-cd "$LNPATH/lightning-dirs"
+mkdir -p "$LN/lightning-dirs/$I"
+cd "$LN/lightning-dirs"
 
 lightningd \
-    --conf=$LNPATH/conf/lightning.conf \
+    --conf=$LN/conf/lightning.conf \
     --lightning-dir=$I \
     --addr=localhost:1000${I} \
     --alias="node-number-$I" \

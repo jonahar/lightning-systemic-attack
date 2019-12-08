@@ -4,10 +4,10 @@ import os
 import sys
 
 LABPATH = os.path.expandvars("$LAB")
-LNPATH = os.path.expandvars("$LNPATH")
-LIGHTNING_DIR_BASE = os.path.join(LNPATH, "lightning-dirs")
-LIGHTNING_CONF_PATH = os.path.join(LNPATH, "conf/lightning.conf")
-BITCOIN_CONF_PATH = os.path.join(LNPATH, "conf/bitcoin.conf")
+LN = os.path.expandvars("$LN")
+LIGHTNING_DIR_BASE = os.path.join(LN, "lightning-dirs")
+LIGHTNING_CONF_PATH = os.path.join(LN, "conf/lightning.conf")
+BITCOIN_CONF_PATH = os.path.join(LN, "conf/bitcoin.conf")
 PORT_BASE = 10000
 INITIAL_CHANNEL_BALANCE = 10000000  # 0.1 BTC
 

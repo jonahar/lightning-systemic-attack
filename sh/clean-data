@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cd $LNPATH
+cd $LN
 rm -rf lightning-dirs/*   \
        dev/*.tmp          \
        ~/.bitcoin         \
