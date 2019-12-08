@@ -7,10 +7,10 @@ Setup a complete environment with bitcoin and lightning nodes running, connected
 according to a given topology
 
 Valid arguments
---topology TOPOLOGY_FILE    topology json file. defaults to 'topology.json'
---scratch                   setup from scratch (delete all data and establish channels
-                            from scratch)
---help                      display this help and exit
+-t, --topology TOPOLOGY_FILE    topology json file. defaults to 'topology.json'
+-s, --scratch                   setup from scratch (delete all data and establish channels
+                                from scratch)
+-h, --help                      display this help and exit
 """
     exit 1
 }
@@ -23,15 +23,15 @@ parse-args(){
     while [[ $# -gt 0 ]]; do
         key="$1"
         case $key in
-            --scratch)
+            -s|--scratch)
                 SCRATCH="true"
                 shift
                 ;;
-            --topology)
+            -t|--topology)
                 TOPOLOGY="$2"
                 shift 2
                 ;;
-            --help)
+            -h|--help)
                 usage
                 ;;
         esac
