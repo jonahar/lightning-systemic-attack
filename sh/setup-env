@@ -40,6 +40,12 @@ parse-args(){
 
 
 parse-args "$@"
+
+if [[ ! -f "$TOPOLOGY" ]]; then
+    echo "topology file '$TOPOLOGY' does not exist"
+    exit 1
+fi
+
 cd $LN
 source sh/cli-functions
 
