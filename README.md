@@ -1,4 +1,4 @@
-# ln
+# LN
 
 This repo contains a bunch of scripts for interacting with bitcoin and lightning nodes.
 
@@ -12,14 +12,21 @@ lab
 ├── lightning
 │   ├── ...
 │   └── ...
+├── lightning-evil (a modified impl of c-lightning)
+│   ├── ...
+│   └── ...
 └── ln (this repo)
     ├── conf
-    ├── dev
     ├── lightning-dirs
     ├── py
     └── sh
 ```
 
-The paths of `lab` and `ln` should be set in the variables `LAB` and `LNPATH` respectively, 
-and `LNPATH/sh` should be added to `PATH`
+The paths of `lab` and `ln` should be set in the variables `LAB` and `LN` respectively. 
+`LN/sh` should be added to `PATH`.
+
+## Where to start
+`setup-env` is the recommended entry point. It creates a complete setup of bitcoin and 
+lightning nodes ready for interaction. Run `setup-env --help` to see more details and options.
+
 
