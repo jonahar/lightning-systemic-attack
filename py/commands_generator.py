@@ -3,12 +3,16 @@ import json
 import os
 import sys
 
+LABPATH = os.path.expandvars("$LAB")
 LNPATH = os.path.expandvars("$LNPATH")
 LIGHTNING_DIR_BASE = os.path.join(LNPATH, "lightning-dirs")
 LIGHTNING_CONF_PATH = os.path.join(LNPATH, "conf/lightning.conf")
 BITCOIN_CONF_PATH = os.path.join(LNPATH, "conf/bitcoin.conf")
 PORT_BASE = 10000
 INITIAL_CHANNEL_BALANCE = 10000000  # 0.1 BTC
+
+LIGHTNING_BINARY = os.path.join(LABPATH, "lightning/lightningd/lightningd")
+LIGHTNING_BINARY_EVIL = os.path.join(LABPATH, "lightning-evil/lightningd/lightningd")
 
 
 class CommandsGenerator:
@@ -32,14 +36,18 @@ class CommandsGenerator:
         """generate code to start lightning nodes"""
         for id, info in self.topology.items():
             alias = info["alias"] if "alias" in info else id
-            evil = info["evil"] if "evil" in info else False
-            evil_flag = "--evil" if evil else ""
+            evil_flag = ""
+            binary = LIGHTNING_BINARY
+            if "evil" in info and info["evil"]:
+                evil_flag = "--evil"
+                binary = LIGHTNING_BINARY_EVIL
+            
             lightning_dir = os.path.join(LIGHTNING_DIR_BASE, id)
             port = PORT_BASE + int(id)
             
             self.__write_line(f"mkdir -p {lightning_dir}")
             self.__write_line(
-                f"lightningd "
+                f"{binary} "
                 f"  --conf={LIGHTNING_CONF_PATH}"
                 f"  --lightning-dir={lightning_dir}"
                 f"  --addr=localhost:{port}"
