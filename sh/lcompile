@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 # lcompile ~ lightning-compile
 cd $LAB/lightning
-make -j6
+(./configure; make -j6) &
+PID1=$!
 
+cd $LAB/lightning-evil
+(./configure; make -j6) &
+PID2=$!
+
+wait $PID1
+wait $PID2
+echo "Done compiling"
