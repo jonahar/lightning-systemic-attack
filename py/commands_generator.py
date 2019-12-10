@@ -42,7 +42,12 @@ class CommandsGenerator:
             evil_flag = "--evil" if evil else ""
             silent_flag = "--silent" if silent else ""
             
-            binary = LIGHTNING_BINARY_EVIL if evil or silent else LIGHTNING_BINARY
+            binary = LIGHTNING_BINARY
+            log_level_flag = ""
+            if evil or silent:
+                binary = LIGHTNING_BINARY_EVIL
+                log_level_flag = "--log-level=JONA"
+            
             lightning_dir = os.path.join(LIGHTNING_DIR_BASE, id)
             port = PORT_BASE + int(id)
             
@@ -56,6 +61,7 @@ class CommandsGenerator:
                 f"  --log-file=log"  # relative to lightning-dir
                 f"  {evil_flag}"
                 f"  {silent_flag}"
+                f"  {log_level_flag}"
                 f"  --daemon"
             )
     
