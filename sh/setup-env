@@ -71,6 +71,6 @@ fi
 tmux new-session -d -n cli
 tmux new-window -n py3 "cd py; python3"
 
-ACTIVE_WINDOW=0
+ACTIVE_WINDOW=1
 tmux select-window -t $ACTIVE_WINDOW # select window on which we start when attaching
 tmux attach-session
