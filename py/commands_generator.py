@@ -35,13 +35,14 @@ class CommandsGenerator:
     def start_nodes(self) -> None:
         """generate code to start lightning nodes"""
         for id, info in self.topology.items():
-            alias = info["alias"] if "alias" in info else id
-            evil_flag = ""
-            binary = LIGHTNING_BINARY
-            if "evil" in info and info["evil"]:
-                evil_flag = "--evil"
-                binary = LIGHTNING_BINARY_EVIL
+            alias = info.get("alias", id)
+            evil = info.get("evil", False)
+            silent = info.get("silent", False)
             
+            evil_flag = "--evil" if evil else ""
+            silent_flag = "--silent" if silent else ""
+            
+            binary = LIGHTNING_BINARY_EVIL if evil or silent else LIGHTNING_BINARY
             lightning_dir = os.path.join(LIGHTNING_DIR_BASE, id)
             port = PORT_BASE + int(id)
             
@@ -54,6 +55,7 @@ class CommandsGenerator:
                 f"  --alias={alias}"
                 f"  --log-file=log"  # relative to lightning-dir
                 f"  {evil_flag}"
+                f"  {silent_flag}"
                 f"  --daemon"
             )
     
