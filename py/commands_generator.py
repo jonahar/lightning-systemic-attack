@@ -64,6 +64,13 @@ class CommandsGenerator:
         for id in self.topology.keys():
             self.__start_bitcoin_node(id=id)
     
+    def wait_until_miner_is_ready(self):
+        self.__write_line("""
+    while [[ $(bcli 0 -getinfo 2>/dev/null | jq -r ".blocks") != "0" ]]; do
+        sleep 1;
+    done
+    """)
+    
     def connect_miner_to_all_nodes(self):
         for id in self.topology.keys():
             id_int = int(id)
@@ -208,7 +215,8 @@ def main() -> None:
     cg.shebang()
     cg.start_bitcoin_nodes()
     cg.start_bitcoin_miner()
-    cg.wait(2)  # let bitcoin daemons time to start
+    cg.info("waiting for miner node to be ready")
+    cg.wait_until_miner_is_ready()
     cg.connect_miner_to_all_nodes()
     cg.start_lightning_nodes()
     
