@@ -159,9 +159,6 @@ class CommandsGenerator:
                 peer_port = LIGHTNING_RPC_PORT_BASE + int(peer_id)
                 self.__write_line(f"lcli {id} connect $ID_{peer_id} localhost:{peer_port}")
                 self.__write_line(f"lcli {id} fundchannel $ID_{peer_id} {INITIAL_CHANNEL_BALANCE}")
-        
-        # mine 6 blocks so the channels reach NORMAL_STATE
-        self.__write_line("mine 6")
     
     def wait_for_funding_transactions(self):
         """
@@ -225,6 +222,7 @@ def main() -> None:
         cg.wait_for_funds()
         cg.establish_channels()
         cg.wait_for_funding_transactions()
+        # mine 6 blocks so the channels reach NORMAL_STATE
         cg.mine(num_blocks=6)
     
     # NOTE: we close outfile which may be stdout
