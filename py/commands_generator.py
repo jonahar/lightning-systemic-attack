@@ -163,7 +163,7 @@ class CommandsGenerator:
     def wait_for_funding_transactions(self):
         """
         generate code that waits until all funding transactions have propagated
-        to the miner node
+        to the miner node's mempool
         """
         num_channels = sum(map(lambda entry: len(entry["peers"]), self.topology.values()))
         self.__write_line(f"""
@@ -221,6 +221,7 @@ def main() -> None:
         cg.fund_nodes()
         cg.wait_for_funds()
         cg.establish_channels()
+        cg.info("waiting for funding transactions to enter mempool")
         cg.wait_for_funding_transactions()
         # mine 6 blocks so the channels reach NORMAL_STATE
         cg.mine(num_blocks=6)
