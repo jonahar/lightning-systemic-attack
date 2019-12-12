@@ -7,34 +7,37 @@ lcli(){
         --lightning-dir="$LN/lightning-dirs/$IDX" \
         "${@:2}"
 }
-
 export -f lcli
 
-lcli-alice(){ lcli 1 $*; }
-export -f lcli-alice
+bcli(){
+    IDX=$1
+    BITCOIN_RPC_PORT_BASE=18000
+    PORT=$((BITCOIN_RPC_PORT_BASE + IDX))
+    bitcoin-cli -conf=$LN/conf/bitcoin.conf -rpcport=$PORT "${@:2}"
+}
+export -f bcli
 
-lcli-bob(){ lcli 2 $*; }
-export -f lcli-bob
-
-lcli-charlie(){ lcli 3 $*; }
-export -f lcli-charlie
+bcli-main(){
+    bcli 0 "$@"
+}
+export -f bcli-main
 
 gettransaction(){
     txid=$1
-    RAW_TRANSACTION=$(bitcoin-cli getrawtransaction $txid)
-    bitcoin-cli decoderawtransaction $RAW_TRANSACTION
+    RAW_TRANSACTION=$(bcli-main getrawtransaction $txid)
+    bcli-main decoderawtransaction $RAW_TRANSACTION
 }
 export -f gettransaction
 
 getblock(){
     blockheight=$1
-    blockhash=$(bitcoin-cli getblockhash $blockheight)
-    bitcoin-cli getblock $blockhash
+    blockhash=$(bcli-main getblockhash $blockheight)
+    bcli-main getblock $blockhash
 }
 export -f getblock
 
 mine(){
     BLOCKS_TO_MINE=$1
-    bitcoin-cli generatetoaddress $BLOCKS_TO_MINE $(bitcoin-cli getnewaddress) > /dev/null
+    bcli-main generatetoaddress $BLOCKS_TO_MINE $(bcli-main getnewaddress) > /dev/null
 }
 export -f mine

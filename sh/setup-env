@@ -51,8 +51,6 @@ source sh/cli-functions
 
 if [[ "$SCRATCH" == "true" ]]; then
     clean-env
-    setup-configs
-    bitcoind -daemon
     python3 py/commands_generator.py \
         --topology $TOPOLOGY \
         --outfile generated_setup_commands \
@@ -60,7 +58,6 @@ if [[ "$SCRATCH" == "true" ]]; then
     source generated_setup_commands
 else
     kill-daemons
-    bitcoind -daemon
     python3 py/commands_generator.py \
         --topology $TOPOLOGY \
         --outfile generated_setup_commands

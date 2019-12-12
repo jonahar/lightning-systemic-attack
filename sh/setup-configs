@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-# bitcoin config
-mkdir -p "$HOME/.bitcoin" && ln -s -f "$LN/conf/bitcoin.conf" "$HOME/.bitcoin/bitcoin.conf"
