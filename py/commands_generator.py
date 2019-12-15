@@ -179,7 +179,7 @@ class CommandsGenerator:
         
         self.__write_line(f"""
     # wait until there is a known route from sender to receiver
-    while [[ $(ROUTE=$(lcli {sender_idx} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")) == "null" ]]; do
+    while [[ "$(lcli {sender_idx} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")" == "null" ]]; do
         sleep 1;
     done
         """)
