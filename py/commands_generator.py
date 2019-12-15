@@ -289,6 +289,27 @@ class CommandsGenerator:
         """)
         # we have a redundant sleep at the end. Nu shoin... I rather keep it simple than efficient
     
+    def dump_blockchain(self, dir: str):
+        """
+        dump all blocks and transactions in the blockchain to files
+        inside directory 'dir'
+        """
+        self.__write_line(f"mkdir -p '{dir}'")
+        self.__write_line(f"cd '{dir}'")
+        
+        self.__write_line("""BLOCKCHAIN_HEIGHT=$(bcli 0 -getinfo | jq ".blocks")""")
+        self.__write_line("""
+    for i in $(seq 1 $BLOCKCHAIN_HEIGHT); do
+        getblock $i > block_$i.json
+        TXS_IN_BLOCK=$(jq -r ".tx[]" < block_$i.json)
+        for TX in $TXS_IN_BLOCK; do
+            gettransaction $TX > tx_$TX.json
+        done
+    done
+        """)
+        
+        self.__write_line(f"cd ..")  # go back to where we were
+    
     def mine(self, num_blocks):
         self.__write_line(f"mine {num_blocks}")
     
@@ -317,6 +338,10 @@ def parse_args():
     parser.add_argument(
         "--steal-attack", type=int, nargs=3, metavar=("SENDER_ID", "RECEIVER_ID", "NUM_BLOCKS"),
         help="generate code to execute the steal attack. NUM_BLOCKS are mined",
+    )
+    parser.add_argument(
+        "--dump-blockchain", type=str, metavar="DIRECTORY",
+        help="generate code to dump all blocks and transactions to json files in the given directory",
     )
     parser.add_argument(
         "--outfile", action="store", metavar="OUTFILE",
@@ -374,6 +399,9 @@ def main() -> None:
         cg.close_all_node_channels(receiver_idx)
         cg.info(f"slowly mining {num_blocks} blocks")
         cg.mine_many(num_blocks)
+    
+    if args.dump_blockchain:
+        cg.dump_blockchain(dir=args.dump_blockchain)
     
     # NOTE: we close outfile which may be stdout
     outfile.close()
