@@ -23,6 +23,31 @@ BITCOIN_MINER_ID = "0"
 
 class CommandsGenerator:
     
+    """
+    A CommandsGenerator generates bash code to execute many lightning-related actions.
+    it support:
+        - start bitcoin nodes
+        - connect bitcoin nodes to a central "miner" node
+        - start lightning nodes
+        - establish channels between lightning nodes
+        - make lightning payments between nodes
+    
+    topology structure:
+    
+    {
+      "ID1": {
+        "peers": ["ID2", "ID4"],   // mandatory. may be an empty list
+        "evil": false,             // optional. defaults to false
+        "silent": false,           // optional. defaults to false
+        "alias": "alice"           // optional. defaults to ID
+      },
+      "ID2": {...},
+      "ID3": {...},
+      "ID4": {...}
+    }
+
+    """
+    
     def __init__(self, file, topology: dict):
         """
         :param file: file-like object
