@@ -78,8 +78,35 @@ class CommandsGenerator:
                 f"bcli 0 addnode 127.0.0.1:{BITCOIN_PORT_BASE + id_int} onetry"
             )
     
+    def start_lightning_node(
+        self,
+        idx: int,
+        lightning_dir: str,
+        binary: str,
+        port: int,
+        alias: str = "",
+        evil_flag: str = "",
+        silent_flag: str = "",
+        log_level_flag: str = "",
+    ):
+        self.__write_line(f"mkdir -p {lightning_dir}")
+        self.__write_line(
+            f"{binary} "
+            f"  --conf={LIGHTNING_CONF_PATH}"
+            f"  --lightning-dir={lightning_dir}"
+            f"  --addr=localhost:{port}"
+            f"  --alias={alias}"
+            f"  --log-file=log"  # relative to lightning-dir
+            f"  {evil_flag}"
+            f"  {silent_flag}"
+            f"  {log_level_flag}"
+            f"  --bitcoin-rpcconnect=localhost"
+            f"  --bitcoin-rpcport={BITCOIN_RPC_PORT_BASE + int(idx)}"
+            f"  --daemon"
+        )
+    
     def start_lightning_nodes(self) -> None:
-        """generate code to start lightning nodes"""
+        """generate code to start all lightning nodes"""
         for id, info in self.topology.items():
             alias = info.get("alias", id)
             evil = info.get("evil", False)
@@ -97,20 +124,8 @@ class CommandsGenerator:
             lightning_dir = os.path.join(LIGHTNING_DIR_BASE, id)
             port = LIGHTNING_RPC_PORT_BASE + int(id)
             
-            self.__write_line(f"mkdir -p {lightning_dir}")
-            self.__write_line(
-                f"{binary} "
-                f"  --conf={LIGHTNING_CONF_PATH}"
-                f"  --lightning-dir={lightning_dir}"
-                f"  --addr=localhost:{port}"
-                f"  --alias={alias}"
-                f"  --log-file=log"  # relative to lightning-dir
-                f"  {evil_flag}"
-                f"  {silent_flag}"
-                f"  {log_level_flag}"
-                f"  --bitcoin-rpcconnect=localhost"
-                f"  --bitcoin-rpcport={BITCOIN_RPC_PORT_BASE + int(id)}"
-                f"  --daemon"
+            self.start_lightning_node(
+                id, lightning_dir, binary, port, alias, evil_flag, silent_flag, log_level_flag
             )
     
     def fund_nodes(self) -> None:
