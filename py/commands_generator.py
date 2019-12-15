@@ -13,7 +13,7 @@ LIGHTNING_RPC_PORT_BASE = 10000
 BITCOIN_RPC_PORT_BASE = 18000
 BITCOIN_PORT_BASE = 8300
 
-INITIAL_CHANNEL_BALANCE = 10000000  # 0.1 BTC
+INITIAL_CHANNEL_BALANCE_SAT = 10000000  # 0.1 BTC
 
 LIGHTNING_BINARY = os.path.join(LABPATH, "lightning/lightningd/lightningd")
 LIGHTNING_BINARY_EVIL = os.path.join(LABPATH, "lightning-evil/lightningd/lightningd")
@@ -158,7 +158,7 @@ class CommandsGenerator:
             for peer_id in info["peers"]:
                 peer_port = LIGHTNING_RPC_PORT_BASE + int(peer_id)
                 self.__write_line(f"lcli {id} connect $ID_{peer_id} localhost:{peer_port}")
-                self.__write_line(f"lcli {id} fundchannel $ID_{peer_id} {INITIAL_CHANNEL_BALANCE}")
+                self.__write_line(f"lcli {id} fundchannel $ID_{peer_id} {INITIAL_CHANNEL_BALANCE_SAT}")
     
     def wait_for_funding_transactions(self):
         """
