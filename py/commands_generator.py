@@ -22,7 +22,6 @@ BITCOIN_MINER_ID = "0"
 
 
 class CommandsGenerator:
-    
     """
     A CommandsGenerator generates bash code to execute many lightning-related actions.
     it support:
@@ -103,25 +102,38 @@ class CommandsGenerator:
                 f"bcli 0 addnode 127.0.0.1:{BITCOIN_PORT_BASE + id_int} onetry"
             )
     
+    @staticmethod
+    def __get_node_lightning_dir(cls, node_idx: int) -> str:
+        return os.path.join(LIGHTNING_DIR_BASE, str(node_idx))
+    
+    @staticmethod
+    def __get_node_lightning_port(cls, node_idx: int) -> int:
+        return LIGHTNING_RPC_PORT_BASE + node_idx
+    
     def start_lightning_node(
         self,
         idx: int,
         lightning_dir: str,
         binary: str,
         port: int,
-        alias: str = "",
-        evil_flag: str = "",
-        silent_flag: str = "",
-        log_level_flag: str = "",
+        alias: str = None,
+        evil: bool = False,
+        silent: bool = False,
+        log_level: str = None,
     ):
+        evil_flag = "--evil" if evil else ""
+        silent_flag = "--silent" if silent else ""
+        alias_flag = f"--alias={alias}" if alias else ""
+        log_level_flag = f"--log-level={log_level}" if log_level else ""
+        
         self.__write_line(f"mkdir -p {lightning_dir}")
         self.__write_line(
             f"{binary} "
             f"  --conf={LIGHTNING_CONF_PATH}"
             f"  --lightning-dir={lightning_dir}"
             f"  --addr=localhost:{port}"
-            f"  --alias={alias}"
             f"  --log-file=log"  # relative to lightning-dir
+            f"  {alias_flag}"
             f"  {evil_flag}"
             f"  {silent_flag}"
             f"  {log_level_flag}"
@@ -141,16 +153,20 @@ class CommandsGenerator:
             silent_flag = "--silent" if silent else ""
             
             binary = LIGHTNING_BINARY
-            log_level_flag = ""
+            log_level = None
             if evil or silent:
                 binary = LIGHTNING_BINARY_EVIL
-                log_level_flag = "--log-level=JONA"
-            
-            lightning_dir = os.path.join(LIGHTNING_DIR_BASE, id)
-            port = LIGHTNING_RPC_PORT_BASE + int(id)
+                log_level = "JONA"
             
             self.start_lightning_node(
-                id, lightning_dir, binary, port, alias, evil_flag, silent_flag, log_level_flag
+                idx=id,
+                lightning_dir=self.__get_node_lightning_dir(id),
+                binary=binary,
+                port=self.__get_node_lightning_port(id),
+                alias=alias,
+                evil=evil,
+                silent=silent,
+                log_level=log_level,
             )
     
     def fund_nodes(self) -> None:
