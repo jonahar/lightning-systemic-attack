@@ -172,6 +172,28 @@ class CommandsGenerator:
     done
     """)
     
+    def make_payments(self, sender_idx: int, receiver_idx: int, num_payments: int, amount_msat: int):
+        self.__write_line(f'SENDER_ID=$(lcli {sender_idx} getinfo | jq -r ".id")')
+        self.__write_line(f'RECEIVER_ID=$(lcli {receiver_idx} getinfo | jq -r ".id")')
+        self.__write_line("RISKFACTOR=1")
+        
+        self.__write_line(f"""
+    # wait until there is a known route from sender to receiver
+    while [[ $(ROUTE=$(lcli {sender_idx} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")) == "null" ]]; do
+        sleep 1;
+    done
+        """)
+        
+        # make payments
+        self.__write_line(f"""
+    for i in $(seq 1 {num_payments}); do
+        LABEL="invoice-label-$(date +%s.%N)"
+        PAYMENT_HASH=$(lcli {receiver_idx} invoice $AMOUNT_MSAT $LABEL "" | jq -r ".payment_hash")
+        ROUTE=$(lcli {sender_idx} getroute $RECEIVER_ID $AMOUNT_MSAT $RISKFACTOR | jq -r ".route")
+        lcli {sender_idx} sendpay "$ROUTE" "$PAYMENT_HASH"
+    done
+        """)
+    
     def mine(self, num_blocks):
         self.__write_line(f"mine {num_blocks}")
     
@@ -196,6 +218,10 @@ def parse_args():
     parser.add_argument(
         "--establish-channels", action='store_true',
         help="generate code to establish channels too",
+    )
+    parser.add_argument(
+        "--make-payments", type=int, nargs=4, metavar=("SENDER_ID", "RECEIVER_ID", "NUM_PAYMENTS", "AMOUNT_MSAT"),
+        help="generate code to make payments between two nodes",
     )
     
     return parser.parse_args()
@@ -225,6 +251,9 @@ def main() -> None:
         cg.wait_for_funding_transactions()
         # mine 6 blocks so the channels reach NORMAL_STATE
         cg.mine(num_blocks=6)
+    
+    if args.make_payments:
+        cg.make_payments(*args.make_payments)
     
     # NOTE: we close outfile which may be stdout
     outfile.close()
