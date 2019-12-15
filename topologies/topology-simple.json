@@ -4,6 +4,7 @@
       "2"
     ],
     "evil": false,
+    "silent": false,
     "alias": "alice"
   },
   "2": {
