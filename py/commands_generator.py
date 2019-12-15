@@ -171,24 +171,29 @@ class CommandsGenerator:
     done
     """)
     
-    def make_payments(self, sender_idx: int, receiver_idx: int, num_payments: int, amount_msat: int):
-        self.__write_line(f'SENDER_ID=$(lcli {sender_idx} getinfo | jq -r ".id")')
-        self.__write_line(f'RECEIVER_ID=$(lcli {receiver_idx} getinfo | jq -r ".id")')
+    def __set_riskfactor(self):
         self.__write_line("RISKFACTOR=1")
-        
+    
+    def __set_receiver_id(self, receiver_idx: int):
+        self.__write_line(f'RECEIVER_ID=$(lcli {receiver_idx} getinfo | jq -r ".id")')
+    
+    def wait_to_route(self, sender_idx: int, receiver_idx: int, amount_msat: int):
+        self.__set_riskfactor()
+        self.__set_receiver_id(receiver_idx)
         self.__write_line(f"""
-    # wait until there is a known route from sender to receiver
-    while [[ "$(lcli {sender_idx} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")" == "null" ]]; do
-        sleep 1;
-    done
-        """)
-        
-        # make payments
+        while [[ "$(lcli {sender_idx} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")" == "null" ]]; do
+            sleep 1;
+        done
+            """)
+    
+    def make_payments(self, sender_idx: int, receiver_idx: int, num_payments: int, amount_msat: int):
+        self.__set_riskfactor()
+        self.__set_receiver_id(receiver_idx)
         self.__write_line(f"""
     for i in $(seq 1 {num_payments}); do
         LABEL="invoice-label-$(date +%s.%N)"
         PAYMENT_HASH=$(lcli {receiver_idx} invoice $AMOUNT_MSAT $LABEL "" | jq -r ".payment_hash")
-        ROUTE=$(lcli {sender_idx} getroute $RECEIVER_ID $AMOUNT_MSAT $RISKFACTOR | jq -r ".route")
+        ROUTE=$(lcli {sender_idx} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")
         lcli {sender_idx} sendpay "$ROUTE" "$PAYMENT_HASH"
     done
         """)
@@ -258,6 +263,9 @@ def main() -> None:
         cg.mine(num_blocks=6)
     
     if args.make_payments:
+        sender_idx, receiver_idx, num_payments, amount_msat = args.make_payments
+        cg.info("waiting until there is a known route from sender to receiver")
+        cg.wait_to_route(sender_idx, receiver_idx, amount_msat)
         cg.info("making payments")
         cg.make_payments(*args.make_payments)
     
