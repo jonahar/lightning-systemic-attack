@@ -141,7 +141,6 @@ class CommandsGenerator:
         
         self.__write_line(f"""
     for i in {ids_list_str}; do
-        echo "waiting for funds of node $i"
         while [[ $(lcli $i listfunds | jq -r ."outputs") == "[]" ]]; do
             sleep 1;
         done
@@ -236,23 +235,30 @@ def main() -> None:
     
     cg = CommandsGenerator(file=outfile, topology=topology)
     cg.shebang()
+    cg.info("starting all bitcoin nodes")
     cg.start_bitcoin_nodes()
     cg.start_bitcoin_miner()
-    cg.info("waiting for miner node to be ready")
+    cg.info("waiting until miner node is ready")
     cg.wait_until_miner_is_ready()
+    cg.info("connecting miner to all other bitcoin nodes")
     cg.connect_miner_to_all_nodes()
+    cg.info("starting lightning nodes")
     cg.start_lightning_nodes()
     
     if args.establish_channels:
+        cg.info("funding lightning nodes")
         cg.fund_nodes()
+        cg.info("waiting until lightning nodes are synchronized and have received their funds")
         cg.wait_for_funds()
+        cg.info("establishing lightning channels")
         cg.establish_channels()
-        cg.info("waiting for funding transactions to enter mempool")
+        cg.info("waiting for funding transactions to enter miner's mempool")
         cg.wait_for_funding_transactions()
         # mine 6 blocks so the channels reach NORMAL_STATE
         cg.mine(num_blocks=6)
     
     if args.make_payments:
+        cg.info("making payments")
         cg.make_payments(*args.make_payments)
     
     # NOTE: we close outfile which may be stdout
