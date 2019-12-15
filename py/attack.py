@@ -14,7 +14,7 @@ n3 = LightningRpc(os.path.join(ln, "lightning-dirs/3/regtest/lightning-rpc"))
 # we assume the channels are already set-up
 
 CHANNEL_BALANCE = 0.1
-NUM_NODES = 20
+NUM_NODES = 5
 MAX_HTLCS_PER_CHANNEL = 483
 
 # divide channel balance between max_htlcs, but leave room for fees
@@ -22,10 +22,10 @@ amount_per_payment = (CHANNEL_BALANCE / MAX_HTLCS_PER_CHANNEL) * 0.9
 amount_btc = round(amount_per_payment, 8)
 amount = Millisatoshi(f"{amount_btc}btc")
 
-wait_to_route(src=n1, dest=n3, msatoshi=amount.millisatoshis)
-
 num_payments = NUM_NODES * MAX_HTLCS_PER_CHANNEL
 batch_size = 10
+
+wait_to_route(src=n1, dest=n3, msatoshi=amount.millisatoshis)
 
 for _ in range(num_payments // batch_size):
     route = n1.getroute(
@@ -44,6 +44,24 @@ for _ in range(num_payments // batch_size):
         n1.sendpay(route=route, payment_hash=invoice["payment_hash"])
 
 
+def print_balance():
+    for n in [n1, n3]:
+        print(f"Total balance node {n.getinfo()['alias']}: {get_total_balance(n)}")
+
+
+def print_num_htlcs():
+    # see the number of HTLCs on every channel
+    for i, peer in enumerate(n3.listpeers()["peers"]):
+        print(f"htlcs with peers {i}: {len(peer['channels'][0]['htlcs'])}")
+
+
+def mine_slowly(num_blocks: int, interval_sec: int):
+    for _ in range(num_blocks):
+        time.sleep(interval_sec)
+        mine(1)
+        print("block mined")
+
+
 def steal_attack():
     # stop node 1 and run it again in silent mode
     n1.stop()
@@ -60,17 +78,8 @@ def spam_attack():
     # all nodes should now collect their HTLCs-out after expiration
 
 
-def print_balance():
-    for n in [n1, n3]:
-        print(f"Total balance node {n.getinfo()['alias']}: {get_total_balance(n)}")
-
-
-def print_num_htlcs():
-    # see the number of HTLCs on every channel
-    for i, peer in enumerate(n3.listpeers()["peers"]):
-        print(f"htlcs with peers {i}: {len(peer['channels'][0]['htlcs'])}")
-
-
 print_balance()
 print_num_htlcs()
 show_num_tx_in_last_t_blocks(t=30)
+mine_slowly(num_blocks=20, interval_sec=10)
+
