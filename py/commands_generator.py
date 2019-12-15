@@ -212,16 +212,16 @@ def parse_args():
         help="topology json file",
     )
     parser.add_argument(
-        "--outfile", action="store", metavar="OUTFILE",
-        help="output file to write commands to. default to stdout if not given",
-    )
-    parser.add_argument(
         "--establish-channels", action='store_true',
-        help="generate code to establish channels too",
+        help="generate code to establish channels",
     )
     parser.add_argument(
         "--make-payments", type=int, nargs=4, metavar=("SENDER_ID", "RECEIVER_ID", "NUM_PAYMENTS", "AMOUNT_MSAT"),
         help="generate code to make payments between two nodes",
+    )
+    parser.add_argument(
+        "--outfile", action="store", metavar="OUTFILE",
+        help="output file to write commands to. default to stdout if not given",
     )
     
     return parser.parse_args()
