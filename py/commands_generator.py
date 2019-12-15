@@ -18,7 +18,7 @@ INITIAL_CHANNEL_BALANCE_SAT = 10000000  # 0.1 BTC
 LIGHTNING_BINARY = os.path.join(LABPATH, "lightning/lightningd/lightningd")
 LIGHTNING_BINARY_EVIL = os.path.join(LABPATH, "lightning-evil/lightningd/lightningd")
 
-BITCOIN_MINER_ID = "0"
+BITCOIN_MINER_IDX = "0"
 
 
 class CommandsGenerator:
@@ -52,7 +52,7 @@ class CommandsGenerator:
         :param file: file-like object
         :param topology: topology dictionary
         """
-        if BITCOIN_MINER_ID in topology:
+        if BITCOIN_MINER_IDX in topology:
             raise ValueError("Invalid id {BITCOIN_MINER_ID}: reserved for bitcoin miner node")
         self.file = file
         self.topology = topology
@@ -67,9 +67,9 @@ class CommandsGenerator:
     def wait(self, seconds: int):
         self.__write_line(f"sleep {seconds}")
     
-    def __start_bitcoin_node(self, id: str):
-        id_int = int(id)
-        datadir = os.path.join(BITCOIN_DIR_BASE, id)
+    def __start_bitcoin_node(self, idx: str):
+        id_int = int(idx)
+        datadir = os.path.join(BITCOIN_DIR_BASE, idx)
         
         self.__write_line(f"mkdir -p {datadir}")
         self.__write_line(
@@ -82,11 +82,11 @@ class CommandsGenerator:
         )
     
     def start_bitcoin_miner(self):
-        self.__start_bitcoin_node(id=BITCOIN_MINER_ID)
+        self.__start_bitcoin_node(idx=BITCOIN_MINER_IDX)
     
     def start_bitcoin_nodes(self):
-        for id in self.topology.keys():
-            self.__start_bitcoin_node(id=id)
+        for idx in self.topology.keys():
+            self.__start_bitcoin_node(idx=idx)
     
     def wait_until_miner_is_ready(self):
         self.__write_line("""
@@ -103,11 +103,11 @@ class CommandsGenerator:
             )
     
     @staticmethod
-    def __get_node_lightning_dir(cls, node_idx: int) -> str:
+    def __get_node_lightning_dir(node_idx: int) -> str:
         return os.path.join(LIGHTNING_DIR_BASE, str(node_idx))
     
     @staticmethod
-    def __get_node_lightning_port(cls, node_idx: int) -> int:
+    def __get_node_lightning_port(node_idx: int) -> int:
         return LIGHTNING_RPC_PORT_BASE + node_idx
     
     def start_lightning_node(
@@ -144,7 +144,8 @@ class CommandsGenerator:
     
     def start_lightning_nodes(self) -> None:
         """generate code to start all lightning nodes"""
-        for id, info in self.topology.items():
+        for idx, info in self.topology.items():
+            node_idx = int(idx)
             alias = info.get("alias", id)
             evil = info.get("evil", False)
             silent = info.get("silent", False)
@@ -159,10 +160,10 @@ class CommandsGenerator:
                 log_level = "JONA"
             
             self.start_lightning_node(
-                idx=id,
-                lightning_dir=self.__get_node_lightning_dir(id),
+                idx=node_idx,
+                lightning_dir=self.__get_node_lightning_dir(node_idx=node_idx),
                 binary=binary,
-                port=self.__get_node_lightning_port(id),
+                port=self.__get_node_lightning_port(node_idx=node_idx),
                 alias=alias,
                 evil=evil,
                 silent=silent,
@@ -174,14 +175,14 @@ class CommandsGenerator:
         # mine enough blocks to fund the nodes and to unlock coinbase coins
         self.__write_line(f"mine {100 + len(self.topology)}")
         
-        for id in self.topology:
-            self.__write_line(f"ADDR_{id}=$(lcli {id} newaddr | jq -r '.address')")
+        for idx in self.topology:
+            self.__write_line(f"ADDR_{idx}=$(lcli {idx} newaddr | jq -r '.address')")
             
             # We give more funds to nodes that need to open many channels.
             # we fund these nodes with many small transactions instead of one big transaction,
             # so they have enough outputs to funds the different channels
-            for _ in range(len(self.topology[id]["peers"])):
-                self.__write_line(f"bcli {BITCOIN_MINER_ID} sendtoaddress $ADDR_{id} 1")
+            for _ in range(len(self.topology[idx]["peers"])):
+                self.__write_line(f"bcli {BITCOIN_MINER_IDX} sendtoaddress $ADDR_{idx} 1")
         
         self.__write_line("mine 10")
     
@@ -206,14 +207,14 @@ class CommandsGenerator:
     def establish_channels(self) -> None:
         """generate code to connect peers and establish all channels"""
         # get full id for each node
-        for id in self.topology:
-            self.__write_line(f"ID_{id}=$(lcli {id} getinfo | jq -r '.id')")
+        for node_idx in self.topology:
+            self.__write_line(f"ID_{node_idx}=$(lcli {node_idx} getinfo | jq -r '.id')")
         
-        for id, info in self.topology.items():
+        for node_idx, info in self.topology.items():
             for peer_id in info["peers"]:
                 peer_port = LIGHTNING_RPC_PORT_BASE + int(peer_id)
-                self.__write_line(f"lcli {id} connect $ID_{peer_id} localhost:{peer_port}")
-                self.__write_line(f"lcli {id} fundchannel $ID_{peer_id} {INITIAL_CHANNEL_BALANCE_SAT}")
+                self.__write_line(f"lcli {node_idx} connect $ID_{peer_id} localhost:{peer_port}")
+                self.__write_line(f"lcli {node_idx} fundchannel $ID_{peer_id} {INITIAL_CHANNEL_BALANCE_SAT}")
     
     def wait_for_funding_transactions(self):
         """
