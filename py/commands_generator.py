@@ -289,15 +289,19 @@ class CommandsGenerator:
         """)
         # we have a redundant sleep at the end. Nu shoin... I rather keep it simple than efficient
     
-    def dump_blockchain(self, dir: str):
+    def dump_simulation_data(self, dir: str):
         """
-        dump all blocks and transactions in the blockchain to files
-        inside directory 'dir'
+        dump the following data to files in the given directory:
+            - all blocks in the blockchain
+            - all transactions in the blockchain
+            - total balance of each node, that is not locked in a channel
+        
         """
         self.__write_line(f"mkdir -p '{dir}'")
         self.__write_line(f"cd '{dir}'")
         
         self.__write_line("""BLOCKCHAIN_HEIGHT=$(bcli 0 -getinfo | jq ".blocks")""")
+        # dump blocks + transactions
         self.__write_line("""
     for i in $(seq 1 $BLOCKCHAIN_HEIGHT); do
         getblock $i > block_$i.json
@@ -305,6 +309,15 @@ class CommandsGenerator:
         for TX in $TXS_IN_BLOCK; do
             gettransaction $TX > tx_$TX.json
         done
+    done
+        """)
+        
+        # dump nodes balances that are not locked in channels
+        node_ids = " ".join(self.topology.keys())
+        self.__write_line(f"""
+    for i in {node_ids}; do
+        printf "node ${{i}} balance: " >> nodes_balance
+        lcli $i listfunds | jq '.outputs[] | .value' | jq -s add >> nodes_balance
     done
         """)
         
@@ -340,8 +353,8 @@ def parse_args():
         help="generate code to execute the steal attack. NUM_BLOCKS are mined",
     )
     parser.add_argument(
-        "--dump-blockchain", type=str, metavar="DIRECTORY",
-        help="generate code to dump all blocks and transactions to json files in the given directory",
+        "--dump-data", type=str, metavar="DIRECTORY",
+        help="generate code that dumps the simulation data to files in the given directory",
     )
     parser.add_argument(
         "--outfile", action="store", metavar="OUTFILE",
@@ -400,8 +413,9 @@ def main() -> None:
         cg.info(f"slowly mining {num_blocks} blocks")
         cg.mine_many(num_blocks)
     
-    if args.dump_blockchain:
-        cg.dump_blockchain(dir=args.dump_blockchain)
+    if args.dump_data:
+        cg.info(f"dumping simulation data")
+        cg.dump_simulation_data(dir=args.dump_data)
     
     # NOTE: we close outfile which may be stdout
     outfile.close()
