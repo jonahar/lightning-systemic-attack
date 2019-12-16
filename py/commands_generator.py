@@ -278,7 +278,7 @@ class CommandsGenerator:
     done
         """)
     
-    def mine_many(self, num_blocks: int, block_time_sec: int = 60):
+    def mine_many(self, num_blocks: int, block_time_sec: int):
         """
         generate code to mine num_blocks blocks every block_time_sec seconds
         """
@@ -357,6 +357,11 @@ def parse_args():
         help="generate code that dumps the simulation data to files in the given directory",
     )
     parser.add_argument(
+        "--block-time", type=int, metavar="BLK_TIME_SEC", default=60,
+        help="set the block time in seconds (the time until a new block is mined)."
+             " applies to the attack code generation",
+    )
+    parser.add_argument(
         "--outfile", action="store", metavar="OUTFILE",
         help="output file to write commands to. default to stdout if not given",
     )
@@ -411,7 +416,7 @@ def main() -> None:
         cg.info(f"closing all channels of node {receiver_idx}")
         cg.close_all_node_channels(receiver_idx)
         cg.info(f"slowly mining {num_blocks} blocks")
-        cg.mine_many(num_blocks)
+        cg.mine_many(num_blocks=num_blocks, block_time_sec=args.block_time)
     
     if args.dump_data:
         cg.info(f"dumping simulation data")

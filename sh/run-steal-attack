@@ -17,6 +17,7 @@ python3 py/commands_generator.py \
     --make-payments 1 3 $NUM_PAYMENTS $AMOUNT_MSAT \
     --steal-attack 1 3 $NUM_BLOCKS \
     --dump-data $DIR \
+    --block-time 120 \
     --outfile generated_setup_commands
 
 source generated_setup_commands
