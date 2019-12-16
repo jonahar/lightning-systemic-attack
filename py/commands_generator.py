@@ -146,7 +146,7 @@ class CommandsGenerator:
         """generate code to start all lightning nodes"""
         for idx, info in self.topology.items():
             node_idx = int(idx)
-            alias = info.get("alias", id)
+            alias = info.get("alias", idx)
             evil = info.get("evil", False)
             silent = info.get("silent", False)
             
