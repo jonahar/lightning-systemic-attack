@@ -334,8 +334,7 @@ def parse_args():
     """
     parse and return the program arguments
     """
-    parser = argparse.ArgumentParser(description='Lightning commands generator',
-                                     formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(description='Lightning commands generator')
     parser.add_argument(
         "--topology", action="store", metavar="TOPOLOGY_FILE", required=True,
         help="topology json file",
