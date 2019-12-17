@@ -251,7 +251,7 @@ class CommandsGenerator:
         LABEL="invoice-label-$(date +%s.%N)"
         PAYMENT_HASH=$(lcli {receiver_idx} invoice $AMOUNT_MSAT $LABEL "" | jq -r ".payment_hash")
         ROUTE=$(lcli {sender_idx} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")
-        lcli {sender_idx} sendpay "$ROUTE" "$PAYMENT_HASH"
+        lcli {sender_idx} sendpay "$ROUTE" "$PAYMENT_HASH" > /dev/null
     done
         """)
     
