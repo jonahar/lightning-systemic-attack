@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-# one victim
 AMOUNT_MSAT=20000000 # 0.0002 BTC
 NUM_PAYMENTS=2500 # a bit more than possible, just to be on the safe side
 NUM_BLOCKS=180 # blocks to mine in the steal attack
