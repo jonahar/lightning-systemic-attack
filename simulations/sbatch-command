@@ -1,0 +1,8 @@
+sbatch \
+    -c30 \
+    --mem=4000m \
+    --output=$LN/simulations/steal-attack-1-5-1.out \
+    --mail-type=ALL \
+    --mail-user=jona.harris@mail.huji.ac.il \
+    --time=10:0:0 \
+    $LN/sh/steal-attack
