@@ -298,6 +298,10 @@ class CommandsGenerator:
             - total balance of each node, that is not locked in a channel
         
         """
+        # before dumping we mine 100 blocks in case some channels are still waiting
+        # to forget a peer
+        self.mine_many(num_blocks=100, block_time_sec=10)
+        
         self.__write_line(f"mkdir -p '{dir}'")
         self.__write_line(f"cd '{dir}'")
         
