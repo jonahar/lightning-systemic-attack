@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
+
 AMOUNT_MSAT=20000000 # 0.0002 BTC
-NUM_PAYMENTS=2500 # a bit more than possible, just to be on the safe side
+NUM_PAYMENTS=500 # a bit more than possible, just to be on the safe side
 NUM_BLOCKS=180 # blocks to mine in the steal attack
-BLOCK_TIME=180 # 3 minutes between two blocks, so ln nodes have enough time to do what they need
-TOPOLOGY="topologies/topology-1-5-1.json"
-DIR="simulations/steal-attack-1-5-1"
+BLOCK_TIME=120 # 2 minutes between two blocks, so ln nodes have enough time to do what they need
+TOPOLOGY="topologies/topology-simple.json"
+DIR="simulations/data-steal-attack-simple"
 
 cd $LN
 source sh/cli-functions
