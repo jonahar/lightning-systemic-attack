@@ -100,7 +100,7 @@ class CommandsGenerator:
         for id in self.topology.keys():
             id_int = int(id)
             self.__write_line(
-                f"bcli 0 addnode 127.0.0.1:{BITCOIN_PORT_BASE + id_int} onetry"
+                f"bcli 0 addnode 127.0.0.1:{BITCOIN_PORT_BASE + id_int} add"
             )
     
     @staticmethod
