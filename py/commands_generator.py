@@ -47,7 +47,7 @@ class CommandsGenerator:
 
     """
     
-    def __init__(self, file, topology: dict):
+    def __init__(self, file, topology: dict, bitcoin_block_max_weight):
         """
         :param file: file-like object
         :param topology: topology dictionary
@@ -56,6 +56,7 @@ class CommandsGenerator:
             raise ValueError("Invalid id {BITCOIN_MINER_ID}: reserved for bitcoin miner node")
         self.file = file
         self.topology = topology
+        self.bitcoin_block_max_weight = bitcoin_block_max_weight
     
     def __write_line(self, line: str) -> None:
         self.file.write(line)
@@ -67,26 +68,26 @@ class CommandsGenerator:
     def wait(self, seconds: int):
         self.__write_line(f"sleep {seconds}")
     
-    def __start_bitcoin_node(self, idx: str):
-        id_int = int(idx)
-        datadir = os.path.join(BITCOIN_DIR_BASE, idx)
+    def __start_bitcoin_node(self, idx: int):
+        datadir = os.path.join(BITCOIN_DIR_BASE, str(idx))
         
         self.__write_line(f"mkdir -p {datadir}")
         self.__write_line(
             f"bitcoind"
             f"  -conf={BITCOIN_CONF_PATH}"
-            f"  -port={BITCOIN_PORT_BASE + id_int}"
-            f"  -rpcport={BITCOIN_RPC_PORT_BASE + id_int}"
+            f"  -port={BITCOIN_PORT_BASE + idx}"
+            f"  -rpcport={BITCOIN_RPC_PORT_BASE + idx}"
             f"  -datadir={datadir}"
             f"  -daemon"
+            f"  -blockmaxweight={self.bitcoin_block_max_weight}"
         )
     
     def start_bitcoin_miner(self):
-        self.__start_bitcoin_node(idx=BITCOIN_MINER_IDX)
+        self.__start_bitcoin_node(idx=int(BITCOIN_MINER_IDX))
     
     def start_bitcoin_nodes(self):
         for idx in self.topology.keys():
-            self.__start_bitcoin_node(idx=idx)
+            self.__start_bitcoin_node(idx=int(idx))
     
     def wait_until_miner_is_ready(self):
         self.__write_line("""
@@ -361,6 +362,10 @@ def parse_args():
              " applies to the attack code generation",
     )
     parser.add_argument(
+        "--bitcoin-blockmaxweight", type=int, default=3996000,
+        help="set bitcoin's block maximum weight",
+    )
+    parser.add_argument(
         "--outfile", action="store", metavar="OUTFILE",
         help="output file to write commands to. default to stdout if not given",
     )
@@ -375,7 +380,11 @@ def main() -> None:
     
     outfile = open(args.outfile, mode="w") if args.outfile else sys.stdout
     
-    cg = CommandsGenerator(file=outfile, topology=topology)
+    cg = CommandsGenerator(
+        file=outfile,
+        topology=topology,
+        bitcoin_block_max_weight=args.bitcoin_blockmaxweight,
+    )
     cg.shebang()
     cg.info("starting all bitcoin nodes")
     cg.start_bitcoin_nodes()
