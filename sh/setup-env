@@ -51,14 +51,14 @@ source sh/cli-functions
 
 if [[ "$SCRATCH" == "true" ]]; then
     clean-env
-    python3 py/commands_generator.py \
+    python3 py/lightning_commands_generator.py \
         --topology $TOPOLOGY \
         --outfile generated_setup_commands \
         --establish-channels
     source generated_setup_commands
 else
     kill-daemons
-    python3 py/commands_generator.py \
+    python3 py/lightning_commands_generator.py \
         --topology $TOPOLOGY \
         --outfile generated_setup_commands
     source generated_setup_commands

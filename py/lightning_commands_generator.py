@@ -21,9 +21,9 @@ LIGHTNING_BINARY_EVIL = os.path.join(LABPATH, "lightning-evil/lightningd/lightni
 BITCOIN_MINER_IDX = "0"
 
 
-class CommandsGenerator:
+class LightningCommandsGenerator:
     """
-    A CommandsGenerator generates bash code to execute many lightning-related actions.
+    A LightningCommandsGenerator generates bash code to execute many lightning-related actions.
     it support:
         - start bitcoin nodes
         - connect bitcoin nodes to a central "miner" node
@@ -417,65 +417,65 @@ def main() -> None:
     
     outfile = open(args.outfile, mode="w") if args.outfile else sys.stdout
     
-    cg = CommandsGenerator(
+    lcg = LightningCommandsGenerator(
         file=outfile,
         topology=topology,
         bitcoin_block_max_weight=args.bitcoin_blockmaxweight,
     )
-    cg.shebang()
-    cg.info("starting all bitcoin nodes")
-    cg.start_bitcoin_nodes()
-    cg.start_bitcoin_miner()
-    cg.info("waiting until miner node is ready")
-    cg.wait_until_miner_is_ready()
-    cg.info("connecting bitcoin nodes to the miner node")
-    cg.connect_bitcoin_nodes_to_miner()
+    lcg.shebang()
+    lcg.info("starting all bitcoin nodes")
+    lcg.start_bitcoin_nodes()
+    lcg.start_bitcoin_miner()
+    lcg.info("waiting until miner node is ready")
+    lcg.wait_until_miner_is_ready()
+    lcg.info("connecting bitcoin nodes to the miner node")
+    lcg.connect_bitcoin_nodes_to_miner()
     # Empirically, if we connect all at once, the nodes doesn't get
     # blocks from the miner. Therefore we first connect the nodes to the miner, let
     # them sync with him, and only then connect them to each other
-    cg.mine(10)
-    cg.info("waiting until nodes are synced with miner node")
-    cg.wait_until_bitcoin_nodes_synced(height=10)
-    cg.info("connecting all nodes in circle")
-    cg.connect_bitcoin_nodes_in_circle()
-    cg.info("starting lightning nodes")
-    cg.start_lightning_nodes()
+    lcg.mine(10)
+    lcg.info("waiting until nodes are synced with miner node")
+    lcg.wait_until_bitcoin_nodes_synced(height=10)
+    lcg.info("connecting all nodes in circle")
+    lcg.connect_bitcoin_nodes_in_circle()
+    lcg.info("starting lightning nodes")
+    lcg.start_lightning_nodes()
     
     if args.establish_channels:
-        cg.info("funding lightning nodes")
-        cg.fund_nodes()
-        cg.info("waiting until lightning nodes are synchronized and have received their funds")
-        cg.wait_for_funds()
-        cg.info("establishing lightning channels")
-        cg.establish_channels()
-        cg.info("waiting for funding transactions to enter miner's mempool")
-        cg.wait_for_funding_transactions()
+        lcg.info("funding lightning nodes")
+        lcg.fund_nodes()
+        lcg.info("waiting until lightning nodes are synchronized and have received their funds")
+        lcg.wait_for_funds()
+        lcg.info("establishing lightning channels")
+        lcg.establish_channels()
+        lcg.info("waiting for funding transactions to enter miner's mempool")
+        lcg.wait_for_funding_transactions()
         # mine 10 blocks so the channels reach NORMAL_STATE
-        cg.mine(num_blocks=10)
+        lcg.mine(num_blocks=10)
     
     if args.make_payments:
         sender_idx, receiver_idx, num_payments, amount_msat = args.make_payments
-        cg.info("waiting until there is a known route from sender to receiver")
-        cg.wait_to_route(sender_idx, receiver_idx, amount_msat)
-        cg.info("making payments")
-        cg.make_payments(*args.make_payments)
-        cg.info(f"number of HTLCs node {receiver_idx} has on each channel:")
-        cg.print_node_htlcs(node_idx=receiver_idx)
+        lcg.info("waiting until there is a known route from sender to receiver")
+        lcg.wait_to_route(sender_idx, receiver_idx, amount_msat)
+        lcg.info("making payments")
+        lcg.make_payments(*args.make_payments)
+        lcg.info(f"number of HTLCs node {receiver_idx} has on each channel:")
+        lcg.print_node_htlcs(node_idx=receiver_idx)
     
     if args.steal_attack:
         sender_idx, receiver_idx, num_blocks = args.steal_attack
-        cg.info(f"stopping lightning node {sender_idx}")
-        cg.stop_lightning_node(sender_idx)
-        cg.info(f"starting lightning node {sender_idx} in silent mode")
-        cg.start_lightning_node_silent(sender_idx)
-        cg.info(f"closing all channels of node {receiver_idx}")
-        cg.close_all_node_channels(receiver_idx)
-        cg.info(f"slowly mining {num_blocks} blocks")
-        cg.mine_many(num_blocks=num_blocks, block_time_sec=args.block_time)
+        lcg.info(f"stopping lightning node {sender_idx}")
+        lcg.stop_lightning_node(sender_idx)
+        lcg.info(f"starting lightning node {sender_idx} in silent mode")
+        lcg.start_lightning_node_silent(sender_idx)
+        lcg.info(f"closing all channels of node {receiver_idx}")
+        lcg.close_all_node_channels(receiver_idx)
+        lcg.info(f"slowly mining {num_blocks} blocks")
+        lcg.mine_many(num_blocks=num_blocks, block_time_sec=args.block_time)
     
     if args.dump_data:
-        cg.info(f"dumping simulation data")
-        cg.dump_simulation_data(dir=args.dump_data)
+        lcg.info(f"dumping simulation data")
+        lcg.dump_simulation_data(dir=args.dump_data)
     
     # NOTE: we close outfile which may be stdout
     outfile.close()
