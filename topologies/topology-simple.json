@@ -3,7 +3,7 @@
     "peers": [
       "2"
     ],
-    "evil": false,
+    "evil": true,
     "silent": false,
     "alias": "alice"
   },
