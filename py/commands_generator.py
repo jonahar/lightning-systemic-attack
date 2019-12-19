@@ -417,8 +417,8 @@ def main() -> None:
         cg.establish_channels()
         cg.info("waiting for funding transactions to enter miner's mempool")
         cg.wait_for_funding_transactions()
-        # mine 6 blocks so the channels reach NORMAL_STATE
-        cg.mine(num_blocks=6)
+        # mine 10 blocks so the channels reach NORMAL_STATE
+        cg.mine(num_blocks=10)
     
     if args.make_payments:
         sender_idx, receiver_idx, num_payments, amount_msat = args.make_payments
