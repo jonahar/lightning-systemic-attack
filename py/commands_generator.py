@@ -250,11 +250,19 @@ class CommandsGenerator:
         self.__write_line(f"""
     for i in $(seq 1 {num_payments}); do
         LABEL="invoice-label-$(date +%s.%N)"
-        PAYMENT_HASH=$(lcli {receiver_idx} invoice $AMOUNT_MSAT $LABEL "" | jq -r ".payment_hash")
+        PAYMENT_HASH=$(lcli {receiver_idx} invoice {amount_msat} $LABEL "" | jq -r ".payment_hash")
         ROUTE=$(lcli {sender_idx} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")
         lcli {sender_idx} sendpay "$ROUTE" "$PAYMENT_HASH" > /dev/null
     done
         """)
+    
+    def print_node_htlcs(self, node_idx: int):
+        """
+        print the number of htlcs the given node has on each of its channels
+        """
+        self.__write_line(
+            f"""lcli {node_idx} listpeers| jq ".peers[] | .channels[0].htlcs" | jq length"""
+        )
     
     def stop_lightning_node(self, node_idx: int):
         self.__write_line(f"lcli {node_idx} stop")
@@ -418,6 +426,8 @@ def main() -> None:
         cg.wait_to_route(sender_idx, receiver_idx, amount_msat)
         cg.info("making payments")
         cg.make_payments(*args.make_payments)
+        cg.info(f"number of HTLCs node {receiver_idx} has on each channel:")
+        cg.print_node_htlcs(node_idx=receiver_idx)
     
     if args.steal_attack:
         sender_idx, receiver_idx, num_blocks = args.steal_attack
