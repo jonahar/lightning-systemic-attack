@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+$LN/simulations/steal-attack \
+  $LN/topologies/topology-1-5-1.json \
+  $LN/simulations/data-steal-attack-1-5-1-blockmaxweight=100000 \
+  2500 \
+  20000000 \
+  60 \
+  150 \
+  100000

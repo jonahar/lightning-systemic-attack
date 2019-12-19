@@ -2,9 +2,9 @@
 
 $LN/simulations/steal-attack \
   $LN/topologies/topology-1-5-1.json \
-  $LN/simulations/data-steal-attack-1-5-1-blockmaxweight=399600 \
+  $LN/simulations/data-steal-attack-1-5-1-blockmaxweight=400000 \
   2500 \
   20000000 \
   60 \
   150 \
-  399600
+  400000
