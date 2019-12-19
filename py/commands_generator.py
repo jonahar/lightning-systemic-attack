@@ -96,11 +96,36 @@ class CommandsGenerator:
     done
     """)
     
-    def connect_miner_to_all_nodes(self):
-        for id in self.topology.keys():
-            id_int = int(id)
+    def wait_until_bitcoin_nodes_synced(self, height: int):
+        """
+        generate code that waits until all bitcoin nodes have reached the given height
+        """
+        node_ids = " ".join(self.topology.keys())
+        
+        self.__write_line(f"""
+    for i in {node_ids}; do
+        while [[ $(bcli $i -getinfo | jq ".blocks") -lt "{height}" ]]; do
+            sleep 1
+        done
+    done
+        """)
+    
+    def connect_bitcoin_nodes_to_miner(self):
+        # connect all nodes to the miner
+        for node_idx in self.topology.keys():
+            node_idx_int = int(node_idx)
             self.__write_line(
-                f"bcli 0 addnode 127.0.0.1:{BITCOIN_PORT_BASE + id_int} add"
+                f"bcli 0 addnode 127.0.0.1:{BITCOIN_PORT_BASE + node_idx_int} add"
+            )
+    
+    def connect_bitcoin_nodes_in_circle(self):
+        all_nodes = sorted(self.topology.keys())
+        num_nodes = len(all_nodes)
+        for i in range(num_nodes):
+            peer_1_idx = int(all_nodes[i % num_nodes])
+            peer_2_idx = int(all_nodes[(i + 1) % num_nodes])
+            self.__write_line(
+                f"bcli {peer_1_idx} addnode 127.0.0.1:{BITCOIN_PORT_BASE + peer_2_idx} add"
             )
     
     @staticmethod
@@ -403,8 +428,16 @@ def main() -> None:
     cg.start_bitcoin_miner()
     cg.info("waiting until miner node is ready")
     cg.wait_until_miner_is_ready()
-    cg.info("connecting miner to all other bitcoin nodes")
-    cg.connect_miner_to_all_nodes()
+    cg.info("connecting bitcoin nodes to the miner node")
+    cg.connect_bitcoin_nodes_to_miner()
+    # Empirically, if we connect all at once, the nodes doesn't get
+    # blocks from the miner. Therefore we first connect the nodes to the miner, let
+    # them sync with him, and only then connect them to each other
+    cg.mine(10)
+    cg.info("waiting until nodes are synced with miner node")
+    cg.wait_until_bitcoin_nodes_synced(height=10)
+    cg.info("connecting all nodes in circle")
+    cg.connect_bitcoin_nodes_in_circle()
     cg.info("starting lightning nodes")
     cg.start_lightning_nodes()
     
