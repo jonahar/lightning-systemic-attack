@@ -308,7 +308,6 @@ class LightningCommandsGenerator:
         )
     
     def close_all_node_channels(self, node_idx):
-        pass;
         self.__write_line(
             f"""PEER_IDS=$(lcli {node_idx} listpeers | jq -r ".peers[] | .id")"""
         )
@@ -318,16 +317,27 @@ class LightningCommandsGenerator:
     done
         """)
     
-    def mine_many(self, num_blocks: int, block_time_sec: int):
+    def __set_blockchain_height(self):
+        """set a bash variable BLOCKCHAIN_HEIGHT with the current height"""
+        self.__write_line("""BLOCKCHAIN_HEIGHT=$(bcli 0 -getinfo | jq ".blocks")""")
+    
+    def advance_blockchain(self, num_blocks: int, block_time_sec: int):
         """
-        generate code to mine num_blocks blocks every block_time_sec seconds
+        generate code to advance the blockchain by 'num_blocks' blocks.
+        blocks are mined at a rate corresponding to block_time_sec until the
+        blockchain reaches height CURRENT_HEIGHT+num_blocks.
+        Note, this may be different than mining 'num_blocks' blocks, in case
+        someone else is also mining
         """
+        self.__set_blockchain_height()
+        self.__write_line(f"DEST_HEIGHT=$((BLOCKCHAIN_HEIGHT + {num_blocks}))")
+        
         self.__write_line(f"""
-    for i in $(seq 1 {num_blocks}); do
-        mine 1; sleep {block_time_sec};
+    while [[ $(bcli 0 -getinfo | jq ".blocks") -lt $DEST_HEIGHT ]]; do
+        sleep {block_time_sec}
+        mine 1
     done
         """)
-        # we have a redundant sleep at the end. Nu shoin... I rather keep it simple than efficient
     
     def dump_simulation_data(self, dir: str):
         """
@@ -337,14 +347,14 @@ class LightningCommandsGenerator:
             - total balance of each node, that is not locked in a channel
         
         """
-        # before dumping we mine 100 blocks in case some channels are still waiting
-        # to forget a peer
-        self.mine_many(num_blocks=100, block_time_sec=10)
+        # before dumping we advance the blockchain by 100 blocks in case some
+        # channels are still waiting to forget a peer
+        self.advance_blockchain(num_blocks=100, block_time_sec=10)
         
         self.__write_line(f"mkdir -p '{dir}'")
         self.__write_line(f"cd '{dir}'")
         
-        self.__write_line("""BLOCKCHAIN_HEIGHT=$(bcli 0 -getinfo | jq ".blocks")""")
+        self.__set_blockchain_height()
         # dump blocks + transactions
         self.__write_line("""
     for i in $(seq 1 $BLOCKCHAIN_HEIGHT); do
@@ -478,7 +488,7 @@ def main() -> None:
         lcg.info(f"closing all channels of node {receiver_idx}")
         lcg.close_all_node_channels(receiver_idx)
         lcg.info(f"slowly mining {num_blocks} blocks")
-        lcg.mine_many(num_blocks=num_blocks, block_time_sec=args.block_time)
+        lcg.advance_blockchain(num_blocks=num_blocks, block_time_sec=args.block_time)
     
     if args.dump_data:
         lcg.info(f"dumping simulation data")
