@@ -375,7 +375,7 @@ class LightningCommandsGenerator:
     done
         """)
         
-        self.__write_line(f"cd ..")  # go back to where we were
+        self.__write_line(f"cd - > /dev/null")  # go back to where we were
     
     def mine(self, num_blocks):
         self.__write_line(f"mine {num_blocks}")
