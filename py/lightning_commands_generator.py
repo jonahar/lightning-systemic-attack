@@ -118,10 +118,16 @@ class LightningCommandsGenerator:
     
     def connect_bitcoin_nodes_to_miner(self):
         # connect all nodes to the miner
+        miner_port = int(BITCOIN_MINER_IDX)
         for node_idx in self.topology.keys():
             node_idx_int = int(node_idx)
+            # miner adds node
             self.__write_line(
                 f"bcli 0 addnode 127.0.0.1:{BITCOIN_PORT_BASE + node_idx_int} add"
+            )
+            # node adds miner
+            self.__write_line(
+                f"bcli {node_idx} addnode 127.0.0.1:{BITCOIN_PORT_BASE + miner_port} add"
             )
     
     def connect_bitcoin_nodes_in_circle(self):
@@ -447,14 +453,11 @@ def main() -> None:
     lcg.wait_until_miner_is_ready()
     lcg.info("connecting bitcoin nodes to the miner node")
     lcg.connect_bitcoin_nodes_to_miner()
-    # Empirically, if we connect all at once, the nodes doesn't get
-    # blocks from the miner. Therefore we first connect the nodes to the miner, let
-    # them sync with him, and only then connect them to each other
+    lcg.info("connecting all nodes in circle")
+    lcg.connect_bitcoin_nodes_in_circle()
     lcg.mine(10)
     lcg.info("waiting until nodes are synced with miner node")
     lcg.wait_until_bitcoin_nodes_synced(height=10)
-    lcg.info("connecting all nodes in circle")
-    lcg.connect_bitcoin_nodes_in_circle()
     lcg.info("starting lightning nodes")
     lcg.start_lightning_nodes()
     
