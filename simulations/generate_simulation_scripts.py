@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 topology = "/home/jona/lab/ln/topologies/topology-1-10-1.json"
 num_victims = 10
 num_payments = num_victims * 500
@@ -7,7 +9,7 @@ block_time = 180
 blockmaxweight_values = [100000, 250000, 500000, 750000, 1000000]
 
 for blockmaxweight in blockmaxweight_values:
-    script_name = "steal-attack-{num_victims}victims-blockmaxweight={bitcoin_blockmaxweight}"
+    script_name = f"steal-attack-{num_victims}victims-blockmaxweight={blockmaxweight}"
     datadir = f"/home/jona/lab/ln/simulations/data-{script_name}"
     script_file = f"/home/jona/lab/ln/simulations/{script_name}.sh"
     
