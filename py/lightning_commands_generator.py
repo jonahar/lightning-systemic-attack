@@ -497,6 +497,8 @@ def main() -> None:
         lcg.info(f"dumping simulation data")
         lcg.dump_simulation_data(dir=args.dump_data)
     
+    lcg.info("simulation ended")
+    
     # NOTE: we close outfile which may be stdout
     outfile.close()
 
