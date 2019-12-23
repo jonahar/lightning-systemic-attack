@@ -7,86 +7,125 @@ import networkx as nx
 from networkx.algorithms.traversal.breadth_first_search import bfs_edges
 from networkx.classes.digraph import DiGraph
 
-from datatypes import Block, BlockHash, BlockHeight, TX, TXID
+from datatypes import BTC, Block, BlockHash, BlockHeight, TX, TXID, btc_to_satoshi
 
 
-def load_blocks(datadir: str) -> Dict[BlockHash, Block]:
-    blocks = {}
-    for filename in os.listdir(datadir):
-        if filename.startswith("block_"):
-            with open(os.path.join(datadir, filename)) as f:
-                d = json.load(f)
-                blocks[d["hash"]] = d
+class TransactionDB:
     
-    return blocks
-
-
-def load_txs(datadir: str) -> Dict[TXID, TX]:
-    txs = {}
-    for filename in os.listdir(datadir):
-        if filename.startswith("tx_"):
-            with open(os.path.join(datadir, filename)) as f:
-                d = json.load(f)
-                txs[d["txid"]] = d
+    def __init__(self, datadir: str) -> None:
+        self.datadir = datadir
+        self.blocks: Dict[BlockHash, Block] = self.__load_blocks()
+        self.txs: Dict[TXID, TX] = self.__load_txs()
+        self.__add_fee_to_tx_data()
+        self.__txs_graph: DiGraph = self.__build_txs_graph()
+        self.__height_to_txids: Dict[BlockHeight, List[TXID]] = self.__build_height_to_txids_map()
     
-    return txs
-
-
-def build_txs_graph(txs: Dict[TXID, TX]) -> DiGraph:
-    """
-    return a directed graph with all transactions as nodes, and an edge between
-    tx X to tx Y if Y spends an output from X. each edge has a 'value' attribute
-    which is the value of the spent output
-    """
-    txs_graph = nx.DiGraph()
+    @property
+    def height_to_txids(self) -> Dict[BlockHeight, List[TXID]]:
+        return self.__height_to_txids
     
-    # add all transactions
-    for txid in txs.keys():
-        txs_graph.add_node(txid, tx=txs[txid])
+    @property
+    def full_txs_graph(self) -> DiGraph:
+        return self.__txs_graph
     
-    # add edges between transactions
-    for dest_txid, dest_tx in txs.items():
-        for entry in dest_tx["vin"]:
-            if "coinbase" in entry:
-                continue  # coinbase transaction. no src
-            src_txid = entry["txid"]
-            index = entry["vout"]
-            value = txs[src_txid]["vout"][index]["value"]
-            txs_graph.add_edge(src_txid, dest_txid, value=value)
+    def __load_blocks(self) -> Dict[BlockHash, Block]:
+        blocks = {}
+        for filename in os.listdir(self.datadir):
+            if filename.startswith("block_"):
+                with open(os.path.join(self.datadir, filename)) as f:
+                    d = json.load(f)
+                    blocks[d["hash"]] = d
+        
+        return blocks
     
-    return txs_graph
-
-
-def get_all_children(g: DiGraph, root) -> set:
-    """
-    return a set with all nodes that are children of the given root, i.e. nodes
-    that are reachable from root
-    """
-    children = {
-        dest
-        for src, dest in bfs_edges(g, source=root)
-    }
-    return children.union({root})
-
-
-def build_height_to_txids_map(blocks: Mapping[BlockHash, Block]) -> Mapping[BlockHeight, List[TXID]]:
-    """
-    return a mapping from block height to the transactions in this block.
-    the returned mapping includes only blocks with more than 1
-    transactions (i.e. at least one non-coinbase transaction)
-    """
-    return {
-        block["height"]: block["tx"]
-        for block in blocks.values()
-        if len(block["tx"]) > 1
-    }
-
-
-def find_tx_height(blocks: Mapping[BlockHash, Block], txid: TXID) -> BlockHeight:
-    for block in blocks.values():
-        if txid in block["tx"]:
-            return block["height"]
-    return -1
+    def __load_txs(self) -> Dict[TXID, TX]:
+        txs = {}
+        for filename in os.listdir(self.datadir):
+            if filename.startswith("tx_"):
+                with open(os.path.join(self.datadir, filename)) as f:
+                    d = json.load(f)
+                    txs[d["txid"]] = d
+        
+        return txs
+    
+    def get_tx_incoming_value(self, txid: TXID) -> float:
+        return sum(
+            self.txs[src_entry["txid"]]["vout"][src_entry["vout"]]["value"]
+            for src_entry in self.txs[txid]["vin"] if "coinbase" not in src_entry
+        )
+        # this is equivalent to
+        # value = 0
+        # for entry in self.txs[txid]["vin"]:
+        #     if "coinbase" in entry:
+        #         continue  # coinbase transaction. no fee
+        #     src_txid = entry["txid"]
+        #     index = entry["vout"]
+        #     value += self.txs[src_txid]["vout"][index]["value"]
+        # return value
+    
+    def get_tx_outgoing_value(self, txid: TXID) -> float:
+        return sum(
+            entry["value"]
+            for entry in self.txs[txid]["vout"]
+        )
+    
+    def get_tx_fee(self, txid: TXID) -> BTC:
+        return self.get_tx_incoming_value(txid) - self.get_tx_outgoing_value(txid)
+    
+    def __add_fee_to_tx_data(self) -> None:
+        for txid, tx in self.txs.items():
+            if "coinbase" in tx["vin"][0]:
+                continue  # don't include fee for coinbase transaction
+            tx["fee"] = self.get_tx_fee(txid)
+    
+    def __build_txs_graph(self) -> DiGraph:
+        """
+        return a directed graph with all transactions as nodes, and an edge between
+        tx X to tx Y if Y spends an output from X. each edge has a 'value' attribute
+        which is the value of the spent output
+        """
+        txs_graph = nx.DiGraph()
+        
+        # add all transactions
+        for txid in self.txs.keys():
+            txs_graph.add_node(txid, tx=self.txs[txid])
+        
+        # add edges between transactions
+        for dest_txid, dest_tx in self.txs.items():
+            for entry in dest_tx["vin"]:
+                if "coinbase" in entry:
+                    continue  # coinbase transaction. no src
+                src_txid = entry["txid"]
+                index = entry["vout"]
+                value = self.txs[src_txid]["vout"][index]["value"]
+                txs_graph.add_edge(src_txid, dest_txid, value=value)
+        
+        return txs_graph
+    
+    def transactions_sub_graph(self, sources: Iterable[TXID]) -> DiGraph:
+        """
+        return a directed graph that contains the given transactions and
+        all their children
+        """
+        # for each source, compute the set of its children. then reduce all by union
+        children = reduce(
+            lambda s1, s2: s1.union(s2),
+            ({u for v, u in bfs_edges(self.__txs_graph, source=src)} for src in sources)
+        )
+        all_nodes = children.union(sources)
+        return self.__txs_graph.subgraph(nodes=all_nodes)
+    
+    def __build_height_to_txids_map(self) -> Dict[BlockHeight, List[TXID]]:
+        """
+        return a mapping from block height to the transactions in this block.
+        the returned mapping includes only blocks with more than 1
+        transaction (i.e. at least one non-coinbase transaction)
+        """
+        return {
+            block["height"]: block["tx"]
+            for block in self.blocks.values()
+            if len(block["tx"]) > 1
+        }
 
 
 def export_tx_graph_to_dot(
@@ -109,16 +148,15 @@ def export_tx_graph_to_dot(
             f.write("; }\n")
         
         for u, v, data in g.edges(data=True):
-            value = data["value"]
+            value: BTC = data["value"]
             f.write(
-                f""" "{txid_to_label(u)}" -> "{txid_to_label(v)}" [ label = "{value}" ];\n"""
+                f""" "{txid_to_label(u)}" -> "{txid_to_label(v)}" [ label = "{btc_to_satoshi(value)}" ];\n"""
             )
         
         # ’invisible’ edges between height nodes so they are aligned
         f.write("edge [style=invis];\n")
         f.write(" -> ".join(map(str, sorted(height_to_txids.keys()))))
         f.write(";\n")
-        
         f.write("}\n")
 
 
@@ -129,24 +167,16 @@ funding_txids = {
     "",
 }
 
-blocks = load_blocks(datadir)
-txs = load_txs(datadir)
+db = TransactionDB(datadir=datadir)
 
-txs_full_graph = build_txs_graph(txs)
-
-# get the children of all funding txs. those are the interesting txs
-children = reduce(
-    lambda s1, s2: s1.union(s2),
-    (get_all_children(txs_full_graph, funding_txid) for funding_txid in funding_txids)
-)
-
-txs_graph = txs_full_graph.subgraph(nodes=children)
-height_to_txids = build_height_to_txids_map(blocks)
+txs_graph = db.transactions_sub_graph(sources=funding_txids)
 
 dotfile = os.path.join(ln, "txs_graph.dot")
+
+txid_to_label = lambda txid: f"id={txid[-4:]}; fee={btc_to_satoshi(db.get_tx_fee(txid))}"
 export_tx_graph_to_dot(
     g=txs_graph,
     dotfile=dotfile,
-    height_to_txids=height_to_txids,
-    txid_to_label=lambda txid: txid[-4:],
+    height_to_txids=db.height_to_txids,
+    txid_to_label=txid_to_label,
 )
