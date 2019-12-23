@@ -11,12 +11,13 @@ num_payments = num_victims * 500
 amount_msat = int((0.1 / 500) * (10 ** 8) * (10 ** 3))
 num_blocks = 60
 block_time = 180
-blockmaxweight_values = [100000, 250000, 500000, 750000, 1000000]
+blockmaxweight_values = [100000, 200000, 300000, 400000, 500000, 750000, 1000000]
 
 for blockmaxweight in blockmaxweight_values:
     script_name = f"steal-attack-{num_victims}victims-blockmaxweight={blockmaxweight}"
-    datadir = os.path.join(simulations_dir, f"data-{script_name}")
+    datadir = os.path.join(simulations_dir, f"{script_name}")
     script_file = os.path.join(simulations_dir, f"{script_name}.sh")
+    output_file = os.path.join(simulations_dir, f"{script_name}.out")
     
     with open(script_file, mode="w") as f:
         simulation_script = f"""#!/usr/bin/env bash
@@ -33,7 +34,7 @@ for blockmaxweight in blockmaxweight_values:
             --bitcoin-blockmaxweight {blockmaxweight} \\
             --outfile generated_commands
         
-        bash generated_commands
+        bash generated_commands 2>&1 | tee {output_file}
         """
         
         f.write(simulation_script)
