@@ -41,3 +41,21 @@ mine(){
     bcli-main generatetoaddress $BLOCKS_TO_MINE $(bcli-main getnewaddress) > /dev/null
 }
 export -f mine
+
+# print blockchain height and mempool size for each node
+stat(){
+    MAX_NODE_IDX=$1
+    for i in $(seq 0 $MAX_NODE_IDX); do
+        if [[ $(bcli $i echo "testo" 2>/dev/null | jq -r ".[0]") == "testo" ]]; then
+            printf "bcli $i: height="
+            bcli $i -getinfo | jq -j -r ".blocks"
+            printf " mempool_size="
+            bcli $i getmempoolinfo | jq -j -r ".size"
+            printf "; "
+            printf "lcli $i: height="
+            lcli $i getinfo 2>/dev/null | jq -j -r ".blockheight"
+            echo
+        fi
+    done
+}
+export -f stat
