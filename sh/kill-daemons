@@ -3,4 +3,4 @@
 tmux kill-server > /dev/null 2>&1
 pkill bitcoind
 pkill lightningd
-sleep 1
+sleep 2
