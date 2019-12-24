@@ -35,6 +35,8 @@ for blockmaxweight in blockmaxweight_values:
             --outfile generated_commands
         
         bash generated_commands 2>&1 | tee {output_file}
+        kill-daemons # kill all daemons before we terminate
+
         """
         
         f.write(simulation_script)
