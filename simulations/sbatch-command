@@ -1,8 +1,8 @@
 sbatch \
-    -c30 \
+    -c20 \
     --mem=4000m \
-    --output=$LN/simulations/simulationXXXX.out \
     --mail-type=ALL \
     --mail-user=jona.harris@mail.huji.ac.il \
-    --time=10:0:0 \
+    --time=5:0:0 \
+    --dependency=afterany:<job_id> \
     path/to/script
