@@ -1,7 +1,8 @@
 import json
 import os
+import re
 from functools import reduce
-from typing import Callable, Dict, Iterable, List, Mapping
+from typing import Callable, Dict, Iterable, List, Mapping, Set
 
 import networkx as nx
 from networkx.algorithms.traversal.breadth_first_search import bfs_edges
@@ -160,14 +161,43 @@ def export_tx_graph_to_dot(
         f.write("}\n")
 
 
+def extract_funding_txids(simulation_outfile: str) -> Set[TXID]:
+    p = re.compile("""{\\s+"tx".*?"txid".*?"channel_id".*?}""", flags=re.DOTALL)
+    
+    with open(simulation_outfile) as f:
+        simulation_output = f.read()
+    
+    m = p.search(string=simulation_output)
+    funding_txids = set()
+    while m:
+        funding_tx_json_str = m.group(0)
+        funding_txid = json.loads(funding_tx_json_str)["txid"]
+        funding_txids.add(funding_txid)
+        m = p.search(string=simulation_output, pos=m.end())
+    
+    return funding_txids
+
+
+def print_commitments_sizes(db: TransactionDB, funding_txids: Set[TXID]) -> None:
+    for funding in funding_txids:
+        successors = list(db.full_txs_graph.successors(funding))
+        assert len(successors) == 1
+        commitment_tx = db.full_txs_graph.nodes[successors[0]]["tx"]
+        print(
+            f"commitment {commitment_tx['txid'][-4:]}"
+            f"\tsize={commitment_tx['size']}"
+            f"\tvsize={commitment_tx['vsize']}"
+            f"\tweight={commitment_tx['weight']}"
+        )
+
+
 ln = os.path.expandvars("$LN")
 datadir = os.path.join(ln, "simulations/datadir")
-funding_txids = {
-    "",
-    "",
-}
+outfile = os.path.join(ln, "simulations/simulation.out")
 
 db = TransactionDB(datadir=datadir)
+funding_txids = extract_funding_txids(outfile)
+print_commitments_sizes(db, funding_txids)
 
 txs_graph = db.transactions_sub_graph(sources=funding_txids)
 
