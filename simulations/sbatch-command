@@ -1,8 +1,0 @@
-sbatch \
-    -c20 \
-    --mem=4000m \
-    --mail-type=ALL \
-    --mail-user=jona.harris@mail.huji.ac.il \
-    --time=5:0:0 \
-    --dependency=afterany:<job_id> \
-    path/to/script
