@@ -188,9 +188,6 @@ class LightningCommandsGenerator:
             evil = info.get("evil", False)
             silent = info.get("silent", False)
             
-            evil_flag = "--evil" if evil else ""
-            silent_flag = "--silent" if silent else ""
-            
             binary = LIGHTNING_BINARY
             log_level = None
             if evil or silent:
