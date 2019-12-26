@@ -12,6 +12,8 @@ BITCOIN_CONF_PATH = os.path.join(LN, "conf/bitcoin.conf")
 LIGHTNING_RPC_PORT_BASE = 10000
 BITCOIN_RPC_PORT_BASE = 18000
 BITCOIN_PORT_BASE = 8300
+ZMQPUBRAWBLOCK_PORT_BASE = 28000
+ZMQPUBRAWTX_PORT_BASE = 30000
 
 INITIAL_CHANNEL_BALANCE_SAT = 10000000  # 0.1 BTC
 
@@ -86,6 +88,8 @@ class LightningCommandsGenerator:
             f"  -datadir={datadir}"
             f"  -daemon"
             f"  -blockmaxweight={self.bitcoin_block_max_weight}"
+            f"  -zmqpubrawblock=tcp://127.0.0.1:{ZMQPUBRAWBLOCK_PORT_BASE + idx}"
+            f"  -zmqpubrawtx=tcp://127.0.0.1:{ZMQPUBRAWTX_PORT_BASE + idx}"
         )
     
     def start_bitcoin_miner(self):

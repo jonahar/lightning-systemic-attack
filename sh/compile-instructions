@@ -20,12 +20,16 @@ make install
 cd "${ROOT_DIR}"
 
 
+# make sure libzmq is installed. required for bitcoind to work with lnd
+sudo apt install libzmq3-dev
+
+
 # download and compile bitcoin-core
 git clone https://github.com/bitcoin/bitcoin.git
 cd bitcoin
 git checkout v0.19.0.1 # select the wanted version
 ./autogen.sh
-./configure CPPFLAGS="-I${BDB_PREFIX}/include/ -O2" LDFLAGS="-L${BDB_PREFIX}/lib/"
+./configure CPPFLAGS="-I${BDB_PREFIX}/include/ -O2" LDFLAGS="-L${BDB_PREFIX}/lib/" --with-zmq --enable-zmq
 make
 cd "${ROOT_DIR}"
 
