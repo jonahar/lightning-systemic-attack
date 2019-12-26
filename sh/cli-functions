@@ -3,7 +3,7 @@
 lcli(){
     IDX=$1
     lightning-cli \
-        --conf=$LN/conf/lightning.conf \
+        --conf=$LN/conf/clightning.conf \
         --lightning-dir="$LN/lightning-dirs/$IDX" \
         "${@:2}"
 }
