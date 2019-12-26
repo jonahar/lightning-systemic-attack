@@ -21,10 +21,8 @@ for blockmaxweight in blockmaxweight_values:
     
     with open(script_file, mode="w") as f:
         simulation_script = f"""#!/usr/bin/env bash
-        cd $LN
-        source sh/cli-functions
-        clean-env
-        python3 py/lightning_commands_generator.py \\
+        cd $LN/py
+        python3 -m commands_generator.commands_generator \\
             --topology "{topology}" \\
             --establish-channels \\
             --make-payments 1 3 {num_payments} {amount_msat} \\
@@ -32,11 +30,15 @@ for blockmaxweight in blockmaxweight_values:
             --dump-data "{datadir}" \\
             --block-time {block_time} \\
             --bitcoin-blockmaxweight {blockmaxweight} \\
-            --outfile generated_commands
+            --outfile $LN/generated_commands
+        
+        cd $LN
+        source sh/cli-functions
+        clean-env
         
         bash generated_commands 2>&1 | tee {output_file}
         kill-daemons # kill all daemons before we terminate
-
+        exit 0
         """
         
         f.write(simulation_script)

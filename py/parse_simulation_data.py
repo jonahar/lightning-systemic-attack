@@ -8,7 +8,8 @@ import networkx as nx
 from networkx.algorithms.traversal.breadth_first_search import bfs_edges
 from networkx.classes.digraph import DiGraph
 
-from datatypes import BTC, Block, BlockHash, BlockHeight, TX, TXID, btc_to_satoshi
+from datatypes import BTC, Block, BlockHash, BlockHeight, TX, TXID
+from utils import btc_to_satoshi
 
 
 class TransactionDB:

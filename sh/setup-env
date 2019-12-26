@@ -51,20 +51,18 @@ source sh/cli-functions
 
 if [[ "$SCRATCH" == "true" ]]; then
     clean-env
-    python3 py/lightning_commands_generator.py \
+    PYTHONPATH=$LN/py python3 -m commands_generator.commands_generator \
         --topology $TOPOLOGY \
         --outfile generated_setup_commands \
         --establish-channels
-    source generated_setup_commands
 else
     kill-daemons
-    python3 py/lightning_commands_generator.py \
+    PYTHONPATH=$LN/py python3 -m commands_generator.commands_generator \
         --topology $TOPOLOGY \
         --outfile generated_setup_commands
-    source generated_setup_commands
 fi
 
-
+bash generated_setup_commands
 tmux new-session -d -n cli
 tmux new-window -n py3 "cd py; python3"
 

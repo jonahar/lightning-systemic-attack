@@ -1,30 +1,15 @@
 import argparse
 import json
-import os
 import sys
+from typing import Dict, TextIO
 
-LABPATH = os.path.expandvars("$LAB")
-LN = os.path.expandvars("$LN")
-LIGHTNING_DIR_BASE = os.path.join(LN, "lightning-dirs")
-BITCOIN_DIR_BASE = os.path.join(LN, "bitcoin-dirs")
-LIGHTNING_CONF_PATH = os.path.join(LN, "conf/clightning.conf")
-BITCOIN_CONF_PATH = os.path.join(LN, "conf/bitcoin.conf")
-LIGHTNING_LISTEN_PORT_BASE = 12000
-LIGHTNING_RPC_PORT_BASE = 10000
-BITCOIN_LISTEN_PORT_BASE = 8300
-BITCOIN_RPC_PORT_BASE = 18000
-ZMQPUBRAWBLOCK_PORT_BASE = 28000
-ZMQPUBRAWTX_PORT_BASE = 30000
-
-INITIAL_CHANNEL_BALANCE_SAT = 10000000  # 0.1 BTC
-
-LIGHTNING_BINARY = os.path.join(LABPATH, "lightning/lightningd/lightningd")
-LIGHTNING_BINARY_EVIL = os.path.join(LABPATH, "lightning-evil/lightningd/lightningd")
-
-BITCOIN_MINER_IDX = "0"
+from commands_generator.clightning import ClightningCommandsGenerator
+from commands_generator.config_constants import *
+from datatypes import NodeIndex, NodeIndexStr
+from commands_generator.lightning import LightningCommandsGenerator
 
 
-class LightningCommandsGenerator:
+class CommandsGenerator:
     """
     A LightningCommandsGenerator generates bash code to execute many lightning-related actions.
     it support:
@@ -42,6 +27,7 @@ class LightningCommandsGenerator:
         "evil": false,             // optional. defaults to false
         "silent": false,           // optional. defaults to false
         "alias": "alice"           // optional. defaults to ID
+        "client": "lnd"           // optional. defaults to c-lightning
       },
       "ID2": {...},
       "ID3": {...},
@@ -50,7 +36,7 @@ class LightningCommandsGenerator:
 
     """
     
-    def __init__(self, file, topology: dict, bitcoin_block_max_weight):
+    def __init__(self, file: TextIO, topology: dict, bitcoin_block_max_weight):
         """
         :param file: file-like object
         :param topology: topology dictionary
@@ -60,6 +46,52 @@ class LightningCommandsGenerator:
         self.file = file
         self.topology = topology
         self.bitcoin_block_max_weight = bitcoin_block_max_weight
+        
+        # each LightningCommandsGenerator should generate lightning node commands
+        # according to the node's chosen implementation
+        self.clients: Dict[NodeIndexStr, LightningCommandsGenerator] = self.__init_clients()
+    
+    def __init_clients(self) -> Dict[NodeIndexStr, LightningCommandsGenerator]:
+        """
+        build LightningCommandsGenerator for each node in the topology
+        the concrete implementation is determined by the node's config
+        """
+        clients = {}
+        for idx, info in self.topology.items():
+            node_idx = int(idx)
+            alias = info.get("alias", idx)
+            client = info.get("client", "c-lightning")
+            lightning_dir = self.get_lightning_node_dir(node_idx=node_idx)
+            
+            if client == "c-lightning":
+                evil = info.get("evil", False)
+                silent = info.get("silent", False)
+                clients[idx] = ClightningCommandsGenerator(
+                    idx=node_idx,
+                    file=self.file,
+                    lightning_dir=lightning_dir,
+                    listen_port=self.get_lightning_node_listen_port(node_idx),
+                    bitcoin_rpc_port=self.__get_bitcoin_node_rpc_port(node_idx),
+                    alias=alias,
+                    evil=evil,
+                    silent=silent,
+                )
+            else:
+                raise TypeError(f"unsupported client: {client}")
+        
+        return clients
+    
+    @staticmethod
+    def get_lightning_node_dir(node_idx: int) -> str:
+        return os.path.join(LIGHTNING_DIR_BASE, str(node_idx))
+    
+    @staticmethod
+    def get_lightning_node_rpc_port(node_idx: int) -> int:
+        return LIGHTNING_RPC_PORT_BASE + node_idx
+    
+    @staticmethod
+    def get_lightning_node_listen_port(node_idx: int) -> int:
+        return LIGHTNING_LISTEN_PORT_BASE + node_idx
     
     def __write_line(self, line: str) -> None:
         self.file.write(line)
@@ -70,24 +102,20 @@ class LightningCommandsGenerator:
         return os.path.join(BITCOIN_DIR_BASE, str(node_idx))
     
     @staticmethod
-    def __get_lightning_node_dir(node_idx: int) -> str:
-        return os.path.join(LIGHTNING_DIR_BASE, str(node_idx))
-    
-    @staticmethod
-    def __get_lightning_node_rpc_port(node_idx: int) -> int:
-        return LIGHTNING_RPC_PORT_BASE + node_idx
-    
-    @staticmethod
-    def __get_lightning_node_listen_port(node_idx: int) -> int:
-        return LIGHTNING_LISTEN_PORT_BASE + node_idx
-    
-    @staticmethod
     def __get_bitcoin_node_rpc_port(node_idx: int) -> int:
         return BITCOIN_RPC_PORT_BASE + node_idx
     
     @staticmethod
     def __get_bitcoin_node_listen_port(node_idx: int) -> int:
         return BITCOIN_LISTEN_PORT_BASE + node_idx
+    
+    @staticmethod
+    def __get_bitcoin_node_zmqpubrawblock_port(node_idx: int) -> int:
+        return ZMQPUBRAWBLOCK_PORT_BASE + node_idx
+    
+    @staticmethod
+    def __get_bitcoin_node_zmqpubrawtx_port(node_idx: int) -> int:
+        return ZMQPUBRAWTX_PORT_BASE + node_idx
     
     def shebang(self) -> None:
         self.__write_line("#!/usr/bin/env bash")
@@ -113,8 +141,8 @@ class LightningCommandsGenerator:
             f"  -datadir={datadir}"
             f"  -daemon"
             f"  -blockmaxweight={self.bitcoin_block_max_weight}"
-            f"  -zmqpubrawblock=tcp://127.0.0.1:{ZMQPUBRAWBLOCK_PORT_BASE + idx}"
-            f"  -zmqpubrawtx=tcp://127.0.0.1:{ZMQPUBRAWTX_PORT_BASE + idx}"
+            f"  -zmqpubrawblock=tcp://127.0.0.1:{self.__get_bitcoin_node_zmqpubrawblock_port(idx)}"
+            f"  -zmqpubrawtx=tcp://127.0.0.1:{self.__get_bitcoin_node_zmqpubrawtx_port(idx)}"
         )
     
     def start_bitcoin_miner(self):
@@ -171,62 +199,10 @@ class LightningCommandsGenerator:
                 f"bcli {peer_1_idx} addnode 127.0.0.1:{peer_2_listen_port} add"
             )
     
-    def start_lightningd_node(
-        self,
-        lightning_dir: str,
-        binary: str,
-        listen_port: int,
-        bitcoin_rpc_port: int,
-        alias: str = None,
-        evil: bool = False,
-        silent: bool = False,
-        log_level: str = None,
-    ):
-        alias_flag = f"--alias={alias}" if alias else ""
-        evil_flag = "--evil" if evil else ""
-        silent_flag = "--silent" if silent else ""
-        log_level_flag = f"--log-level={log_level}" if log_level else ""
-        
-        self.__write_line(f"mkdir -p {lightning_dir}")
-        self.__write_line(
-            f"{binary} "
-            f"  --conf={LIGHTNING_CONF_PATH}"
-            f"  --lightning-dir={lightning_dir}"
-            f"  --addr=localhost:{listen_port}"
-            f"  --log-file=log"  # relative to lightning-dir
-            f"  {alias_flag}"
-            f"  {evil_flag}"
-            f"  {silent_flag}"
-            f"  {log_level_flag}"
-            f"  --bitcoin-rpcconnect=localhost"
-            f"  --bitcoin-rpcport={bitcoin_rpc_port}"
-            f"  --daemon"
-        )
-    
     def start_lightning_nodes(self) -> None:
         """generate code to start all lightning nodes"""
         for idx, info in self.topology.items():
-            node_idx = int(idx)
-            alias = info.get("alias", idx)
-            evil = info.get("evil", False)
-            silent = info.get("silent", False)
-            
-            binary = LIGHTNING_BINARY
-            log_level = None
-            if evil or silent:
-                binary = LIGHTNING_BINARY_EVIL
-                log_level = "JONA"
-            
-            self.start_lightningd_node(
-                lightning_dir=self.__get_lightning_node_dir(node_idx=node_idx),
-                binary=binary,
-                listen_port=self.__get_lightning_node_listen_port(node_idx=node_idx),
-                bitcoin_rpc_port=self.__get_bitcoin_node_rpc_port(node_idx),
-                alias=alias,
-                evil=evil,
-                silent=silent,
-                log_level=log_level,
-            )
+            self.clients[idx].start()
     
     def fund_nodes(self) -> None:
         """generate code to fund nodes"""
@@ -234,7 +210,7 @@ class LightningCommandsGenerator:
         self.__write_line(f"mine {100 + len(self.topology)}")
         
         for idx in self.topology:
-            self.__write_line(f"ADDR_{idx}=$(lcli {idx} newaddr | jq -r '.address')")
+            self.clients[idx].set_address(bash_var=f"ADDR_{idx}")
             
             # We give more funds to nodes that need to open many channels.
             # we fund these nodes with many small transactions instead of one big transaction,
@@ -242,37 +218,23 @@ class LightningCommandsGenerator:
             for _ in range(len(self.topology[idx]["peers"])):
                 self.__write_line(f"bcli {BITCOIN_MINER_IDX} sendtoaddress $ADDR_{idx} 1")
         
-        self.__write_line("mine 10")
+        self.mine(10)
     
     def wait_for_funds(self) -> None:
         """generate code that waits until the nodes are synced and recognize their funds"""
-        # we need to wait only for nodes that need to fund a channel
-        ids_list_str = " ".join(
-            filter(
-                lambda id: len(self.topology[id]["peers"]) != 0,
-                self.topology.keys()
-            )
-        )
-        
-        self.__write_line(f"""
-    for i in {ids_list_str}; do
-        while [[ $(lcli $i listfunds | jq -r ."outputs") == "[]" ]]; do
-            sleep 1;
-        done
-    done
-    """)
+        for idx, info in self.topology.items():
+            # we need to wait only for nodes that need to fund a channel
+            if len(self.topology[idx]["peers"]) != 0:
+                self.clients[idx].wait_for_funds()
     
     def establish_channels(self) -> None:
         """generate code to connect peers and establish all channels"""
-        # get full id for each node
-        for node_idx in self.topology:
-            self.__write_line(f"ID_{node_idx}=$(lcli {node_idx} getinfo | jq -r '.id')")
-        
-        for node_idx, info in self.topology.items():
+        for idx, info in self.topology.items():
             for peer_idx in info["peers"]:
-                peer_port = self.__get_lightning_node_listen_port(int(peer_idx))
-                self.__write_line(f"lcli {node_idx} connect $ID_{peer_idx} localhost:{peer_port}")
-                self.__write_line(f"lcli {node_idx} fundchannel $ID_{peer_idx} {INITIAL_CHANNEL_BALANCE_SAT}")
+                self.clients[idx].establish_channel(
+                    peer=self.clients[peer_idx],
+                    peer_listen_port=self.get_lightning_node_listen_port(int(peer_idx))
+                )
     
     def wait_for_funding_transactions(self):
         """
@@ -286,62 +248,42 @@ class LightningCommandsGenerator:
     done
     """)
     
-    def __set_riskfactor(self):
-        self.__write_line("RISKFACTOR=1")
-    
-    def __set_receiver_id(self, receiver_idx: int):
-        self.__write_line(f'RECEIVER_ID=$(lcli {receiver_idx} getinfo | jq -r ".id")')
-    
     def wait_to_route(self, sender_idx: int, receiver_idx: int, amount_msat: int):
-        self.__set_riskfactor()
-        self.__set_receiver_id(receiver_idx)
-        self.__write_line(f"""
-        while [[ "$(lcli {sender_idx} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")" == "null" ]]; do
-            sleep 1;
-        done
-            """)
+        self.clients[str(sender_idx)].wait_to_route(
+            receiver=self.clients[str(receiver_idx)],
+            amount_msat=amount_msat,
+        )
     
     def make_payments(self, sender_idx: int, receiver_idx: int, num_payments: int, amount_msat: int):
-        self.__set_riskfactor()
-        self.__set_receiver_id(receiver_idx)
-        self.__write_line(f"""
-    for i in $(seq 1 {num_payments}); do
-        LABEL="invoice-label-$(date +%s.%N)"
-        PAYMENT_HASH=$(lcli {receiver_idx} invoice {amount_msat} $LABEL "" | jq -r ".payment_hash")
-        ROUTE=$(lcli {sender_idx} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")
-        lcli {sender_idx} sendpay "$ROUTE" "$PAYMENT_HASH" > /dev/null
-    done
-        """)
+        self.clients[str(sender_idx)].make_payments(
+            receiver=self.clients[str(receiver_idx)],
+            num_payments=num_payments,
+            amount_msat=amount_msat,
+        )
     
     def print_node_htlcs(self, node_idx: int):
         """
         print the number of htlcs the given node has on each of its channels
         """
-        self.__write_line(
-            f"""lcli {node_idx} listpeers| jq ".peers[] | .channels[0].htlcs" | jq length"""
-        )
+        self.clients[str(node_idx)].print_node_htlcs()
     
     def stop_lightning_node(self, node_idx: int):
-        self.__write_line(f"lcli {node_idx} stop")
+        self.clients[str(node_idx)].stop()
     
     def start_lightning_node_silent(self, node_idx: int):
-        self.start_lightningd_node(
-            lightning_dir=self.__get_lightning_node_dir(node_idx),
-            binary=LIGHTNING_BINARY_EVIL,
-            listen_port=self.__get_lightning_node_listen_port(node_idx),
+        # silent mode is only supported for the c-lightning impl
+        self.clients[node_idx] = ClightningCommandsGenerator(
+            idx=node_idx,
+            file=self.file,
+            lightning_dir=self.get_lightning_node_dir(node_idx),
+            listen_port=self.get_lightning_node_listen_port(node_idx),
             bitcoin_rpc_port=self.__get_bitcoin_node_rpc_port(node_idx),
             silent=True,
         )
+        self.clients[node_idx].start()
     
-    def close_all_node_channels(self, node_idx):
-        self.__write_line(
-            f"""PEER_IDS=$(lcli {node_idx} listpeers | jq -r ".peers[] | .id")"""
-        )
-        self.__write_line(f"""
-    for id in $PEER_IDS; do
-        lcli {node_idx} close $id
-    done
-        """)
+    def close_all_node_channels(self, node_idx: NodeIndex):
+        self.clients[str(node_idx)].close_all_channels()
     
     def __set_blockchain_height(self):
         """set a bash variable BLOCKCHAIN_HEIGHT with the current height"""
@@ -373,10 +315,6 @@ class LightningCommandsGenerator:
             - total balance of each node, that is not locked in a channel
         
         """
-        # before dumping we advance the blockchain by 100 blocks in case some
-        # channels are still waiting to forget a peer
-        self.advance_blockchain(num_blocks=100, block_time_sec=10)
-        
         self.__write_line(f"mkdir -p '{dir}'")
         self.__write_line(f"cd '{dir}'")
         
@@ -392,14 +330,9 @@ class LightningCommandsGenerator:
     done
         """)
         
-        # dump nodes balances that are not locked in channels
-        node_ids = " ".join(self.topology.keys())
-        self.__write_line(f"""
-    for i in {node_ids}; do
-        printf "node ${{i}} balance: " >> nodes_balance
-        lcli $i listfunds | jq '.outputs[] | .value' | jq -s add >> nodes_balance
-    done
-        """)
+        # dump nodes balances
+        for idx in self.topology.keys():
+            self.clients[idx].dump_balance(filepath="nodes_balance")
         
         self.__write_line(f"cd - > /dev/null")  # go back to where we were
     
@@ -459,65 +392,69 @@ def main() -> None:
     
     outfile = open(args.outfile, mode="w") if args.outfile else sys.stdout
     
-    lcg = LightningCommandsGenerator(
+    cg = CommandsGenerator(
         file=outfile,
         topology=topology,
         bitcoin_block_max_weight=args.bitcoin_blockmaxweight,
     )
-    lcg.shebang()
-    lcg.generated_code_comment()
-    lcg.info("starting all bitcoin nodes")
-    lcg.start_bitcoin_nodes()
-    lcg.start_bitcoin_miner()
-    lcg.info("waiting until miner node is ready")
-    lcg.wait_until_miner_is_ready()
-    lcg.info("connecting bitcoin nodes to the miner node")
-    lcg.connect_bitcoin_nodes_to_miner()
-    lcg.info("connecting all nodes in circle")
-    lcg.connect_bitcoin_nodes_in_circle()
-    lcg.mine(10)
-    lcg.info("waiting until nodes are synced with miner node")
-    lcg.wait_until_bitcoin_nodes_synced(height=10)
-    lcg.info("starting lightning nodes")
-    lcg.start_lightning_nodes()
+    cg.shebang()
+    cg.generated_code_comment()
+    cg.info("starting all bitcoin nodes")
+    cg.start_bitcoin_nodes()
+    cg.start_bitcoin_miner()
+    cg.info("waiting until miner node is ready")
+    cg.wait_until_miner_is_ready()
+    cg.info("connecting bitcoin nodes to the miner node")
+    cg.connect_bitcoin_nodes_to_miner()
+    cg.info("connecting all nodes in circle")
+    cg.connect_bitcoin_nodes_in_circle()
+    cg.mine(10)
+    cg.info("waiting until nodes are synced with miner node")
+    cg.wait_until_bitcoin_nodes_synced(height=10)
+    cg.info("starting lightning nodes")
+    cg.start_lightning_nodes()
     
     if args.establish_channels:
-        lcg.info("funding lightning nodes")
-        lcg.fund_nodes()
-        lcg.info("waiting until lightning nodes are synchronized and have received their funds")
-        lcg.wait_for_funds()
-        lcg.info("establishing lightning channels")
-        lcg.establish_channels()
-        lcg.info("waiting for funding transactions to enter miner's mempool")
-        lcg.wait_for_funding_transactions()
+        cg.info("funding lightning nodes")
+        cg.fund_nodes()
+        cg.info("waiting until lightning nodes are synchronized and have received their funds")
+        cg.wait_for_funds()
+        cg.info("establishing lightning channels")
+        cg.establish_channels()
+        cg.info("waiting for funding transactions to enter miner's mempool")
+        cg.wait_for_funding_transactions()
         # mine 10 blocks so the channels reach NORMAL_STATE
-        lcg.mine(num_blocks=10)
+        cg.mine(num_blocks=10)
     
     if args.make_payments:
         sender_idx, receiver_idx, num_payments, amount_msat = args.make_payments
-        lcg.info("waiting until there is a known route from sender to receiver")
-        lcg.wait_to_route(sender_idx, receiver_idx, amount_msat)
-        lcg.info("making payments")
-        lcg.make_payments(*args.make_payments)
-        lcg.info(f"number of HTLCs node {receiver_idx} has on each channel:")
-        lcg.print_node_htlcs(node_idx=receiver_idx)
+        cg.info("waiting until there is a known route from sender to receiver")
+        cg.wait_to_route(sender_idx, receiver_idx, amount_msat)
+        cg.info("making payments")
+        cg.make_payments(*args.make_payments)
+        cg.info(f"number of HTLCs node {receiver_idx} has on each channel:")
+        cg.print_node_htlcs(node_idx=receiver_idx)
     
     if args.steal_attack:
         sender_idx, receiver_idx, num_blocks = args.steal_attack
-        lcg.info(f"stopping lightning node {sender_idx}")
-        lcg.stop_lightning_node(sender_idx)
-        lcg.info(f"starting lightning node {sender_idx} in silent mode")
-        lcg.start_lightning_node_silent(sender_idx)
-        lcg.info(f"closing all channels of node {receiver_idx}")
-        lcg.close_all_node_channels(receiver_idx)
-        lcg.info(f"slowly mining {num_blocks} blocks")
-        lcg.advance_blockchain(num_blocks=num_blocks, block_time_sec=args.block_time)
+        cg.info(f"stopping lightning node {sender_idx}")
+        cg.stop_lightning_node(sender_idx)
+        cg.info(f"starting lightning node {sender_idx} in silent mode")
+        cg.start_lightning_node_silent(sender_idx)
+        cg.info(f"closing all channels of node {receiver_idx}")
+        cg.close_all_node_channels(receiver_idx)
+        cg.info(f"slowly mining {num_blocks} blocks")
+        cg.advance_blockchain(num_blocks=num_blocks, block_time_sec=args.block_time)
     
     if args.dump_data:
-        lcg.info(f"dumping simulation data")
-        lcg.dump_simulation_data(dir=args.dump_data)
+        # before dumping we advance the blockchain by 100 blocks in case some
+        # channels are still waiting to forget a peer
+        cg.info(f"quickly mining 100 blocks")
+        cg.advance_blockchain(num_blocks=100, block_time_sec=5)
+        cg.info(f"dumping simulation data")
+        cg.dump_simulation_data(dir=args.dump_data)
     
-    lcg.info("simulation ended")
+    cg.info("simulation ended")
     
     # NOTE: we close outfile which may be stdout
     outfile.close()
