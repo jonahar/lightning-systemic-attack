@@ -9,9 +9,10 @@ LIGHTNING_DIR_BASE = os.path.join(LN, "lightning-dirs")
 BITCOIN_DIR_BASE = os.path.join(LN, "bitcoin-dirs")
 LIGHTNING_CONF_PATH = os.path.join(LN, "conf/lightning.conf")
 BITCOIN_CONF_PATH = os.path.join(LN, "conf/bitcoin.conf")
+LIGHTNING_LISTEN_PORT_BASE = 12000
 LIGHTNING_RPC_PORT_BASE = 10000
+BITCOIN_LISTEN_PORT_BASE = 8300
 BITCOIN_RPC_PORT_BASE = 18000
-BITCOIN_PORT_BASE = 8300
 ZMQPUBRAWBLOCK_PORT_BASE = 28000
 ZMQPUBRAWTX_PORT_BASE = 30000
 
@@ -64,6 +65,30 @@ class LightningCommandsGenerator:
         self.file.write(line)
         self.file.write("\n")
     
+    @staticmethod
+    def __get_bitcoin_node_dir(node_idx: int) -> str:
+        return os.path.join(BITCOIN_DIR_BASE, str(node_idx))
+    
+    @staticmethod
+    def __get_lightning_node_dir(node_idx: int) -> str:
+        return os.path.join(LIGHTNING_DIR_BASE, str(node_idx))
+    
+    @staticmethod
+    def __get_lightning_node_rpc_port(node_idx: int) -> int:
+        return LIGHTNING_RPC_PORT_BASE + node_idx
+    
+    @staticmethod
+    def __get_lightning_node_listen_port(node_idx: int) -> int:
+        return LIGHTNING_LISTEN_PORT_BASE + node_idx
+    
+    @staticmethod
+    def __get_bitcoin_node_rpc_port(node_idx: int) -> int:
+        return BITCOIN_RPC_PORT_BASE + node_idx
+    
+    @staticmethod
+    def __get_bitcoin_node_listen_port(node_idx: int) -> int:
+        return BITCOIN_LISTEN_PORT_BASE + node_idx
+    
     def shebang(self) -> None:
         self.__write_line("#!/usr/bin/env bash")
     
@@ -77,14 +102,14 @@ class LightningCommandsGenerator:
         self.__write_line(f"sleep {seconds}")
     
     def __start_bitcoin_node(self, idx: int):
-        datadir = os.path.join(BITCOIN_DIR_BASE, str(idx))
+        datadir = self.__get_bitcoin_node_dir(idx)
         
         self.__write_line(f"mkdir -p {datadir}")
         self.__write_line(
             f"bitcoind"
             f"  -conf={BITCOIN_CONF_PATH}"
-            f"  -port={BITCOIN_PORT_BASE + idx}"
-            f"  -rpcport={BITCOIN_RPC_PORT_BASE + idx}"
+            f"  -port={self.__get_bitcoin_node_listen_port(idx)}"
+            f"  -rpcport={self.__get_bitcoin_node_rpc_port(idx)}"
             f"  -datadir={datadir}"
             f"  -daemon"
             f"  -blockmaxweight={self.bitcoin_block_max_weight}"
@@ -122,16 +147,17 @@ class LightningCommandsGenerator:
     
     def connect_bitcoin_nodes_to_miner(self):
         # connect all nodes to the miner
-        miner_port = int(BITCOIN_MINER_IDX)
+        miner_idx = int(BITCOIN_MINER_IDX)
+        miner_listen_port = self.__get_bitcoin_node_listen_port(miner_idx)
         for node_idx in self.topology.keys():
-            node_idx_int = int(node_idx)
+            node_listen_port = self.__get_bitcoin_node_listen_port(int(node_idx))
             # miner adds node
             self.__write_line(
-                f"bcli 0 addnode 127.0.0.1:{BITCOIN_PORT_BASE + node_idx_int} add"
+                f"bcli {miner_idx} addnode 127.0.0.1:{node_listen_port} add"
             )
             # node adds miner
             self.__write_line(
-                f"bcli {node_idx} addnode 127.0.0.1:{BITCOIN_PORT_BASE + miner_port} add"
+                f"bcli {node_idx} addnode 127.0.0.1:{miner_listen_port} add"
             )
     
     def connect_bitcoin_nodes_in_circle(self):
@@ -140,32 +166,25 @@ class LightningCommandsGenerator:
         for i in range(num_nodes):
             peer_1_idx = int(all_nodes[i % num_nodes])
             peer_2_idx = int(all_nodes[(i + 1) % num_nodes])
+            peer_2_listen_port = self.__get_bitcoin_node_listen_port(peer_2_idx)
             self.__write_line(
-                f"bcli {peer_1_idx} addnode 127.0.0.1:{BITCOIN_PORT_BASE + peer_2_idx} add"
+                f"bcli {peer_1_idx} addnode 127.0.0.1:{peer_2_listen_port} add"
             )
     
-    @staticmethod
-    def __get_node_lightning_dir(node_idx: int) -> str:
-        return os.path.join(LIGHTNING_DIR_BASE, str(node_idx))
-    
-    @staticmethod
-    def __get_node_lightning_port(node_idx: int) -> int:
-        return LIGHTNING_RPC_PORT_BASE + node_idx
-    
-    def start_lightning_node(
+    def start_lightningd_node(
         self,
-        idx: int,
         lightning_dir: str,
         binary: str,
-        port: int,
+        listen_port: int,
+        bitcoin_rpc_port: int,
         alias: str = None,
         evil: bool = False,
         silent: bool = False,
         log_level: str = None,
     ):
+        alias_flag = f"--alias={alias}" if alias else ""
         evil_flag = "--evil" if evil else ""
         silent_flag = "--silent" if silent else ""
-        alias_flag = f"--alias={alias}" if alias else ""
         log_level_flag = f"--log-level={log_level}" if log_level else ""
         
         self.__write_line(f"mkdir -p {lightning_dir}")
@@ -173,14 +192,14 @@ class LightningCommandsGenerator:
             f"{binary} "
             f"  --conf={LIGHTNING_CONF_PATH}"
             f"  --lightning-dir={lightning_dir}"
-            f"  --addr=localhost:{port}"
+            f"  --addr=localhost:{listen_port}"
             f"  --log-file=log"  # relative to lightning-dir
             f"  {alias_flag}"
             f"  {evil_flag}"
             f"  {silent_flag}"
             f"  {log_level_flag}"
             f"  --bitcoin-rpcconnect=localhost"
-            f"  --bitcoin-rpcport={BITCOIN_RPC_PORT_BASE + int(idx)}"
+            f"  --bitcoin-rpcport={bitcoin_rpc_port}"
             f"  --daemon"
         )
     
@@ -198,11 +217,11 @@ class LightningCommandsGenerator:
                 binary = LIGHTNING_BINARY_EVIL
                 log_level = "JONA"
             
-            self.start_lightning_node(
-                idx=node_idx,
-                lightning_dir=self.__get_node_lightning_dir(node_idx=node_idx),
+            self.start_lightningd_node(
+                lightning_dir=self.__get_lightning_node_dir(node_idx=node_idx),
                 binary=binary,
-                port=self.__get_node_lightning_port(node_idx=node_idx),
+                listen_port=self.__get_lightning_node_listen_port(node_idx=node_idx),
+                bitcoin_rpc_port=self.__get_bitcoin_node_rpc_port(node_idx),
                 alias=alias,
                 evil=evil,
                 silent=silent,
@@ -250,10 +269,10 @@ class LightningCommandsGenerator:
             self.__write_line(f"ID_{node_idx}=$(lcli {node_idx} getinfo | jq -r '.id')")
         
         for node_idx, info in self.topology.items():
-            for peer_id in info["peers"]:
-                peer_port = LIGHTNING_RPC_PORT_BASE + int(peer_id)
-                self.__write_line(f"lcli {node_idx} connect $ID_{peer_id} localhost:{peer_port}")
-                self.__write_line(f"lcli {node_idx} fundchannel $ID_{peer_id} {INITIAL_CHANNEL_BALANCE_SAT}")
+            for peer_idx in info["peers"]:
+                peer_port = self.__get_lightning_node_listen_port(int(peer_idx))
+                self.__write_line(f"lcli {node_idx} connect $ID_{peer_idx} localhost:{peer_port}")
+                self.__write_line(f"lcli {node_idx} fundchannel $ID_{peer_idx} {INITIAL_CHANNEL_BALANCE_SAT}")
     
     def wait_for_funding_transactions(self):
         """
@@ -306,11 +325,11 @@ class LightningCommandsGenerator:
         self.__write_line(f"lcli {node_idx} stop")
     
     def start_lightning_node_silent(self, node_idx: int):
-        self.start_lightning_node(
-            idx=node_idx,
-            lightning_dir=self.__get_node_lightning_dir(node_idx),
+        self.start_lightningd_node(
+            lightning_dir=self.__get_lightning_node_dir(node_idx),
             binary=LIGHTNING_BINARY_EVIL,
-            port=self.__get_node_lightning_port(node_idx),
+            listen_port=self.__get_lightning_node_listen_port(node_idx),
+            bitcoin_rpc_port=self.__get_bitcoin_node_rpc_port(node_idx),
             silent=True,
         )
     
