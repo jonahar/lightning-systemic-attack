@@ -1,5 +1,4 @@
 import os
-import pickle
 import time
 
 from lightning import LightningRpc, Millisatoshi  # pip3 install pylightning
@@ -9,7 +8,6 @@ from lightning_cli import (
     get_id,
     make_many_payments,
 )
-from tx_graph import TXGraph
 from utils import find_interesting_txids_in_last_t_blocks, show_num_tx_in_last_t_blocks, wait_to_route
 
 ln = os.path.expandvars("$LN")
@@ -52,11 +50,3 @@ for _ in range(20):
 
 show_num_tx_in_last_t_blocks(t=30)
 txs = find_interesting_txids_in_last_t_blocks(t=30)
-
-graph_dot = os.path.join(ln, "graphs", "tx_graph.dot")
-graph_pickle = os.path.join(ln, "graphs", "tx_graph.pickle")
-
-g = TXGraph(txs)
-g.export_to_dot(filepath=graph_dot)
-with open(graph_pickle, mode="wb") as f:
-    pickle.dump(g, f)
