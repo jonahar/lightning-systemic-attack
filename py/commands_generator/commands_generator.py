@@ -11,7 +11,7 @@ from commands_generator.lightning import LightningCommandsGenerator
 
 class CommandsGenerator:
     """
-    A LightningCommandsGenerator generates bash code to execute many lightning-related actions.
+    A CommandsGenerator generates bash code to execute many lightning-related actions.
     it support:
         - start bitcoin nodes
         - connect bitcoin nodes to a central "miner" node
@@ -19,7 +19,8 @@ class CommandsGenerator:
         - establish channels between lightning nodes
         - make lightning payments between nodes
     
-    topology structure:
+    The CommandsGenerator works according to a given topology, which is a dictionary
+    in the following structure:
     
     {
       "ID1": {
@@ -27,7 +28,7 @@ class CommandsGenerator:
         "evil": false,             // optional. defaults to false
         "silent": false,           // optional. defaults to false
         "alias": "alice"           // optional. defaults to ID
-        "client": "lnd"           // optional. defaults to c-lightning
+        "client": "c-lightning"    // optional. defaults to c-lightning
       },
       "ID2": {...},
       "ID3": {...},
@@ -36,7 +37,7 @@ class CommandsGenerator:
 
     """
     
-    def __init__(self, file: TextIO, topology: dict, bitcoin_block_max_weight):
+    def __init__(self, file: TextIO, topology: dict, bitcoin_block_max_weight: int):
         """
         :param file: file-like object
         :param topology: topology dictionary
@@ -53,7 +54,7 @@ class CommandsGenerator:
     
     def __init_clients(self) -> Dict[NodeIndexStr, LightningCommandsGenerator]:
         """
-        build LightningCommandsGenerator for each node in the topology
+        build LightningCommandsGenerator for each node in the topology.
         the concrete implementation is determined by the node's config
         """
         clients = {}
