@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+BITCOIN_CLI="bitcoin-cli -datadir=/cs/labs/avivz/projects/bitcoin -conf=bitcoin.conf "
+
+sample() {
+  date "+%Y-%m-%d %H:%M:%S"
+  echo "height=$($BITCOIN_CLI -getinfo | jq -r ".blocks")"
+  for i in 1 4 100; do
+    echo "economical:"
+    $BITCOIN_CLI estimatesmartfee ${i} ECONOMICAL
+    echo "conservative:"
+    $BITCOIN_CLI estimatesmartfee ${i} CONSERVATIVE
+  done
+}
+
+while true; do
+  sample
+  sleep 60
+done
