@@ -246,7 +246,7 @@ class CommandsGenerator:
         """
         num_channels = sum(map(lambda entry: len(entry["peers"]), self.topology.values()))
         self.__write_line(f"""
-    while [[ $(bcli 0 getmempoolinfo | jq -r ."size") != "{num_channels}" ]]; do
+    while [[ $(bcli 0 getmempoolinfo | jq -r ".size") != "{num_channels}" ]]; do
         sleep 1;
     done
     """)
