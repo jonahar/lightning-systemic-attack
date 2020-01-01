@@ -306,6 +306,11 @@ class CommandsGenerator:
         self.__maybe_info(f"stopping lightning node {node_idx}")
         self.clients[node_idx].stop()
     
+    def stop_all_lightning_nodes(self) -> None:
+        self.__maybe_info("stopping all lightning nodes")
+        for client in self.clients.values():
+            client.stop()
+    
     def start_lightning_node_silent(self, node_idx: NodeIndex):
         self.__maybe_info(f"starting lightning node {node_idx} in silent mode")
         # silent mode is only supported for the c-lightning impl
@@ -485,6 +490,7 @@ def main() -> None:
         cg.advance_blockchain(num_blocks=100, block_time_sec=5)
         cg.dump_simulation_data(dir=args.dump_data)
     
+    cg.stop_all_lightning_nodes()
     cg.info("simulation ended")
     
     # NOTE: we close outfile which may be stdout
