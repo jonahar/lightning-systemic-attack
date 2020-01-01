@@ -39,7 +39,7 @@ class CommandsGenerator:
     
     VERSION: str = "A.113"
     
-    def __init__(self, file: TextIO, topology: dict, bitcoin_block_max_weight: int):
+    def __init__(self, file: TextIO, topology: dict, bitcoin_block_max_weight: int, verbose: bool):
         """
         :param file: file-like object
         :param topology: topology dictionary
@@ -49,6 +49,7 @@ class CommandsGenerator:
         self.file = file
         self.topology = self.__sanitize_topology_keys(topology)
         self.bitcoin_block_max_weight = bitcoin_block_max_weight
+        self.verbose = verbose
         
         # each LightningCommandsGenerator should generate lightning node commands
         # according to the node's chosen implementation
@@ -164,6 +165,7 @@ class CommandsGenerator:
         )
     
     def start_bitcoin_miner(self):
+        self.__maybe_info("starting all bitcoin nodes")
         self.__start_bitcoin_node(idx=int(BITCOIN_MINER_IDX))
     
     def start_bitcoin_nodes(self):
@@ -171,6 +173,7 @@ class CommandsGenerator:
             self.__start_bitcoin_node(idx=int(idx))
     
     def wait_until_miner_is_ready(self):
+        self.__maybe_info("waiting until miner node is ready")
         self.__write_line("""
     while [[ $(bcli 0 -getinfo 2>/dev/null | jq -r ".blocks") != "0" ]]; do
         sleep 1;
@@ -181,6 +184,7 @@ class CommandsGenerator:
         """
         generate code that waits until all bitcoin nodes have reached the given height
         """
+        self.__maybe_info(f"waiting until all bitcoin nodes have reached height {height}")
         node_ids = " ".join(map(str, self.topology.keys()))
         
         self.__write_line(f"""
@@ -192,6 +196,7 @@ class CommandsGenerator:
         """)
     
     def connect_bitcoin_nodes_to_miner(self):
+        self.__maybe_info("connecting all bitcoin nodes to the miner node")
         # connect all nodes to the miner
         miner_idx = int(BITCOIN_MINER_IDX)
         miner_listen_port = self.get_bitcoin_node_listen_port(miner_idx)
@@ -207,6 +212,7 @@ class CommandsGenerator:
             )
     
     def connect_bitcoin_nodes_in_circle(self):
+        self.__maybe_info("connecting all bitcoin nodes in circle")
         all_nodes = sorted(self.topology.keys())
         num_nodes = len(all_nodes)
         for i in range(num_nodes):
@@ -219,11 +225,13 @@ class CommandsGenerator:
     
     def start_lightning_nodes(self) -> None:
         """generate code to start all lightning nodes"""
+        self.__maybe_info("starting all lightning nodes")
         for idx, info in self.topology.items():
             self.clients[idx].start()
     
     def fund_nodes(self) -> None:
         """generate code to fund nodes"""
+        self.__maybe_info("funding lightning nodes")
         # mine enough blocks to fund the nodes and to unlock coinbase coins
         self.__write_line(f"mine {100 + len(self.topology)}")
         
@@ -240,6 +248,7 @@ class CommandsGenerator:
     
     def wait_for_funds(self) -> None:
         """generate code that waits until the nodes are synced and recognize their funds"""
+        self.__maybe_info("waiting until lightning nodes are synchronized and have received their funds")
         for idx, info in self.topology.items():
             # we need to wait only for nodes that need to fund a channel
             if len(self.topology[idx]["peers"]) != 0:
@@ -247,6 +256,7 @@ class CommandsGenerator:
     
     def establish_channels(self) -> None:
         """generate code to connect peers and establish all channels"""
+        self.__maybe_info("establishing lightning channels")
         for idx, info in self.topology.items():
             for peer_idx in info["peers"]:
                 self.clients[idx].establish_channel(
@@ -259,6 +269,7 @@ class CommandsGenerator:
         generate code that waits until all funding transactions have propagated
         to the miner node's mempool
         """
+        self.__maybe_info("waiting for funding transactions to enter miner's mempool")
         num_channels = sum(map(lambda entry: len(entry["peers"]), self.topology.values()))
         self.__write_line(f"""
     while [[ $(bcli 0 getmempoolinfo | jq -r ".size") != "{num_channels}" ]]; do
@@ -267,12 +278,17 @@ class CommandsGenerator:
     """)
     
     def wait_to_route(self, sender_idx: NodeIndex, receiver_idx: NodeIndex, amount_msat: int):
+        self.__maybe_info(f"waiting until there is a known route from {sender_idx} to {receiver_idx}")
         self.clients[sender_idx].wait_to_route(
             receiver=self.clients[receiver_idx],
             amount_msat=amount_msat,
         )
     
     def make_payments(self, sender_idx: NodeIndex, receiver_idx: NodeIndex, num_payments: int, amount_msat: int):
+        self.__maybe_info(
+            f"making {num_payments} payments "
+            f"between {sender_idx} (sender) and {receiver_idx} (receiver) with amount {amount_msat}msat"
+        )
         self.clients[sender_idx].make_payments(
             receiver=self.clients[receiver_idx],
             num_payments=num_payments,
@@ -283,12 +299,15 @@ class CommandsGenerator:
         """
         print the number of htlcs the given node has on each of its channels
         """
+        self.__maybe_info(f"number of HTLCs node {node_idx} has on each channel:")
         self.clients[node_idx].print_node_htlcs()
     
     def stop_lightning_node(self, node_idx: NodeIndex):
+        self.__maybe_info(f"stopping lightning node {node_idx}")
         self.clients[node_idx].stop()
     
     def start_lightning_node_silent(self, node_idx: NodeIndex):
+        self.__maybe_info(f"starting lightning node {node_idx} in silent mode")
         # silent mode is only supported for the c-lightning impl
         self.clients[node_idx] = ClightningCommandsGenerator(
             idx=node_idx,
@@ -301,6 +320,7 @@ class CommandsGenerator:
         self.clients[node_idx].start()
     
     def close_all_node_channels(self, node_idx: NodeIndex):
+        self.__maybe_info(f"closing all channels of node {node_idx}")
         self.clients[node_idx].close_all_channels()
     
     def __set_blockchain_height(self):
@@ -315,6 +335,10 @@ class CommandsGenerator:
         Note, this may be different than mining 'num_blocks' blocks, in case
         someone else is also mining
         """
+        self.__maybe_info(
+            f"mining: advancing blockchain by {num_blocks} blocks "
+            f"with block_time={block_time_sec}sec"
+        )
         self.__set_blockchain_height()
         self.__write_line(f"DEST_HEIGHT=$((BLOCKCHAIN_HEIGHT + {num_blocks}))")
         
@@ -333,6 +357,7 @@ class CommandsGenerator:
             - total balance of each node, that is not locked in a channel
         
         """
+        self.__maybe_info(f"dumping simulation data")
         self.__write_line(f"mkdir -p '{dir}'")
         self.__write_line(f"cd '{dir}'")
         
@@ -357,8 +382,14 @@ class CommandsGenerator:
     def mine(self, num_blocks):
         self.__write_line(f"mine {num_blocks}")
     
-    def info(self, msg):
+    def info(self, msg: str) -> None:
+        """generate command to echo the given message"""
         self.__write_line(f"echo \"{msg}\"")
+    
+    def __maybe_info(self, msg: str) -> None:
+        """same as self.info but only generate command if verbose is True"""
+        if self.verbose:
+            self.info(msg)
 
 
 def parse_args():
@@ -414,62 +445,44 @@ def main() -> None:
         file=outfile,
         topology=topology,
         bitcoin_block_max_weight=args.bitcoin_blockmaxweight,
+        verbose=True,
     )
     cg.shebang()
     cg.generated_code_comment()
-    cg.info("starting all bitcoin nodes")
     cg.start_bitcoin_nodes()
     cg.start_bitcoin_miner()
-    cg.info("waiting until miner node is ready")
     cg.wait_until_miner_is_ready()
-    cg.info("connecting bitcoin nodes to the miner node")
     cg.connect_bitcoin_nodes_to_miner()
-    cg.info("connecting all nodes in circle")
     cg.connect_bitcoin_nodes_in_circle()
     cg.mine(10)
-    cg.info("waiting until nodes are synced with miner node")
     cg.wait_until_bitcoin_nodes_synced(height=10)
-    cg.info("starting lightning nodes")
     cg.start_lightning_nodes()
     
     if args.establish_channels:
-        cg.info("funding lightning nodes")
         cg.fund_nodes()
-        cg.info("waiting until lightning nodes are synchronized and have received their funds")
         cg.wait_for_funds()
-        cg.info("establishing lightning channels")
         cg.establish_channels()
-        cg.info("waiting for funding transactions to enter miner's mempool")
         cg.wait_for_funding_transactions()
         # mine 10 blocks so the channels reach NORMAL_STATE
         cg.mine(num_blocks=10)
     
     if args.make_payments:
         sender_idx, receiver_idx, num_payments, amount_msat = args.make_payments
-        cg.info("waiting until there is a known route from sender to receiver")
         cg.wait_to_route(sender_idx, receiver_idx, amount_msat)
-        cg.info("making payments")
         cg.make_payments(*args.make_payments)
-        cg.info(f"number of HTLCs node {receiver_idx} has on each channel:")
         cg.print_node_htlcs(node_idx=receiver_idx)
     
     if args.steal_attack:
         sender_idx, receiver_idx, num_blocks = args.steal_attack
-        cg.info(f"stopping lightning node {sender_idx}")
         cg.stop_lightning_node(sender_idx)
-        cg.info(f"starting lightning node {sender_idx} in silent mode")
         cg.start_lightning_node_silent(sender_idx)
-        cg.info(f"closing all channels of node {receiver_idx}")
         cg.close_all_node_channels(receiver_idx)
-        cg.info(f"slowly mining {num_blocks} blocks")
         cg.advance_blockchain(num_blocks=num_blocks, block_time_sec=args.block_time)
     
     if args.dump_data:
         # before dumping we advance the blockchain by 100 blocks in case some
         # channels are still waiting to forget a peer
-        cg.info(f"quickly mining 100 blocks")
         cg.advance_blockchain(num_blocks=100, block_time_sec=5)
-        cg.info(f"dumping simulation data")
         cg.dump_simulation_data(dir=args.dump_data)
     
     cg.info("simulation ended")
