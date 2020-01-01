@@ -71,7 +71,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
     
     def wait_for_funds(self) -> None:
         self._write_line(f"""
-    while [[ $(lcli {self.idx} listfunds | jq -r ."outputs") == "[]" ]]; do
+    while [[ $(lcli {self.idx} listfunds | jq -r ".outputs") == "[]" ]]; do
         sleep 1
     done
     """)
