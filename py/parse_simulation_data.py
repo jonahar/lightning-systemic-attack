@@ -1,14 +1,15 @@
+import itertools
 import json
 import os
 import re
 from functools import reduce
-from typing import Callable, Dict, Iterable, List, Mapping, Set
+from typing import Callable, Dict, Iterable, Set
 
 import networkx as nx
 from networkx.algorithms.traversal.breadth_first_search import bfs_edges
 from networkx.classes.digraph import DiGraph
 
-from datatypes import BTC, Block, BlockHash, BlockHeight, TX, TXID
+from datatypes import BTC, Block, BlockHash, TX, TXID
 from utils import btc_to_satoshi
 
 
@@ -19,12 +20,8 @@ class TransactionDB:
         self.blocks: Dict[BlockHash, Block] = self.__load_blocks()
         self.txs: Dict[TXID, TX] = self.__load_txs()
         self.__add_fee_to_tx_data()
+        self.__add_height_to_tx_data()
         self.__txs_graph: DiGraph = self.__build_txs_graph()
-        self.__height_to_txids: Dict[BlockHeight, List[TXID]] = self.__build_height_to_txids_map()
-    
-    @property
-    def height_to_txids(self) -> Dict[BlockHeight, List[TXID]]:
-        return self.__height_to_txids
     
     @property
     def full_txs_graph(self) -> DiGraph:
@@ -71,14 +68,21 @@ class TransactionDB:
             for entry in self.txs[txid]["vout"]
         )
     
-    def get_tx_fee(self, txid: TXID) -> BTC:
+    def __get_tx_fee(self, txid: TXID) -> BTC:
         return self.get_tx_incoming_value(txid) - self.get_tx_outgoing_value(txid)
     
     def __add_fee_to_tx_data(self) -> None:
+        """add a 'fee' attribute for each tx"""
         for txid, tx in self.txs.items():
             if "coinbase" in tx["vin"][0]:
                 continue  # don't include fee for coinbase transaction
-            tx["fee"] = self.get_tx_fee(txid)
+            tx["fee"] = self.__get_tx_fee(txid)
+    
+    def __add_height_to_tx_data(self) -> None:
+        """add a 'height' attribute for each tx"""
+        for block in self.blocks.values():
+            for txid in block["tx"]:
+                self.txs[txid]["height"] = block["height"]
     
     def __build_txs_graph(self) -> DiGraph:
         """
@@ -116,30 +120,25 @@ class TransactionDB:
         )
         all_nodes = children.union(sources)
         return self.__txs_graph.subgraph(nodes=all_nodes)
-    
-    def __build_height_to_txids_map(self) -> Dict[BlockHeight, List[TXID]]:
-        """
-        return a mapping from block height to the transactions in this block.
-        the returned mapping includes only blocks with more than 1
-        transaction (i.e. at least one non-coinbase transaction)
-        """
-        return {
-            block["height"]: block["tx"]
-            for block in self.blocks.values()
-            if len(block["tx"]) > 1
-        }
 
 
 def export_tx_graph_to_dot(
     g: DiGraph,
     dotfile: str,
-    height_to_txids: Mapping[BlockHeight, Iterable[TXID]],
     txid_to_label: Callable[[TXID], str],
 ) -> None:
     # https://www.graphviz.org/Documentation/TSE93.pdf
     with open(dotfile, mode="w") as f:
         f.write("digraph shells {\n")
         f.write("node [fontsize=20, shape = box];\n")
+        
+        txid_to_height = lambda txid: g.nodes[txid]["tx"]["height"]
+        height_to_txids = {
+            k: set(v)
+            for k, v in itertools.groupby(
+                sorted(g.nodes, key=txid_to_height), key=txid_to_height
+            )
+        }
         
         # mark nodes that should be in the same level
         txid_to_wrapped_label = lambda txid: f"\"{txid_to_label(txid)}\""
@@ -198,16 +197,16 @@ outfile = os.path.join(ln, "simulations/simulation.out")
 
 db = TransactionDB(datadir=datadir)
 funding_txids = extract_funding_txids(outfile)
-print_commitments_sizes(db, funding_txids)
 
 txs_graph = db.transactions_sub_graph(sources=funding_txids)
 
 dotfile = os.path.join(ln, "txs_graph.dot")
-
-txid_to_label = lambda txid: f"id={txid[-4:]}; fee={btc_to_satoshi(db.get_tx_fee(txid))}"
+txid_to_label_and_fee = (
+    lambda txid: f"id={txid[-4:]}; fee={btc_to_satoshi(txs_graph.nodes[txid]['tx']['fee'])}"
+)
+txid_to_label = lambda txid: txid[-4:]
 export_tx_graph_to_dot(
     g=txs_graph,
     dotfile=dotfile,
-    height_to_txids=db.height_to_txids,
     txid_to_label=txid_to_label,
 )
