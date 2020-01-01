@@ -1,12 +1,12 @@
 import argparse
 import json
 import sys
-from typing import Dict, TextIO
+from typing import Any, Dict, TextIO
 
 from commands_generator.clightning import ClightningCommandsGenerator
 from commands_generator.config_constants import *
 from commands_generator.lightning import LightningCommandsGenerator
-from datatypes import NodeIndex, NodeIndexStr
+from datatypes import NodeIndex
 
 
 class CommandsGenerator:
@@ -47,34 +47,49 @@ class CommandsGenerator:
         if BITCOIN_MINER_IDX in topology:
             raise ValueError("Invalid id {BITCOIN_MINER_ID}: reserved for bitcoin miner node")
         self.file = file
-        self.topology = topology
+        self.topology = self.__sanitize_topology_keys(topology)
         self.bitcoin_block_max_weight = bitcoin_block_max_weight
         
         # each LightningCommandsGenerator should generate lightning node commands
         # according to the node's chosen implementation
-        self.clients: Dict[NodeIndexStr, LightningCommandsGenerator] = self.__init_clients()
+        self.clients: Dict[NodeIndex, LightningCommandsGenerator] = self.__init_clients()
     
-    def __init_clients(self) -> Dict[NodeIndexStr, LightningCommandsGenerator]:
+    @staticmethod
+    def __sanitize_topology_keys(topology: dict) -> Dict[NodeIndex, Any]:
+        """
+        verify each topology key represents an index (int) and return a topology
+        in which all keys are ints
+        """
+        try:
+            sanitized_topology = {}
+            for k, v in topology.items():
+                sanitized_topology[int(k)] = v
+                v["peers"] = [int(p) for p in v["peers"]]
+            return sanitized_topology
+        
+        except ValueError:
+            raise ValueError("Failed to sanitize topology. Is there a non-integer key?")
+    
+    def __init_clients(self) -> Dict[NodeIndex, LightningCommandsGenerator]:
         """
         build LightningCommandsGenerator for each node in the topology.
         the concrete implementation is determined by the node's config
         """
         clients = {}
         for idx, info in self.topology.items():
-            node_idx = int(idx)
-            alias = info.get("alias", idx)
+            alias = info.get("alias", str(idx))
             client = info.get("client", "c-lightning")
-            lightning_dir = self.get_lightning_node_dir(node_idx=node_idx)
+            lightning_dir = self.get_lightning_node_dir(node_idx=idx)
             
             if client == "c-lightning":
                 evil = info.get("evil", False)
                 silent = info.get("silent", False)
                 clients[idx] = ClightningCommandsGenerator(
-                    idx=node_idx,
+                    idx=idx,
                     file=self.file,
                     lightning_dir=lightning_dir,
-                    listen_port=self.get_lightning_node_listen_port(node_idx),
-                    bitcoin_rpc_port=self.__get_bitcoin_node_rpc_port(node_idx),
+                    listen_port=self.get_lightning_node_listen_port(idx),
+                    bitcoin_rpc_port=self.get_bitcoin_node_rpc_port(idx),
                     alias=alias,
                     evil=evil,
                     silent=silent,
@@ -85,15 +100,15 @@ class CommandsGenerator:
         return clients
     
     @staticmethod
-    def get_lightning_node_dir(node_idx: int) -> str:
+    def get_lightning_node_dir(node_idx: NodeIndex) -> str:
         return os.path.join(LIGHTNING_DIR_BASE, str(node_idx))
     
     @staticmethod
-    def get_lightning_node_rpc_port(node_idx: int) -> int:
+    def get_lightning_node_rpc_port(node_idx: NodeIndex) -> int:
         return LIGHTNING_RPC_PORT_BASE + node_idx
     
     @staticmethod
-    def get_lightning_node_listen_port(node_idx: int) -> int:
+    def get_lightning_node_listen_port(node_idx: NodeIndex) -> int:
         return LIGHTNING_LISTEN_PORT_BASE + node_idx
     
     def __write_line(self, line: str) -> None:
@@ -101,23 +116,23 @@ class CommandsGenerator:
         self.file.write("\n")
     
     @staticmethod
-    def __get_bitcoin_node_dir(node_idx: int) -> str:
+    def get_bitcoin_node_dir(node_idx: NodeIndex) -> str:
         return os.path.join(BITCOIN_DIR_BASE, str(node_idx))
     
     @staticmethod
-    def __get_bitcoin_node_rpc_port(node_idx: int) -> int:
+    def get_bitcoin_node_rpc_port(node_idx: NodeIndex) -> int:
         return BITCOIN_RPC_PORT_BASE + node_idx
     
     @staticmethod
-    def __get_bitcoin_node_listen_port(node_idx: int) -> int:
+    def get_bitcoin_node_listen_port(node_idx: NodeIndex) -> int:
         return BITCOIN_LISTEN_PORT_BASE + node_idx
     
     @staticmethod
-    def __get_bitcoin_node_zmqpubrawblock_port(node_idx: int) -> int:
+    def get_bitcoin_node_zmqpubrawblock_port(node_idx: NodeIndex) -> int:
         return ZMQPUBRAWBLOCK_PORT_BASE + node_idx
     
     @staticmethod
-    def __get_bitcoin_node_zmqpubrawtx_port(node_idx: int) -> int:
+    def get_bitcoin_node_zmqpubrawtx_port(node_idx: NodeIndex) -> int:
         return ZMQPUBRAWTX_PORT_BASE + node_idx
     
     def shebang(self) -> None:
@@ -132,20 +147,20 @@ class CommandsGenerator:
     def wait(self, seconds: int):
         self.__write_line(f"sleep {seconds}")
     
-    def __start_bitcoin_node(self, idx: int):
-        datadir = self.__get_bitcoin_node_dir(idx)
+    def __start_bitcoin_node(self, idx: NodeIndex):
+        datadir = self.get_bitcoin_node_dir(idx)
         
         self.__write_line(f"mkdir -p {datadir}")
         self.__write_line(
             f"bitcoind"
             f"  -conf={BITCOIN_CONF_PATH}"
-            f"  -port={self.__get_bitcoin_node_listen_port(idx)}"
-            f"  -rpcport={self.__get_bitcoin_node_rpc_port(idx)}"
+            f"  -port={self.get_bitcoin_node_listen_port(idx)}"
+            f"  -rpcport={self.get_bitcoin_node_rpc_port(idx)}"
             f"  -datadir={datadir}"
             f"  -daemon"
             f"  -blockmaxweight={self.bitcoin_block_max_weight}"
-            f"  -zmqpubrawblock=tcp://127.0.0.1:{self.__get_bitcoin_node_zmqpubrawblock_port(idx)}"
-            f"  -zmqpubrawtx=tcp://127.0.0.1:{self.__get_bitcoin_node_zmqpubrawtx_port(idx)}"
+            f"  -zmqpubrawblock=tcp://127.0.0.1:{self.get_bitcoin_node_zmqpubrawblock_port(idx)}"
+            f"  -zmqpubrawtx=tcp://127.0.0.1:{self.get_bitcoin_node_zmqpubrawtx_port(idx)}"
         )
     
     def start_bitcoin_miner(self):
@@ -166,7 +181,7 @@ class CommandsGenerator:
         """
         generate code that waits until all bitcoin nodes have reached the given height
         """
-        node_ids = " ".join(self.topology.keys())
+        node_ids = " ".join(map(str, self.topology.keys()))
         
         self.__write_line(f"""
     for i in {node_ids}; do
@@ -179,9 +194,9 @@ class CommandsGenerator:
     def connect_bitcoin_nodes_to_miner(self):
         # connect all nodes to the miner
         miner_idx = int(BITCOIN_MINER_IDX)
-        miner_listen_port = self.__get_bitcoin_node_listen_port(miner_idx)
+        miner_listen_port = self.get_bitcoin_node_listen_port(miner_idx)
         for node_idx in self.topology.keys():
-            node_listen_port = self.__get_bitcoin_node_listen_port(int(node_idx))
+            node_listen_port = self.get_bitcoin_node_listen_port(int(node_idx))
             # miner adds node
             self.__write_line(
                 f"bcli {miner_idx} addnode 127.0.0.1:{node_listen_port} add"
@@ -197,7 +212,7 @@ class CommandsGenerator:
         for i in range(num_nodes):
             peer_1_idx = int(all_nodes[i % num_nodes])
             peer_2_idx = int(all_nodes[(i + 1) % num_nodes])
-            peer_2_listen_port = self.__get_bitcoin_node_listen_port(peer_2_idx)
+            peer_2_listen_port = self.get_bitcoin_node_listen_port(peer_2_idx)
             self.__write_line(
                 f"bcli {peer_1_idx} addnode 127.0.0.1:{peer_2_listen_port} add"
             )
@@ -251,42 +266,42 @@ class CommandsGenerator:
     done
     """)
     
-    def wait_to_route(self, sender_idx: int, receiver_idx: int, amount_msat: int):
-        self.clients[str(sender_idx)].wait_to_route(
-            receiver=self.clients[str(receiver_idx)],
+    def wait_to_route(self, sender_idx: NodeIndex, receiver_idx: NodeIndex, amount_msat: int):
+        self.clients[sender_idx].wait_to_route(
+            receiver=self.clients[receiver_idx],
             amount_msat=amount_msat,
         )
     
-    def make_payments(self, sender_idx: int, receiver_idx: int, num_payments: int, amount_msat: int):
-        self.clients[str(sender_idx)].make_payments(
-            receiver=self.clients[str(receiver_idx)],
+    def make_payments(self, sender_idx: NodeIndex, receiver_idx: NodeIndex, num_payments: int, amount_msat: int):
+        self.clients[sender_idx].make_payments(
+            receiver=self.clients[receiver_idx],
             num_payments=num_payments,
             amount_msat=amount_msat,
         )
     
-    def print_node_htlcs(self, node_idx: int):
+    def print_node_htlcs(self, node_idx: NodeIndex):
         """
         print the number of htlcs the given node has on each of its channels
         """
-        self.clients[str(node_idx)].print_node_htlcs()
+        self.clients[node_idx].print_node_htlcs()
     
-    def stop_lightning_node(self, node_idx: int):
-        self.clients[str(node_idx)].stop()
+    def stop_lightning_node(self, node_idx: NodeIndex):
+        self.clients[node_idx].stop()
     
-    def start_lightning_node_silent(self, node_idx: int):
+    def start_lightning_node_silent(self, node_idx: NodeIndex):
         # silent mode is only supported for the c-lightning impl
         self.clients[node_idx] = ClightningCommandsGenerator(
             idx=node_idx,
             file=self.file,
             lightning_dir=self.get_lightning_node_dir(node_idx),
             listen_port=self.get_lightning_node_listen_port(node_idx),
-            bitcoin_rpc_port=self.__get_bitcoin_node_rpc_port(node_idx),
+            bitcoin_rpc_port=self.get_bitcoin_node_rpc_port(node_idx),
             silent=True,
         )
         self.clients[node_idx].start()
     
     def close_all_node_channels(self, node_idx: NodeIndex):
-        self.clients[str(node_idx)].close_all_channels()
+        self.clients[node_idx].close_all_channels()
     
     def __set_blockchain_height(self):
         """set a bash variable BLOCKCHAIN_HEIGHT with the current height"""
