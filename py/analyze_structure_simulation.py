@@ -46,24 +46,27 @@ cg.wait_to_route(2, 3, 10000000)
 # create output for node 2
 cg.make_payments(sender_idx=1, receiver_idx=2, num_payments=1, amount_msat=Millisatoshi("0.042btc").millisatoshis)
 # create HTLC-in
-cg.make_payments(sender_idx=1, receiver_idx=4, num_payments=2, amount_msat=Millisatoshi("0.001btc").millisatoshis)
+cg.make_payments(sender_idx=1, receiver_idx=4, num_payments=2, amount_msat=Millisatoshi("0.002btc").millisatoshis)
 # create HTLC-out
-cg.make_payments(sender_idx=2, receiver_idx=3, num_payments=2, amount_msat=Millisatoshi("0.002btc").millisatoshis)
+cg.make_payments(sender_idx=2, receiver_idx=3, num_payments=2, amount_msat=Millisatoshi("0.001btc").millisatoshis)
 cg.wait(seconds=2)
 cg.stop_lightning_node(1)
 cg.close_all_node_channels(4)
 cg.advance_blockchain(num_blocks=40, block_time_sec=60)
-cg.advance_blockchain(num_blocks=100, block_time_sec=0)
-cg.advance_blockchain(num_blocks=2, block_time_sec=30)
+cg.clients[1].start()
+cg.advance_blockchain(num_blocks=120, block_time_sec=1)
 # we shouldn't call __write_line directly, but....
 cg._CommandsGenerator__write_line(
     """
+    ADDR_1=$(lcli 1 newaddr | jq -r ".address")
+    lcli 1 withdraw $ADDR_1 all
     ADDR_2=$(lcli 2 newaddr | jq -r ".address")
     lcli 2 withdraw $ADDR_2 all
     """
 )
 cg.mine(1)
 cg.dump_simulation_data(dir=dumpdir)
+cg.stop_all_lightning_nodes()
 cg.info("Done")
 
 outfile.close()
