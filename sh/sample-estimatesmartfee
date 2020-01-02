@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 
 BITCOIN_CLI="bitcoin-cli -datadir=/cs/labs/avivz/projects/bitcoin -conf=bitcoin.conf "
+SAMPLES_DIR="$LN/estimatesmartfee-samples"
+mkdir -p $SAMPLES_DIR
+cd $SAMPLES_DIR
 
 sample() {
-  date "+%Y-%m-%d %H:%M:%S"
-  echo "height=$($BITCOIN_CLI -getinfo | jq -r ".blocks")"
-  for i in 1 4 100; do
-    echo "economical:"
-    $BITCOIN_CLI estimatesmartfee ${i} ECONOMICAL
-    echo "conservative:"
-    $BITCOIN_CLI estimatesmartfee ${i} CONSERVATIVE
+  for n in 1 4 100; do
+    for mode in ECONOMICAL CONSERVATIVE; do
+      outfile="estimates-blocks=${n},mode=${mode}"
+      printf '%(%s)T:' >>${outfile} # current unix time and the ':' char
+      $BITCOIN_CLI estimatesmartfee ${n} ${mode} | jq -r ".feerate" >>${outfile}
+    done
   done
 }
 
