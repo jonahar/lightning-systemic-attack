@@ -490,8 +490,7 @@ def main() -> None:
         cg.advance_blockchain(num_blocks=100, block_time_sec=5)
         cg.dump_simulation_data(dir=args.dump_data)
     
-    cg.stop_all_lightning_nodes()
-    cg.info("simulation ended")
+    cg.info("Done")
     
     # NOTE: we close outfile which may be stdout
     outfile.close()
