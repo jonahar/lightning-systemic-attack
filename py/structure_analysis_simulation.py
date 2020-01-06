@@ -75,7 +75,8 @@ cg._CommandsGenerator__write_line(
     lcli 2 withdraw $ADDR_2 all
     """
 )
-cg.mine(1)
+# mine the above transactions but give them enough time to propagate to the miner
+cg.advance_blockchain(num_blocks=2, block_time_sec=30)
 cg.dump_simulation_data(dir=dumpdir)
 cg.stop_all_lightning_nodes()
 cg.info("Done")
