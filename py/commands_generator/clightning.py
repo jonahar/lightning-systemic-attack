@@ -36,16 +36,12 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
     def start(self) -> None:
         self._write_line(f"mkdir -p {self.lightning_dir}")
         
-        binary = CLIGHTNING_BINARY
-        log_level = ""
-        if self.evil or self.silent:
-            binary = CLIGHTNING_BINARY_EVIL
-            log_level = "JONA"
+        binary = CLIGHTNING_BINARY_EVIL if self.evil or self.silent else CLIGHTNING_BINARY
         
         alias_flag = f"--alias={self.alias}" if self.alias else ""
         evil_flag = "--evil" if self.evil else ""
         silent_flag = "--silent" if self.silent else ""
-        log_level_flag = f"--log-level={log_level}" if log_level else ""
+        log_level_flag = f"--log-level=DEBUG"
         
         self._write_line(
             f"{binary} "
