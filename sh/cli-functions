@@ -59,3 +59,8 @@ stat(){
     done
 }
 export -f stat
+
+listpeers(){
+    lcli $i listpeers | less
+}
+export -f listpeers
