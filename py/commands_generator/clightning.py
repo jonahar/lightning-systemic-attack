@@ -6,8 +6,10 @@ from commands_generator.config_constants import (
     CLIGHTNING_CONF_PATH,
     INITIAL_CHANNEL_BALANCE_SAT,
 )
-from datatypes import NodeIndex
 from commands_generator.lightning import LightningCommandsGenerator
+from datatypes import NodeIndex
+
+CLOSE_CHANNEL_TIMEOUT_SEC = 60
 
 
 class ClightningCommandsGenerator(LightningCommandsGenerator):
@@ -126,7 +128,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         )
         self._write_line(f"""
     for id in $PEER_IDS; do
-        lcli {self.idx} close $id
+        lcli {self.idx} close $id {CLOSE_CHANNEL_TIMEOUT_SEC}
     done
         """)
     
