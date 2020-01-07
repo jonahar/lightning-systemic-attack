@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
-BITCOIN_CLI="bitcoin-cli -datadir=/cs/labs/avivz/projects/bitcoin -conf=bitcoin.conf "
-SAMPLES_DIR="$LN/estimatesmartfee-samples"
+BITCOIN_CLI="/cs/labs/avivz/jonahar/bitcoin-datadir/bitcoin-cli"
+SAMPLES_DIR="$LN/fee-statistics"
 mkdir -p $SAMPLES_DIR
 cd $SAMPLES_DIR
 
 sample() {
   for n in 1 4 100; do
     for mode in ECONOMICAL CONSERVATIVE; do
-      outfile="fee-estimations_blocks=${n}_mode=${mode}"
-      printf '%(%s)T:' >>${outfile} # current unix time and the ':' char
+      outfile="estimatesmartfee_blocks=${n}_mode=${mode}"
+      printf '%(%s)T,' >>${outfile} # current unix time and comma separator
       $BITCOIN_CLI estimatesmartfee ${n} ${mode} | jq -r ".feerate" >>${outfile}
     done
   done
