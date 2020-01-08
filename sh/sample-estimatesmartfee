@@ -15,7 +15,9 @@ sample() {
   done
 }
 
-while true; do
+# 1 week ~1000 blocks
+# 1000 blocks * 10min/block = 10000min
+for _ in {1..10000}; do
   sample
   sleep 60
 done
