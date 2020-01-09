@@ -67,8 +67,11 @@ class LightningCommandsGenerator(ABC):
     ) -> None:
         """
         generate code to open a channel with another node.
-        `peer_id_bash_variable` is the name of a bash variable that contains the id
-        of the peer
+        
+        Args:
+            peer: a LightningCommandsGenerator of the peer we want to connect to.
+                  may be useful to generate peer identifying information (id, etc.)
+            peer_listen_port: the port on which the peer is listening
         """
         pass
     
@@ -80,7 +83,12 @@ class LightningCommandsGenerator(ABC):
     ) -> None:
         """
         generate code that waits until there is a known route from this node to
-        the node whose id is given
+        another node
+        
+        Args:
+            receiver: a LightningCommandsGenerator of the node we are looking a route to
+            amount_msat: the amount we expect the route to have (lightning find routes
+                         for specific amounts)
         """
         pass
     
@@ -100,8 +108,12 @@ class LightningCommandsGenerator(ABC):
         amount_msat: int,
     ) -> None:
         """
-        generate code that makes `num_payments` payments from this node to the receiver
-        with the given amount
+        generate code that makes payments from this node to another
+        
+        Args:
+            receiver: a LightningCommandsGenerator of the nodes receiving the payments
+            num_payments: number of payments to make
+            amount_msat: the amount in millisatoshi for each of the payments
         """
         pass
     
