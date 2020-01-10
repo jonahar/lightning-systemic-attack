@@ -134,7 +134,14 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         receiver: LightningCommandsGenerator,
         amount_msat: int,
     ) -> None:
-        raise NotImplemented
+        amount_sat = int(amount_msat * (10 ** -3))
+        receiver_id_bash_var = f"ID_{receiver.idx}"
+        receiver.set_id(receiver_id_bash_var)
+        self._write_line(f"""
+    while [[ $({self.__lncli_cmd_prefix()} queryroutes --dest ${{{receiver_id_bash_var}}} --amt {amount_sat} 2>/dev/null | jq -r ".routes") == "" ]]; do
+        sleep 1
+    done
+    """)
     
     def create_invoice(self, payment_hash_bash_var, amount_msat: int) -> None:
         raise NotImplemented
