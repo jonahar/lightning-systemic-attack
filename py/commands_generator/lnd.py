@@ -34,7 +34,7 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         self.zmqpubrawtx_port = zmqpubrawtx_port
         self.alias = alias
     
-    def __get_lncli_command_prefix(self) -> str:
+    def __lncli_cmd_prefix(self) -> str:
         """
         return a prefix on an lncli command. that includes the lncli executable
         """
@@ -54,7 +54,7 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         added by this method
         """
         self._write_line(
-            self.__get_lncli_command_prefix() + " " + command
+            self.__lncli_cmd_prefix() + " " + command
         )
     
     def start(self) -> None:
@@ -89,21 +89,32 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         # It also fails to read input directly from file, as it expects a terminal input.
         # That's why we are using `script`
         self._write_line(
-            f"script -q -c \"{self.__get_lncli_command_prefix()} create\" "
+            f"script -q -c \"{self.__lncli_cmd_prefix()} create\" "
             f" <<< \"\"\"00000000\n00000000\nn\n\n\"\"\" | tail -n1"
         )
+        
+        # give the node another moment to be ready to accept wallet requests
+        self._write_line("sleep 1")
     
     def stop(self) -> None:
-        raise NotImplemented
+        self.__write_lncli_command("stop")
     
     def set_address(self, bash_var: str) -> None:
-        raise NotImplemented
+        self._write_line(
+            f"{bash_var}=$({self.__lncli_cmd_prefix()} newaddress p2wkh | jq -r '.address')"
+        )
     
     def set_id(self, bash_var: str) -> None:
-        raise NotImplemented
+        self._write_line(
+            f"{bash_var}=$({self.__lncli_cmd_prefix()} getinfo | jq -r '.identity_pubkey')"
+        )
     
     def wait_for_funds(self) -> None:
-        raise NotImplemented
+        self._write_line(f"""
+    while [[ $({self.__lncli_cmd_prefix()} walletbalance | jq -r ".confirmed_balance") == 0 ]]; do
+        sleep 1
+    done
+    """)
     
     def establish_channel(
         self,
