@@ -99,6 +99,7 @@ class CommandsGenerator:
             bitcoin_dir=self.get_bitcoin_node_dir(node_idx),
             listen_port=self.get_lightning_node_listen_port(node_idx),
             rpc_port=self.get_lightning_node_rpc_port(node_idx),
+            rest_port=self.get_lightning_node_rest_port(node_idx),
             bitcoin_rpc_port=self.get_bitcoin_node_rpc_port(node_idx),
             zmqpubrawblock_port=self.get_bitcoin_node_zmqpubrawblock_port(node_idx),
             zmqpubrawtx_port=self.get_bitcoin_node_zmqpubrawtx_port(node_idx),
@@ -129,6 +130,10 @@ class CommandsGenerator:
     @staticmethod
     def get_lightning_node_rpc_port(node_idx: NodeIndex) -> int:
         return LIGHTNING_RPC_PORT_BASE + node_idx
+
+    @staticmethod
+    def get_lightning_node_rest_port(node_idx: NodeIndex) -> int:
+        return LIGHTNING_REST_PORT_BASE + node_idx
     
     @staticmethod
     def get_lightning_node_listen_port(node_idx: NodeIndex) -> int:
