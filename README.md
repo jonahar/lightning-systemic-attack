@@ -34,3 +34,13 @@ using the `commands_generator`.
 make payments between nodes, execute the attack, dump simulation data and more. Its purpose 
 is the automate the process of setting up the environment and to easily and quickly simulate
 our attacks.
+
+
+## Nodes version
+The latest versions that were tested and work with our code:
+
+| Implementation| Version  |
+|---------------|----------|
+| Bitcoin Core  | 0.19.0.1 |
+| c-lightning   | 0.8.0    |
+| lnd           | 0.8.2    |
