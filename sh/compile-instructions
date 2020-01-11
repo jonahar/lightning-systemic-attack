@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-ROOT_DIR=$LAB # this MUST be an absolute path
+# the directory in which we put all nodes source code. MUST be an absolute path
+ROOT_DIR="${HOME}/nodes"
 cd "${ROOT_DIR}"
-
 
 # Download and compile Berkeley DB (bitcoin-core dependency)
 mkdir bdb
@@ -19,10 +19,8 @@ cd build_unix
 make install
 cd "${ROOT_DIR}"
 
-
 # make sure libzmq is installed. required for bitcoind to work with lnd
 sudo apt install libzmq3-dev
-
 
 # download and compile bitcoin-core
 git clone https://github.com/bitcoin/bitcoin.git
@@ -32,7 +30,6 @@ git checkout v0.19.0.1 # select the wanted version
 ./configure CPPFLAGS="-I${BDB_PREFIX}/include/ -O2" LDFLAGS="-L${BDB_PREFIX}/lib/" --with-zmq --enable-zmq
 make
 cd "${ROOT_DIR}"
-
 
 # download and compile c-lightning
 git clone https://github.com/ElementsProject/lightning.git

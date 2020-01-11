@@ -1,6 +1,11 @@
 from typing import TextIO
 
-from commands_generator.config_constants import INITIAL_CHANNEL_BALANCE_SAT, LND_BINARY, LND_CONF_PATH
+from commands_generator.config_constants import (
+    INITIAL_CHANNEL_BALANCE_SAT,
+    LND_BINARY,
+    LND_CLI_BINARY,
+    LND_CONF_PATH,
+)
 from commands_generator.lightning import LightningCommandsGenerator
 from datatypes import NodeIndex
 
@@ -39,7 +44,7 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         return a prefix on an lncli command. that includes the lncli executable
         """
         return (
-            f"$LAB/lnd/lncli"
+            f"{LND_CLI_BINARY}"
             f"  --rpcserver localhost:{self.rpc_port}"
             f"  --lnddir {self.lightning_dir}"
             f"  --no-macaroons"

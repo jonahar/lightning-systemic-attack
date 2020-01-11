@@ -1,7 +1,7 @@
 import os
 
-LAB = os.path.expandvars("$LAB")
 LN = os.path.expandvars("$LN")
+BIN = os.path.join(LN, "bin")
 
 LIGHTNING_DIR_BASE = os.path.join(LN, "lightning-dirs")
 BITCOIN_DIR_BASE = os.path.join(LN, "bitcoin-dirs")
@@ -10,9 +10,10 @@ CLIGHTNING_CONF_PATH = os.path.join(LN, "conf/clightning.conf")
 LND_CONF_PATH = os.path.join(LN, "conf/lnd.conf")
 BITCOIN_CONF_PATH = os.path.join(LN, "conf/bitcoin.conf")
 
-CLIGHTNING_BINARY = os.path.join(LAB, "lightning/lightningd/lightningd")
-CLIGHTNING_BINARY_EVIL = os.path.join(LAB, "lightning-evil/lightningd/lightningd")
-LND_BINARY = os.path.join(LAB, "lnd/lnd")
+CLIGHTNING_BINARY = os.path.join(BIN, "lightningd")
+CLIGHTNING_BINARY_EVIL = os.path.join(BIN, "lightningd-evil")
+LND_BINARY = os.path.join(BIN, "lnd")
+LND_CLI_BINARY = os.path.join(BIN, "lncli")
 
 LIGHTNING_LISTEN_PORT_BASE = 12000
 LIGHTNING_RPC_PORT_BASE = 10000

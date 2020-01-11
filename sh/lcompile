@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # lcompile ~ lightning-compile
 
-cd $LAB/lightning-evil
+cd "${HOME}/nodes/lightning-evil"
 make -j6
 echo "Done compiling"

@@ -1,34 +1,38 @@
 # LN
 
-This repo contains a bunch of scripts for interacting with bitcoin and lightning nodes.
+This repo contains code for interacting with bitcoin and lightning nodes.
+It was created to support a proposed attack on Bitcoin's Lightning Network.
 
+
+## Project Structure
 The tools in this repo assume the following directory structure:
 
 ```
-lab
-├── bitcoin
-│   ├── ...
-│   └── ...
-├── lightning
-│   ├── ...
-│   └── ...
-├── lightning-evil (a modified impl of c-lightning)
-│   ├── ...
-│   └── ...
-└── ln (this repo)
-    ├── conf
-    ├── py
-    ├── sh
-    └── topologies
+ln
+├── bin
+│   ├── bitcoin-cli
+│   ├── bitcoind
+│   ├── lightning-cli
+│   ├── lightningd
+│   ├── lightningd-evil (a modified impl of c-lightning)
+│   ├── lncli
+│   └── lnd
+├── conf (bitcoin/lightning conf files)
+├── py (python code)
+├── sh (bash scripts)
+└── topologies (useful topology files. see commands_generator for more info)
 ```
 
-The paths of `lab` and `ln` should be set in the variables `LAB` and `LN` respectively. 
-`LN/sh` should be added to `PATH`.
+Before starting you should set the following things:
+1. The full path of the root dir `ln` is set in the bash variable named `LN`
+2. `LN/bin` and `LN/sh` are added to `PATH`
+3. `LN/bin` contains the executables (or links to them) as specified in the tree above
+
 
 ## Where to start
 Two main interesting entry points are `setup-env` and `commands_generator.py`.  
-`setup-env` is good for starting an interactive session - it starts all bitcoin/lightning nodes
-and create channels, so we can start sending commands. It generates all the required code
+`setup-env` is good for starting an interactive session - it starts bitcoin+lightning nodes
+and create channels, so we can quickly start interacting with the nodes. It generates all the required code
 using the `commands_generator`.  
 `commands_generator` can generate bash commands to start nodes, open channels, 
 make payments between nodes, execute the attack, dump simulation data and more. Its purpose 
