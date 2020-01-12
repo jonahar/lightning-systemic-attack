@@ -166,4 +166,7 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         raise NotImplemented
     
     def dump_balance(self, filepath: str) -> None:
-        raise NotImplemented
+        self._write_line(f"""printf "node {self.idx} balance: " >> {filepath}""")
+        self._write_line(
+            f"""{self.__lncli_cmd_prefix()} walletbalance | jq -r ".total_balance" >> {filepath}"""
+        )
