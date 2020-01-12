@@ -64,6 +64,8 @@ def get_F_t_n(
         
         # find the n minimal timestamps that are greater than t
         future_timestamps = blocks_timestamps[np.where(blocks_timestamps > t)]
+        if len(future_timestamps) == 0:
+            return -1  # we don't have data for blocks with greater timestamp
         n = min(n, len(future_timestamps))
         timestamps_to_consider = np.partition(future_timestamps, n - 1)[:n]
         return min([
@@ -110,7 +112,7 @@ def test_F_t_n() -> None:
     assert F(171, 10) == 1
 
 
-def gen_minfeerates_from_F_t_n(
+def gen_minfeerates_plot_data(
     F: Callable[[TIMESTAMP, int], FEERATE],
     n: int,
     timestamps: TIMESTAMPS
@@ -185,7 +187,7 @@ def main():
         # we compute the real feerate data at the timestamps of the first graph. it doesn't matter
         FIRST = 0
         data[n].append(
-            gen_minfeerates_from_F_t_n(F=F, n=n, timestamps=data[n][FIRST][0])
+            gen_minfeerates_plot_data(F=F, n=n, timestamps=data[n][FIRST][0])
         )
     
     draw(data)
