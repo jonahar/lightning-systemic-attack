@@ -2,26 +2,25 @@ import os
 import re
 from collections import defaultdict
 from math import ceil
-from typing import Callable, List, Mapping, Tuple
+from typing import Callable, Dict, List, Mapping, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-TIMESTAMP = float
+TIMESTAMP = int
 FEERATE = int  # in sat/vbyte
 TIMESTAMPS = List[TIMESTAMP]
 FEERATES = List[FEERATE]
 LABEL = str
 
-# PLOT_DATA is a mapping from num_blocks to a list of tuples, each tuple represents
-# data for a single graph - feerate as a function of a timestamp
-PLOT_DATA = Mapping[int, List[Tuple[TIMESTAMPS, FEERATES, LABEL]]]
+# PLOT_DATA represents data for a single graph - feerate as a function of timestamp
+PLOT_DATA = Tuple[TIMESTAMPS, FEERATES, LABEL]
 
 estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)")
 
 
-def parse_estimations(estimation_files_dir: str) -> PLOT_DATA:
-    data: PLOT_DATA = defaultdict(list)
+def parse_estimations(estimation_files_dir: str) -> Dict[int, List[PLOT_DATA]]:
+    data = defaultdict(list)
     for entry in os.listdir(estimation_files_dir):
         match = estimation_sample_file_regex.match(entry)
         if not match:
@@ -115,43 +114,51 @@ def gen_minfeerates_from_F_t_n(
     F: Callable[[TIMESTAMP, int], FEERATE],
     n: int,
     timestamps: TIMESTAMPS
-) -> Tuple[TIMESTAMPS, FEERATES, LABEL]:
+) -> PLOT_DATA:
     return (
         timestamps, [F(t, n) for t in timestamps], f"actual minimal feerate required for {n} blocks"
     )
 
 
-def parse_minfeerates_file(filename: str) -> Mapping[TIMESTAMP, FEERATE]:
+def parse_minfeerates_file(filename: str) -> Dict[TIMESTAMP, FEERATE]:
+    """
+    read the minfeerates file and return a dictionary from block timestamp to the
+    minimal feerate in that block
+    """
+    block_height_idx = 0
+    block_timestamp_idx = 1
+    minfeerate_idx = 2
+    
     with open(filename) as f:
         lines = f.read().splitlines()
-    if lines[0] != "block_timestamp,minfeerate":
+    if lines[0] != "block_height,block_timestamp,minfeerate":
         raise ValueError(f"Unrecognized first line for minfeerates file: '{lines[0]}'")
     lines = lines[1:]
     
     # feerates are already in sat/vbyte
     return {
-        int(line.split(",")[0]): int(line.split(",")[1])
+        int(line.split(",")[block_timestamp_idx]): int(line.split(",")[minfeerate_idx])
         for line in lines
     }
 
 
-def draw(data: PLOT_DATA) -> None:
+def draw(data: Mapping[int, List[PLOT_DATA]]) -> None:
     """
     draw plots according to the given data.
     A new plot is created for each num_blocks
     """
-    for n in data.keys():
+    for n, plot_data_list in data.items():
         plt.figure()
         # sort by label before drawing, so similar labels in different graphs will
         # share the same color
-        data[n].sort(key=lambda tuple: tuple[2])
-        for timestamps, feerates, label in sorted(data[n]):
+        plot_data_list.sort(key=lambda tuple: tuple[2])
+        for timestamps, feerates, label in plot_data_list:
             plt.plot(timestamps, feerates, label=label)
         
-        min_timestamp = min(min(t) for t, f, l in data[n])
-        max_timestamp = max(max(t) for t, f, l in data[n])
-        min_feerate = min(min(f) for t, f, l in data[n])
-        max_feerate = max(max(f) for t, f, l in data[n])
+        min_timestamp = min(min(t) for t, f, l in plot_data_list)
+        max_timestamp = max(max(t) for t, f, l in plot_data_list)
+        min_feerate = min(min(f) for t, f, l in plot_data_list)
+        max_feerate = max(max(f) for t, f, l in plot_data_list)
         # graph config
         plt.legend(loc="best")
         plt.title(f"minimal feerate required to enter in {n} blocks")
@@ -178,7 +185,7 @@ def main():
         # we compute the real feerate data at the timestamps of the first graph. it doesn't matter
         FIRST = 0
         data[n].append(
-            gen_minfeerates_from_F_t_n(F=F, n=n, timestamps=data[n][FIRST][1])
+            gen_minfeerates_from_F_t_n(F=F, n=n, timestamps=data[n][FIRST][0])
         )
     
     draw(data)
