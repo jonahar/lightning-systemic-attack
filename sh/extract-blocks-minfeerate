@@ -17,8 +17,12 @@ fi
 
 HEIGHT=$($BITCOIN_CLI -getinfo | jq -r ".blocks")
 
-echo "block_timestamp,minfeerate" >>$OUTFILE
+echo "block_height,block_timestamp,minfeerate" >>$OUTFILE
 for i in $(seq $((HEIGHT - NUM_BLOCKS + 1)) $HEIGHT); do
   printf "${i}," >>$OUTFILE
+  block_hash=$($BITCOIN_CLI getblockhash $i)
+  block_timestamp=$($BITCOIN_CLI getblock $block_hash | jq -r ".time")
+  printf "${block_timestamp}," >>$OUTFILE
   $BITCOIN_CLI getblockstats $i | jq ".minfeerate" >>$OUTFILE
 done
+
