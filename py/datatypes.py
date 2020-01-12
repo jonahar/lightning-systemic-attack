@@ -13,3 +13,7 @@ MSATOSHI = int
 
 NodeIndex = int
 NodeIndexStr = str
+
+
+def msat_to_sat(msat: MSATOSHI) -> SATOSHI:
+    return int(msat / 1000)
