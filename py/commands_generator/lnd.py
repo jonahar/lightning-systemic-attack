@@ -7,7 +7,7 @@ from commands_generator.config_constants import (
     LND_CONF_PATH,
 )
 from commands_generator.lightning import LightningCommandsGenerator
-from datatypes import NodeIndex
+from datatypes import NodeIndex, msat_to_sat
 
 
 class LndCommandsGenerator(LightningCommandsGenerator):
@@ -139,7 +139,7 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         receiver: LightningCommandsGenerator,
         amount_msat: int,
     ) -> None:
-        amount_sat = int(amount_msat * (10 ** -3))
+        amount_sat = msat_to_sat(msat=amount_msat)
         receiver_id_bash_var = f"ID_{receiver.idx}"
         receiver.set_id(receiver_id_bash_var)
         self._write_line(f"""
@@ -148,8 +148,11 @@ class LndCommandsGenerator(LightningCommandsGenerator):
     done
     """)
     
-    def create_invoice(self, payment_hash_bash_var, amount_msat: int) -> None:
-        raise NotImplemented
+    def create_invoice(self, payment_req_bash_var, amount_msat: int) -> None:
+        amount_sat = msat_to_sat(msat=amount_msat)
+        self._write_line(
+            f"""{payment_req_bash_var}=$({self.__lncli_cmd_prefix()} addinvoice --amt {amount_sat} | jq -r ".payment_request")"""
+        )
     
     def make_payments(
         self,
@@ -157,7 +160,15 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         num_payments: int,
         amount_msat: int,
     ) -> None:
-        raise NotImplemented
+        self._write_line(f"for i in $(seq 1 {num_payments}); do")
+        receiver.create_invoice(payment_req_bash_var="PAYMENT_REQ", amount_msat=amount_msat)
+        # we use timeout since sendpayment returns only when the payment succeeds/fails.
+        # this may stuck us if we are sending to an evil node
+        # the () is to dismiss background process info like "[3] 17480", "[3]+  Done"
+        self._write_line(
+            f"(timeout 2 {self.__lncli_cmd_prefix()} sendpayment --pay_req=$PAYMENT_REQ -f &)"
+        )
+        self._write_line("done")
     
     def print_node_htlcs(self) -> None:
         raise NotImplemented
