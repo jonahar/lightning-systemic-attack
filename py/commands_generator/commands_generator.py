@@ -130,7 +130,7 @@ class CommandsGenerator:
     @staticmethod
     def get_lightning_node_rpc_port(node_idx: NodeIndex) -> int:
         return LIGHTNING_RPC_PORT_BASE + node_idx
-
+    
     @staticmethod
     def get_lightning_node_rest_port(node_idx: NodeIndex) -> int:
         return LIGHTNING_REST_PORT_BASE + node_idx
