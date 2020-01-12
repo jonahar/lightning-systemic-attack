@@ -92,10 +92,10 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
     done
         """)
     
-    def create_invoice(self, payment_hash_bash_var, amount_msat: int) -> None:
+    def create_invoice(self, payment_req_bash_var, amount_msat: int) -> None:
         self._write_line(f"""LABEL="invoice-label-$(date +%s.%N)" """)
         self._write_line(
-            f"""{payment_hash_bash_var}=$(lcli {self.idx} invoice {amount_msat} $LABEL "" | jq -r ".payment_hash")"""
+            f"""{payment_req_bash_var}=$(lcli {self.idx} invoice {amount_msat} $LABEL "" | jq -r ".bolt11")"""
         )
     
     def make_payments(
@@ -107,11 +107,17 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         self.__set_riskfactor()
         receiver.set_id(bash_var="RECEIVER_ID")
         self._write_line(f"for i in $(seq 1 {num_payments}); do")
-        receiver.create_invoice(payment_hash_bash_var="PAYMENT_HASH", amount_msat=amount_msat)
+        receiver.create_invoice(payment_req_bash_var="PAYMENT_REQ", amount_msat=amount_msat)
         self._write_line(
-            f"""ROUTE=$(lcli {self.idx} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")""")
-        self._write_line(f"""lcli {self.idx} sendpay "$ROUTE" "$PAYMENT_HASH" > /dev/null""")
-        self._write_line("done")
+            f"""PAYMENT_HASH=$(lcli {self.idx} decodepay $PAYMENT_REQ | jq -r ".payment_hash")"""
+        )
+        self._write_line(
+            f"""ROUTE=$(lcli {self.idx} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")"""
+        )
+        self._write_line(
+            f"""lcli {self.idx} sendpay "$ROUTE" "$PAYMENT_HASH" > /dev/null"""
+        )
+        self._write_line(f"done")
     
     def print_node_htlcs(self) -> None:
         self._write_line(

@@ -95,10 +95,10 @@ class LightningCommandsGenerator(ABC):
         pass
     
     @abstractmethod
-    def create_invoice(self, payment_hash_bash_var, amount_msat: int) -> None:
+    def create_invoice(self, payment_req_bash_var, amount_msat: int) -> None:
         """
-        generate code that creates a new invoice of this node. the payment
-        hash of the new invoice is inserted to the given bash variable
+        generate code that creates a new invoice by this node with the given amount.
+        the payment request encoding (bolt-11) is inserted to the given bash variable
         """
         pass
     
