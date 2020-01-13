@@ -3,63 +3,63 @@
 BITCOIN_CLI="/cs/labs/avivz/jonahar/bitcoin-datadir/bitcoin-cli"
 
 eval_math_expression() {
-  expr=$1
-  # the expression may include scientific notations (5.46e-06) so we let
-  # python handle it
-  res1=$(python3 -c "print(round($expr, 8))" 2>/dev/null)
-  if [[ ! -z "$res1" ]]; then
-      echo $res1
-      return
-  fi
-  # python fails if the expression is too large (e.g. sum of thousands of numbers)
-  # if it happens we try bc
-  bc <<< "$expr"
+    expr=$1
+    # the expression may include scientific notations (5.46e-06) so we let
+    # python handle it
+    res1=$(python3 -c "print(round($expr, 8))" 2>/dev/null)
+    if [[ ! -z "$res1" ]]; then
+        echo $res1
+        return
+    fi
+    # python fails if the expression is too large (e.g. sum of thousands of numbers)
+    # if it happens we try bc
+    bc <<<"$expr"
 }
 
 get_tx() {
-  txid=$1
-  $BITCOIN_CLI getrawtransaction $txid 1
+    txid=$1
+    $BITCOIN_CLI getrawtransaction $txid 1
 }
 
 get_tx_incoming_value() {
-  txid=$1
-  value=0
-  IFS=$'\n'
-  vin_data=$(get_tx $txid | jq -r '.vin[] | "\(.txid) \(.vout)"')
-  for line in $vin_data; do
-    vin_txid=$(echo $line | cut -f1 -d " ")
-    vin_txid_idx=$(echo $line | cut -f2 -d " ")
-    vin_txid_value=$(get_tx $vin_txid | jq -r ".vout[$vin_txid_idx].value")
-    value=$(eval_math_expression "$value + $vin_txid_value")
-  done
-  IFS=
-  echo $value
+    txid=$1
+    value=0
+    IFS=$'\n'
+    vin_data=$(get_tx $txid | jq -r '.vin[] | "\(.txid) \(.vout)"')
+    for line in $vin_data; do
+        vin_txid=$(echo $line | cut -f1 -d " ")
+        vin_txid_idx=$(echo $line | cut -f2 -d " ")
+        vin_txid_value=$(get_tx $vin_txid | jq -r ".vout[$vin_txid_idx].value")
+        value=$(eval_math_expression "$value + $vin_txid_value")
+    done
+    IFS=
+    echo $value
 }
 
 get_tx_outgoing_value() {
-  txid=$1
-  sum_expression=$(get_tx $txid | jq -r ".vout[] | .value" | paste -sd+)
-  eval_math_expression $sum_expression
+    txid=$1
+    sum_expression=$(get_tx $txid | jq -r ".vout[] | .value" | paste -sd+)
+    eval_math_expression $sum_expression
 }
 
 get_tx_fee() {
-  txid=$1
-  incoming_value=$(get_tx_incoming_value $txid)
-  outgoing_value=$(get_tx_outgoing_value $txid)
-  eval_math_expression "$incoming_value - $outgoing_value"
+    txid=$1
+    incoming_value=$(get_tx_incoming_value $txid)
+    outgoing_value=$(get_tx_outgoing_value $txid)
+    eval_math_expression "$incoming_value - $outgoing_value"
 }
 
 txs_fee_in_block() {
-  block_height=$1
-  block_hash=$($BITCOIN_CLI getblockhash $block_height)
-  transactions=$($BITCOIN_CLI getblock $block_hash | jq -r ".tx[]")
-  for txid in $transactions; do
-    if [[ $(get_tx $txid | jq ".vin[0].coinbase") != "null" ]]; then
-      continue # skip coinbase transaction
-    fi
-    size=$(get_tx $txid | jq -r ".size")
-    fee=$(get_tx_fee $txid)
-    feerate=$(eval_math_expression "($fee / $size) * (10**8)")
-    echo "txid $txid: fee=$fee, size=$size, feerate=$feerate"
-  done
+    block_height=$1
+    block_hash=$($BITCOIN_CLI getblockhash $block_height)
+    transactions=$($BITCOIN_CLI getblock $block_hash | jq -r ".tx[]")
+    for txid in $transactions; do
+        if [[ $(get_tx $txid | jq ".vin[0].coinbase") != "null" ]]; then
+            continue # skip coinbase transaction
+        fi
+        size=$(get_tx $txid | jq -r ".size")
+        fee=$(get_tx_fee $txid)
+        feerate=$(eval_math_expression "($fee / $size) * (10**8)")
+        echo "txid $txid: fee=$fee, size=$size, feerate=$feerate"
+    done
 }
