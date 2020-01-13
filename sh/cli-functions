@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# alias for lightning-cli (c-lightning)
 lcli(){
     IDX=$1
     lightning-cli \
@@ -8,6 +9,19 @@ lcli(){
         "${@:2}"
 }
 export -f lcli
+
+# alias for lncli (lnd)
+lncli(){
+    IDX=$1
+    LIGHTNING_RPC_PORT_BASE=10000
+    PORT=$((LIGHTNING_RPC_PORT_BASE + IDX))
+    $LN/bin/lncli \
+        --rpcserver localhost:${PORT}  \
+        --lnddir /home/jona/ln/lightning-dirs/${IDX} \
+        --no-macaroons \
+        "${@:2}"
+}
+export -f lncli
 
 bcli(){
     IDX=$1
