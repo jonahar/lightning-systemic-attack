@@ -39,21 +39,27 @@ cg.wait_for_funds()
 cg.establish_channels()
 cg.wait_for_funding_transactions()
 cg.mine(num_blocks=10)
-cg.wait_to_route(1, 2, 10000000)
-cg.wait_to_route(1, 5, 10000000)
-cg.wait_to_route(1, 6, 10000000)
-cg.wait_to_route(2, 3, 10000000)
-cg.wait_to_route(2, 4, 10000000)
+
 # create output for node 2
+cg.wait_to_route(1, 2, 10000000)
 cg.make_payments(sender_idx=1, receiver_idx=2, num_payments=1, amount_msat=Millisatoshi("0.042btc").millisatoshis)
+
 # create HTLC-in that should be fulfilled
+cg.wait_to_route(1, 5, 10000000)
 cg.make_payments(sender_idx=1, receiver_idx=5, num_payments=1, amount_msat=Millisatoshi("0.00001btc").millisatoshis)
+
 # create HTLC-in that should be timed-out
+cg.wait_to_route(1, 6, 10000000)
 cg.make_payments(sender_idx=1, receiver_idx=6, num_payments=1, amount_msat=Millisatoshi("0.00002btc").millisatoshis)
+
 # create HTLC-out that should be fulfilled
+cg.wait_to_route(2, 3, 10000000)
 cg.make_payments(sender_idx=2, receiver_idx=3, num_payments=1, amount_msat=Millisatoshi("0.00003btc").millisatoshis)
+
 # create HTLC-out that should be timed-out
+cg.wait_to_route(2, 4, 10000000)
 cg.make_payments(sender_idx=2, receiver_idx=4, num_payments=1, amount_msat=Millisatoshi("0.00004btc").millisatoshis)
+
 cg.wait(seconds=2)
 cg.stop_lightning_node(2)
 cg.close_all_node_channels(4)
