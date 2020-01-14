@@ -166,7 +166,7 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         # this may stuck us if we are sending to an evil node
         # the () is to dismiss background process info like "[3] 17480", "[3]+  Done"
         self._write_line(
-            f"(timeout 2 {self.__lncli_cmd_prefix()} sendpayment --pay_req=$PAYMENT_REQ -f &)"
+            f"(timeout 2 {self.__lncli_cmd_prefix()} sendpayment --pay_req=$PAYMENT_REQ -f >/dev/null &)"
         )
         self._write_line("done")
     
