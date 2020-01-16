@@ -81,6 +81,7 @@ class LndCommandsGenerator(LightningCommandsGenerator):
             f"  --bitcoind.dir={self.bitcoin_dir}"
             f"  --bitcoind.zmqpubrawblock=localhost:{self.zmqpubrawblock_port}"
             f"  --bitcoind.zmqpubrawtx=localhost:{self.zmqpubrawtx_port}"
+            f"  --debuglevel=debug"
             f"  {alias_flag}"
             # redirecting stdout+stderr and run in the background, because stupid lnd
             # doesn't have daemon option
