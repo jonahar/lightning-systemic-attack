@@ -6,7 +6,7 @@ from datatypes import NodeIndex
 
 class LightningCommandsGenerator(ABC):
     
-    def __init__(self, index: NodeIndex, file: TextIO):
+    def __init__(self, index: NodeIndex, file: TextIO) -> None:
         self.index = index
         self.file = file
     
@@ -138,5 +138,16 @@ class LightningCommandsGenerator(ABC):
         """
         generate code to dump this node's balance to the given file.
         data MUST be appended to the file
+        """
+        pass
+    
+    @abstractmethod
+    def reveal_preimages(self, peer: "LightningCommandsGenerator" = None) -> None:
+        """
+        generate code that reveals preimages that are being held by this node.
+        if 'peer' is given, reveal only preimages in channels with that peer.
+        
+        This method is optional, and shouldn't necessarily be implemented by
+        every subclass
         """
         pass

@@ -172,13 +172,16 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         self._write_line("done")
     
     def print_node_htlcs(self) -> None:
-        raise NotImplemented
+        raise NotImplementedError()
     
     def close_all_channels(self) -> None:
-        raise NotImplemented
+        raise NotImplementedError()
     
     def dump_balance(self, filepath: str) -> None:
         self._write_line(f"""printf "node {self.idx} balance: " >> {filepath}""")
         self._write_line(
             f"""{self.__lncli_cmd_prefix()} walletbalance | jq -r ".total_balance" >> {filepath}"""
         )
+    
+    def reveal_preimages(self, peer: "LightningCommandsGenerator" = None) -> None:
+        raise TypeError(f"Unsupported operation for {type(self).__name__}")

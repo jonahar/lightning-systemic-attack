@@ -137,3 +137,10 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
     def dump_balance(self, filepath: str) -> None:
         self._write_line(f"""printf "node {self.idx} balance: " >> {filepath}""")
         self._write_line(f"lcli {self.idx} listfunds | jq '.outputs[] | .value' | jq -s add >> {filepath}")
+    
+    def reveal_preimages(self, peer: "LightningCommandsGenerator" = None) -> None:
+        if peer:
+            peer.set_id(bash_var="PEER_ID")
+        else:
+            self._write_line("PEER_ID=")  # make this variable empty
+        self._write_line(f"lcli {self.idx} revealpreimages $PEER_ID")

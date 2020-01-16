@@ -322,6 +322,15 @@ class CommandsGenerator:
             amount_msat=amount_msat,
         )
     
+    def reveal_preimages(self, node_idx: NodeIndex, peer_idx: NodeIndex = None):
+        """
+        make node with index 'node_idx' reveal any preimages it may hold.
+        if 'peer_idx' is given, reveal only preimages held up from that peer
+        """
+        self.clients[node_idx].reveal_preimages(
+            peer=self.clients[peer_idx] if peer_idx else None
+        )
+    
     def print_node_htlcs(self, node_idx: NodeIndex):
         """
         print the number of htlcs the given node has on each of its channels
@@ -508,6 +517,7 @@ def main() -> None:
         sender_idx, receiver_idx, num_blocks = args.steal_attack
         cg.stop_lightning_node(sender_idx)
         cg.start_lightning_node_silent(sender_idx)
+        cg.reveal_preimages(node_idx=receiver_idx)
         cg.close_all_node_channels(receiver_idx)
         cg.advance_blockchain(num_blocks=num_blocks, block_time_sec=args.block_time)
     
