@@ -518,6 +518,7 @@ def main() -> None:
         cg.stop_lightning_node(sender_idx)
         cg.start_lightning_node_silent(sender_idx)
         cg.reveal_preimages(node_idx=receiver_idx)
+        cg.wait(5)  # wait a little to avoid race condition between close command and htlcs removal
         cg.close_all_node_channels(receiver_idx)
         cg.advance_blockchain(num_blocks=num_blocks, block_time_sec=args.block_time)
     
