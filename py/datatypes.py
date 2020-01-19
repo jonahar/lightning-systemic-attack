@@ -16,4 +16,8 @@ NodeIndexStr = str
 
 
 def msat_to_sat(msat: MSATOSHI) -> SATOSHI:
-    return int(msat / 1000)
+    return SATOSHI(msat / 1000)
+
+
+def btc_to_sat(amount: BTC) -> SATOSHI:
+    return SATOSHI(amount * (10 ** 8))

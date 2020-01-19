@@ -9,8 +9,7 @@ import networkx as nx
 from networkx.algorithms.traversal.breadth_first_search import bfs_edges
 from networkx.classes.digraph import DiGraph
 
-from datatypes import BTC, Block, BlockHash, TX, TXID
-from utils import btc_to_satoshi
+from datatypes import BTC, Block, BlockHash, TX, TXID, btc_to_sat
 
 
 class TransactionDB:
@@ -151,7 +150,7 @@ def export_tx_graph_to_dot(
         for u, v, data in g.edges(data=True):
             value: BTC = data["value"]
             f.write(
-                f""" "{txid_to_label(u)}" -> "{txid_to_label(v)}" [ label = "{btc_to_satoshi(value)}" ];\n"""
+                f""" "{txid_to_label(u)}" -> "{txid_to_label(v)}" [ label = "{btc_to_sat(value)}" ];\n"""
             )
         
         # ’invisible’ edges between height nodes so they are aligned
@@ -202,7 +201,7 @@ txs_graph = db.transactions_sub_graph(sources=funding_txids)
 
 dotfile = os.path.join(ln, "txs_graph.dot")
 txid_to_label_and_fee = (
-    lambda txid: f"id={txid[-4:]}; fee={btc_to_satoshi(txs_graph.nodes[txid]['tx']['fee'])}"
+    lambda txid: f"id={txid[-4:]}; fee={btc_to_sat(txs_graph.nodes[txid]['tx']['fee'])}"
 )
 txid_to_label = lambda txid: txid[-4:]
 export_tx_graph_to_dot(

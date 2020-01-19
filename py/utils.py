@@ -6,7 +6,7 @@ from lightning import LightningRpc  # pip3 install pylightning
 from lightning.lightning import RpcError
 
 from bitcoin_cli import blockchain_height, get_block_by_height, get_transaction, num_tx_in_block
-from datatypes import BTC, Block, Json, SATOSHI, TXID
+from datatypes import Block, Json, TXID
 from lightning_cli import get_id
 
 
@@ -59,7 +59,3 @@ def find_interesting_txids_in_last_t_blocks(t: int) -> Set[TXID]:
         for txid in get_block_by_height(height)["tx"]
         if "coinbase" not in get_transaction(txid)["vin"][0]
     }
-
-
-def btc_to_satoshi(amount: BTC) -> SATOSHI:
-    return SATOSHI(amount * (10 ** 8))
