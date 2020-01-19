@@ -327,6 +327,11 @@ class CommandsGenerator:
         make node with index 'node_idx' reveal any preimages it may hold.
         if 'peer_idx' is given, reveal only preimages held up from that peer
         """
+        self.__maybe_info(
+            f"Revealing preimages by node {node_idx}"
+            +
+            (f" to node {peer_idx}" if peer_idx else "")
+        )
         self.clients[node_idx].reveal_preimages(
             peer=self.clients[peer_idx] if peer_idx else None
         )
