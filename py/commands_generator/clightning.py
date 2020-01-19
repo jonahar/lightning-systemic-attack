@@ -143,4 +143,8 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
             peer.set_id(bash_var="PEER_ID")
         else:
             self._write_line("PEER_ID=")  # make this variable empty
-        self._write_line(f"lcli {self.idx} revealpreimages $PEER_ID")
+        self._write_line(f"""
+    while [[ $(lcli {self.idx} revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
+        sleep 1
+    done
+    """)
