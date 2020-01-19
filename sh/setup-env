@@ -63,3 +63,8 @@ else
 fi
 
 source generated_setup_commands
+tmux new-session -d -n cli
+
+ACTIVE_WINDOW=0
+tmux select-window -t $ACTIVE_WINDOW # select window on which we start when attaching
+tmux attach-session
