@@ -45,10 +45,10 @@ class CommandsGenerator:
         :param file: file-like object
         :param topology: topology dictionary
         """
-        if BITCOIN_MINER_IDX in topology:
-            raise ValueError("Invalid id {BITCOIN_MINER_ID}: reserved for bitcoin miner node")
         self.file = file
         self.topology = self.__sanitize_topology_keys(topology)
+        if BITCOIN_MINER_IDX in topology:
+            raise ValueError("Invalid id {BITCOIN_MINER_ID}: reserved for bitcoin miner node")
         self.bitcoin_block_max_weight = bitcoin_block_max_weight
         self.verbose = verbose
         
