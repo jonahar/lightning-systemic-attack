@@ -283,10 +283,10 @@ class CommandsGenerator:
     
     def establish_channels(self) -> None:
         """generate code to connect peers and establish all channels"""
-        self.__maybe_info("establishing lightning channels")
-        for idx, info in self.topology.items():
+        for node_idx, info in self.topology.items():
             for peer_idx in info["peers"]:
-                self.clients[idx].establish_channel(
+                self.__maybe_info(f"establishing channel from {node_idx} to {peer_idx}")
+                self.clients[node_idx].establish_channel(
                     peer=self.clients[peer_idx],
                     peer_listen_port=self.get_lightning_node_listen_port(int(peer_idx))
                 )
