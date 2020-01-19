@@ -72,16 +72,9 @@ cg.advance_blockchain(num_blocks=120, block_time_sec=1)
 # 1 more minute so the lightning nodes have time to sync with the blockchain
 cg.advance_blockchain(num_blocks=2, block_time_sec=30)
 # withdraw all outputs so the local/remote outputs are claimed.
-# we shouldn't call __write_line directly. this should become a dedicated method of CommandsGenerator
-cg._CommandsGenerator__write_line(
-    """
-    ADDR_1=$(lcli 1 newaddr | jq -r ".address")
-    lcli 1 withdraw $ADDR_1 all
-    ADDR_2=$(lcli 2 newaddr | jq -r ".address")
-    lcli 2 withdraw $ADDR_2 all
-    """
-)
-# mine the above transactions but give them enough time to propagate to the miner
+cg.sweep_funds(1)
+cg.sweep_funds(2)
+# mine the sweeping transactions, but give them enough time to propagate to the miner
 cg.advance_blockchain(num_blocks=2, block_time_sec=30)
 cg.dump_simulation_data(dir=dumpdir)
 cg.stop_all_lightning_nodes()
