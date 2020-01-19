@@ -148,3 +148,8 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         sleep 1
     done
     """)
+    
+    def sweep_funds(self) -> None:
+        addr_var = f"ADDR_{self.idx}"
+        self.set_address(bash_var=addr_var)
+        self._write_line(f"lcli {self.idx} withdraw ${{{addr_var}}} all")

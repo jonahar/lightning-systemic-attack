@@ -151,3 +151,10 @@ class LightningCommandsGenerator(ABC):
         every subclass
         """
         pass
+    
+    def sweep_funds(self) -> None:
+        """
+        generate code that sweeps the entire available balance of that node.
+        The coins are sent to a new address of that node.
+        """
+        pass

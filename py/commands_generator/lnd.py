@@ -192,3 +192,10 @@ class LndCommandsGenerator(LightningCommandsGenerator):
     
     def reveal_preimages(self, peer: "LightningCommandsGenerator" = None) -> None:
         raise TypeError(f"Unsupported operation for {type(self).__name__}")
+    
+    def sweep_funds(self) -> None:
+        addr_var = f"ADDR_{self.idx}"
+        self.set_address(bash_var=addr_var)
+        self.__write_lncli_command(
+            f"sendcoins --addr ${{{addr_var}}} --sweepall"
+        )

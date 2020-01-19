@@ -369,6 +369,10 @@ class CommandsGenerator:
         self.__maybe_info(f"closing all channels of node {node_idx}")
         self.clients[node_idx].close_all_channels()
     
+    def sweep_funds(self, node_idx: NodeIndex):
+        self.__maybe_info(f"sweeping funds of node {node_idx}")
+        self.clients[node_idx].sweep_funds()
+    
     def __set_blockchain_height(self):
         """set a bash variable BLOCKCHAIN_HEIGHT with the current height"""
         self.__write_line("""BLOCKCHAIN_HEIGHT=$(bcli 0 -getinfo | jq ".blocks")""")
