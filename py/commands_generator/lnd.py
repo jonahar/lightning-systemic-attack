@@ -99,6 +99,13 @@ class LndCommandsGenerator(LightningCommandsGenerator):
             f" <<< \"\"\"00000000\n00000000\nn\n\n\"\"\" | tail -n1"
         )
         
+        self._write_line("sleep 1")
+        
+        self._write_line(
+            f"script -q -c \"{self.__lncli_cmd_prefix()} unlock\" "
+            f" <<< \"00000000\n\" >/dev/null"
+        )
+        
         # give the node another moment to be ready to accept wallet requests
         self._write_line("sleep 1")
     
