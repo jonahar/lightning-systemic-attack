@@ -5,6 +5,13 @@ from typing import List, Optional
 
 from datatypes import Address, Block, Json, TXID
 
+ln = os.path.expandvars("$LN")
+BITCOIN_CLI_WITH_CONF = (
+    "/usr/bin/bitcoin-cli "
+    " -datadir=/cs/labs/avivz/projects/bitcoin"
+    " -conf=/cs/labs/avivz/projects/bitcoin/bitcoin.conf"
+)
+
 
 def decode_stdout(result: subprocess.CompletedProcess) -> str:
     out = result.stdout.decode("utf-8")
@@ -14,12 +21,9 @@ def decode_stdout(result: subprocess.CompletedProcess) -> str:
     return out
 
 
-ln = os.path.expandvars("$LN")
-
-
 def run_cli_command(args: List[str]) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["bitcoin-cli", f"-conf={ln}/conf/bitcoin.conf", "-rpcport=18000"] + args,
+        BITCOIN_CLI_WITH_CONF.split() + args,
         stdout=subprocess.PIPE,
     )
 
@@ -36,10 +40,13 @@ def __gen_bitcoin_address() -> Address:
     return decode_stdout(result)
 
 
-MAIN_ADDRESS = __gen_bitcoin_address()
+MAIN_ADDRESS = None
 
 
 def mine(num_blocks: int) -> None:
+    global MAIN_ADDRESS
+    if MAIN_ADDRESS is None:
+        MAIN_ADDRESS = __gen_bitcoin_address()
     result = run_cli_command(["generatetoaddress", str(num_blocks), MAIN_ADDRESS])
     if result.returncode != 0:
         print(decode_stdout(result))
