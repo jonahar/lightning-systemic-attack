@@ -1,9 +1,10 @@
 import json
 import os
 import subprocess
+from functools import lru_cache
 from typing import List, Optional
 
-from datatypes import Address, Block, Json, TXID
+from datatypes import Address, BTC, Block, FEERATE, TX, TXID, btc_to_sat
 
 ln = os.path.expandvars("$LN")
 BITCOIN_CLI_WITH_CONF = (
@@ -26,11 +27,6 @@ def run_cli_command(args: List[str]) -> subprocess.CompletedProcess:
         BITCOIN_CLI_WITH_CONF.split() + args,
         stdout=subprocess.PIPE,
     )
-
-
-def get_transaction(txid: TXID) -> Json:
-    result = run_cli_command(["getrawtransaction", txid, "1"])
-    return json.loads(decode_stdout(result))
 
 
 def __gen_bitcoin_address() -> Address:
@@ -79,6 +75,24 @@ def num_tx_in_block(block: Block) -> int:
     return len(block['tx'])
 
 
+def blockchain_height() -> int:
+    result = run_cli_command(["-getinfo"])
+    return json.loads(decode_stdout(result))["blocks"]
+
+
+def get_mempool_txids() -> List[TXID]:
+    result = run_cli_command(["getrawmempool"])
+    return json.loads(decode_stdout(result))
+
+
+# ----- Transactions -----
+
+@lru_cache(maxsize=8192)
+def get_transaction(txid: TXID) -> TX:
+    result = run_cli_command(["getrawtransaction", txid, "1"])
+    return json.loads(decode_stdout(result))
+
+
 def get_tx_height(txid: TXID) -> int:
     """
     return the block height to which this tx entered
@@ -90,11 +104,24 @@ def get_tx_height(txid: TXID) -> int:
     return block["height"] if "height" in block else -1
 
 
-def blockchain_height() -> int:
-    result = run_cli_command(["-getinfo"])
-    return json.loads(decode_stdout(result))["blocks"]
+def get_tx_incoming_value(txid: TXID) -> BTC:
+    tx = get_transaction(txid)
+    return sum(
+        get_transaction(src_entry["txid"])["vout"][src_entry["vout"]]["value"]
+        for src_entry in tx["vin"] if "coinbase" not in src_entry
+    )
 
 
-def get_mempool_txids() -> List[TXID]:
-    result = run_cli_command(["getrawmempool"])
-    return json.loads(decode_stdout(result))
+def get_tx_outgoing_value(txid: TXID) -> BTC:
+    tx = get_transaction(txid)
+    return sum(entry["value"] for entry in tx["vout"])
+
+
+def get_tx_fee(txid: TXID) -> BTC:
+    return get_tx_incoming_value(txid) - get_tx_outgoing_value(txid)
+
+
+def get_tx_feerate(txid: TXID) -> FEERATE:
+    tx_size = get_transaction(txid)["size"]
+    fee_sat = btc_to_sat(get_tx_fee(txid))
+    return fee_sat / tx_size
