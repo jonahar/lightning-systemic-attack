@@ -69,8 +69,8 @@ stat(){
             printf "ln $i: height="
             if [[ $(lcli $i getinfo 2>/dev/null | jq -r ".blockheight") -gt 0 ]]; then
                 lcli $i getinfo | jq -j -r ".blockheight"
-            elif [[ $(lncli 2 getinfo 2>/dev/null | jq -r ".block_height") -gt 0 ]]; then
-                lncli 2 getinfo | jq -j -r ".block_height"
+            elif [[ $(lncli $i getinfo 2>/dev/null | jq -r ".block_height") -gt 0 ]]; then
+                lncli $i getinfo | jq -j -r ".block_height"
             fi
             echo
         fi
