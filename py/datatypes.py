@@ -10,6 +10,7 @@ BlockHeight = int
 BTC = float
 SATOSHI = int
 MSATOSHI = int
+FEERATE = float  # in satoshi per byte
 
 NodeIndex = int
 NodeIndexStr = str
