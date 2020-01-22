@@ -4,10 +4,7 @@ import time
 from lightning import LightningRpc, Millisatoshi  # pip3 install pylightning
 
 from bitcoin_cli import mine
-from lightning_cli import (
-    get_id
-)
-from utils import wait_to_route
+from lightning_cli import get_id, wait_to_route
 
 ln = os.path.expandvars("$LN")
 n1 = LightningRpc(os.path.join(ln, "lightning-dirs/1/regtest/lightning-rpc"))

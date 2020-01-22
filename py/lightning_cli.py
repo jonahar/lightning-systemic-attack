@@ -2,6 +2,7 @@ import time
 from functools import lru_cache
 
 from lightning import LightningRpc  # pip3 install pylightning
+from lightning.lightning import RpcError
 
 from bitcoin_cli import mine
 from datatypes import Address, TXID
@@ -77,3 +78,21 @@ def get_total_balance(n: LightningRpc) -> float:
         sum(map(lambda entry: entry["channel_sat"], n.listfunds()["channels"]))
     )
     return total_sat / (10 ** 8)  # convert to BTC
+
+
+def wait_to_funds(n: LightningRpc) -> None:
+    """wait until n has a UTXO it controls"""
+    while len(n.listfunds()["outputs"]) == 0:
+        time.sleep(1)
+
+
+def wait_to_route(src: LightningRpc, dest: LightningRpc, msatoshi: int) -> None:
+    """wait until src knows a route to dest with an amount of msatoshi"""
+    found = False
+    while not found:
+        try:
+            src.getroute(node_id=get_id(dest), msatoshi=msatoshi, riskfactor=1)
+            found = True
+        except RpcError as e:
+            assert e.error["message"] == "Could not find a route", e
+            time.sleep(2)

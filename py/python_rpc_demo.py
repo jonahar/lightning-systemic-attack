@@ -3,12 +3,8 @@ import time
 
 from lightning import LightningRpc, Millisatoshi  # pip3 install pylightning
 
-from bitcoin_cli import mine
-from lightning_cli import (
-    get_id,
-    make_many_payments,
-)
-from utils import find_interesting_txids_in_last_t_blocks, show_num_tx_in_last_t_blocks, wait_to_route
+from bitcoin_cli import find_interesting_txids_in_last_t_blocks, mine, show_num_tx_in_last_t_blocks
+from lightning_cli import make_many_payments, wait_to_route
 
 ln = os.path.expandvars("$LN")
 n1 = LightningRpc(os.path.join(ln, "lightning-dirs/1/regtest/lightning-rpc"))
