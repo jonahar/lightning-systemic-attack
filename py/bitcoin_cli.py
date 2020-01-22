@@ -4,11 +4,11 @@ import subprocess
 from functools import lru_cache
 from typing import List, Optional
 
-from datatypes import Address, BTC, Block, FEERATE, TX, TXID, btc_to_sat
+from datatypes import Address, BTC, Block, FEERATE, TX, TXID, btc_to_sat, BlockHeight
 
 ln = os.path.expandvars("$LN")
 BITCOIN_CLI_WITH_CONF = (
-    "/usr/bin/bitcoin-cli "
+    "/usr/bin/bitcoin-cli-master "
     " -datadir=/cs/labs/avivz/projects/bitcoin"
     " -conf=/cs/labs/avivz/projects/bitcoin/bitcoin.conf"
 )
@@ -65,7 +65,7 @@ def get_block_by_hash(block_hash: str) -> Block:
     return json.loads(decode_stdout(result))
 
 
-def get_block_by_height(height: int) -> Block:
+def get_block_by_height(height: BlockHeight) -> Block:
     result = run_cli_command(["getblockhash", str(height)])
     block_hash = decode_stdout(result)
     return get_block_by_hash(block_hash)
