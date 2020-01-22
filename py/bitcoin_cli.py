@@ -4,7 +4,7 @@ import subprocess
 from functools import lru_cache
 from typing import List, Optional
 
-from datatypes import Address, BTC, Block, FEERATE, TX, TXID, btc_to_sat, BlockHeight
+from datatypes import Address, BTC, Block, BlockHeight, FEERATE, TX, TXID, btc_to_sat
 
 ln = os.path.expandvars("$LN")
 BITCOIN_CLI_WITH_CONF = (
@@ -60,6 +60,7 @@ def fund_addresses(addresses: List[Address]) -> Optional[str]:
     return initial_balance_txid
 
 
+@lru_cache(maxsize=2048)
 def get_block_by_hash(block_hash: str) -> Block:
     result = run_cli_command(["getblock", block_hash])
     return json.loads(decode_stdout(result))
