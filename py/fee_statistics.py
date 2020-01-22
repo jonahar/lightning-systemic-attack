@@ -56,7 +56,7 @@ def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PLOT_DAT
     return data
 
 
-@timeit
+@timeit(print_args=True)
 def get_first_block_after_time_t(t: TIMESTAMP) -> BlockHeight:
     """
     return the height of the first block with timestamp greater to equal to
@@ -76,7 +76,7 @@ def get_first_block_after_time_t(t: TIMESTAMP) -> BlockHeight:
     return low
 
 
-@timeit
+@timeit(print_args=False)
 def get_largest_prefix(txids: List[TXID], max_size: float) -> List[TXID]:
     """
     return the largest prefix of the given list such that the total size of
@@ -92,7 +92,7 @@ def get_largest_prefix(txids: List[TXID], max_size: float) -> List[TXID]:
 # BLOCK_MAX_SIZE = 1 * 1000 * 1000  # 1000000 bytes
 
 
-@timeit
+@timeit(print_args=True)
 @lru_cache(8192)
 def G(b: int, p: float) -> List[TXID]:
     """
@@ -114,18 +114,18 @@ def G(b: int, p: float) -> List[TXID]:
     return get_largest_prefix(txids=txids_sorted, max_size=p * block["size"])
 
 
-@timeit
+@timeit(print_args=True)
 def F(t: TIMESTAMP, n: int, p: float) -> FEERATE:
     """
     The function F(t,n,p) which is defined as:
         F(t,n,p) = min{ feerate(tx) | M <= height(tx) < M+n, tx ∈ G(b, p) }
         
     """
-    first_block = get_first_block_after_time_t(t)
+    first_block = get_first_block_after_time_t(t=t)
     return min(
         get_tx_feerate(txid)
         for b in range(first_block, first_block + n)
-        for txid in G(b, p)
+        for txid in G(b=b, p=p)
     )
 
 
