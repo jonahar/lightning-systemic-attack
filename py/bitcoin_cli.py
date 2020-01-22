@@ -8,7 +8,7 @@ from datatypes import Address, BTC, Block, BlockHeight, FEERATE, TX, TXID, btc_t
 
 ln = os.path.expandvars("$LN")
 BITCOIN_CLI_WITH_CONF = (
-    "/usr/bin/bitcoin-cli-master "
+    "/usr/bin/bitcoin-cli "
     " -datadir=/cs/labs/avivz/projects/bitcoin"
     " -conf=/cs/labs/avivz/projects/bitcoin/bitcoin.conf"
 )
