@@ -92,6 +92,19 @@ def get_largest_prefix(txids: List[TXID], max_size: float) -> List[TXID]:
 # BLOCK_MAX_SIZE = 1 * 1000 * 1000  # 1000000 bytes
 
 
+def remove_coinbase_txid(txids: List[TXID]) -> List[TXID]:
+    """
+    remove the txid of a coinbase transaction from the given list and return the
+    modified list.
+    this function assumes there is at most one such txid
+    """
+    for i, txid in enumerate(txids):
+        if "coinbase" in get_transaction(txid)["vin"][0]:
+            del txids[i]
+            return txids
+    return txids
+
+
 @timeit(print_args=True)
 @lru_cache(8192)
 def G(b: int, p: float) -> List[TXID]:
@@ -101,10 +114,7 @@ def G(b: int, p: float) -> List[TXID]:
     """
     block: Block = get_block_by_height(height=b)
     # remove the coinbase transaction
-    txids_in_block = filter(
-        lambda txid: "coinbase" not in get_transaction(txid)["vin"][0],
-        block["tx"]
-    )
+    txids_in_block = remove_coinbase_txid(block["tx"])
     txids_sorted = sorted(
         txids_in_block,
         key=lambda txid: get_tx_feerate(txid),
