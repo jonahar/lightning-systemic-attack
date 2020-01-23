@@ -183,7 +183,7 @@ def main():
             plot_data_list.append(make_F_graph(timestamps=timestamps, n=num_blocks, p=p))
             # make_F_graph is computationally expensive. we don't want to lost it.
             # dump the precomputed data
-            with open(f"/tmp/plot_data_{now()}.pickle", mode="wb") as f:
+            with open(f"{fee_stats_dir}/plot_data_{now()}.pickle", mode="wb") as f:
                 pickle.dump(data, f)
     
     for num_blocks, plot_data_list in data.items():
