@@ -179,13 +179,12 @@ def main():
         # we compute F at the timestamps of the first graph. they should all
         # have the same timestamps anyway, but it doesn't really matter
         timestamps = plot_data_list[0][0]
-        plot_data_list.append(make_F_graph(timestamps=timestamps, n=num_blocks, p=1))
-        plot_data_list.append(make_F_graph(timestamps=timestamps, n=num_blocks, p=0.9))
-        plot_data_list.append(make_F_graph(timestamps=timestamps, n=num_blocks, p=0.8))
-    
-    # dump the computed data
-    with open(f"/tmp/plot_data_{now}.pickle", mode="wb") as f:
-        pickle.dump(data, f)
+        for p in [1, 0.9, 0.8]:
+            plot_data_list.append(make_F_graph(timestamps=timestamps, n=num_blocks, p=p))
+            # make_F_graph is computationally expensive. we don't want to lost it.
+            # dump the precomputed data
+            with open(f"/tmp/plot_data_{now()}.pickle", mode="wb") as f:
+                pickle.dump(data, f)
     
     for num_blocks, plot_data_list in data.items():
         # sort by label before drawing, so similar labels in different graphs will
