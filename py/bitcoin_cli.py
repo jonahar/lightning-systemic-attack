@@ -147,6 +147,7 @@ def get_tx_outgoing_value(txid: TXID) -> BTC:
     return sum(entry["value"] for entry in tx["vout"])
 
 
+@lru_cache(maxsize=8192)
 def get_tx_fee(txid: TXID) -> BTC:
     return get_tx_incoming_value(txid) - get_tx_outgoing_value(txid)
 
