@@ -58,7 +58,8 @@ if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Usage: feerates_db <first_block> <last_block>")
         exit(1)
-    first_block, last_block = sys.argv[1:]
+    first_block = int(sys.argv[1])
+    last_block = int(sys.argv[2])
     dump_block_feerates_serial(first_block=first_block, last_block=last_block)
 
 """
