@@ -89,9 +89,6 @@ def get_largest_prefix(txids: List[TXID], max_size: float) -> List[TXID]:
     return txids
 
 
-# BLOCK_MAX_SIZE = 1 * 1000 * 1000  # 1000000 bytes
-
-
 def remove_coinbase_txid(txids: List[TXID]) -> List[TXID]:
     """
     remove the txid of a coinbase transaction from the given list and return the
@@ -120,7 +117,6 @@ def G(b: int, p: float) -> List[TXID]:
         key=lambda txid: get_tx_feerate(txid),
         reverse=True
     )
-    # TODO we should probably change max_size to p*BLOCK_MAX_SIZE
     return get_largest_prefix(txids=txids_sorted, max_size=p * block["size"])
 
 
