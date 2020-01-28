@@ -35,12 +35,12 @@ class BlockchainParserTXFeeOracle(TXFeeOracle):
             start=first_block,
             end=last_block,
         )
-        logger.debug(f"BlockchainParserTXFeeOracle: loading {last_block - first_block + 1} blocks")
+        logger.info(f"BlockchainParserTXFeeOracle: loading {last_block - first_block + 1} blocks")
         self.TXS: Dict[TXID, Transaction] = {
             tx.txid: tx
             for block in blocks_gen for tx in block.transactions
         }
-        logger.debug(f"BlockchainParserTXFeeOracle: done loading blocks")
+        logger.info(f"BlockchainParserTXFeeOracle: done loading blocks")
     
     def __get_output_value(self, txid: TXID, idx: int) -> SATOSHI:
         if txid in self.TXS:
