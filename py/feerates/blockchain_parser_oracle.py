@@ -7,6 +7,7 @@ from bitcoin_cli import (
 from blockchain_parser.blockchain import Blockchain
 from blockchain_parser.transaction import Transaction
 from datatypes import FEERATE, SATOSHI, TXID, btc_to_sat
+from feerates.feerates_logger import logger
 from feerates.tx_fee_oracle import TXFeeOracle
 
 
@@ -34,11 +35,12 @@ class BlockchainParserTXFeeOracle(TXFeeOracle):
             start=first_block,
             end=last_block,
         )
-        
-        self.TXS: Dict[TXID, Transaction] = {}
-        for block in blocks_gen:
-            for tx in block.transactions:
-                self.TXS[tx.txid] = tx
+        logger.debug(f"BlockchainParserTXFeeOracle: loading {last_block - first_block + 1} blocks")
+        self.TXS: Dict[TXID, Transaction] = {
+            tx.txid: tx
+            for block in blocks_gen for tx in block.transactions
+        }
+        logger.debug(f"BlockchainParserTXFeeOracle: done loading blocks")
     
     def __get_output_value(self, txid: TXID, idx: int) -> SATOSHI:
         if txid in self.TXS:
