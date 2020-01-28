@@ -5,6 +5,14 @@ from datatypes import FEERATE, TXID
 
 
 class TXFeeOracle:
+    """
+    An oracle that retrieves feerates for transactions.
+    Oracles can be stacked together - if an oracle is unable to retrieve the
+    feerate by itself for some reason, it can consult another oracle.
+    This logic is implemented in this abstract class. sub-classes should only
+    implement the method that actually looks for the feerate.
+    """
+    
     def __init__(self, next_oracle: "TXFeeOracle"):
         self.next_oracle = next_oracle
     

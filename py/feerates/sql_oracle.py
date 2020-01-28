@@ -6,6 +6,12 @@ from feerates.tx_fee_oracle import TXFeeOracle
 
 
 class SQLTXFeeOracle(TXFeeOracle):
+    """
+    A TXFeeOracle that look for feerate in an existing SQLite database.
+    The assumption is that the DB contains a table named `feerates` with
+    columns `txid` and `feerate`
+    """
+    
     def __init__(self, db_filepath: str, next_oracle: TXFeeOracle) -> None:
         super().__init__(next_oracle=next_oracle)
         self.sql_conn = sqlite3.connect(db_filepath)

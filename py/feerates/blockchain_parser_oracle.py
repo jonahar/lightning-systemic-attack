@@ -19,6 +19,14 @@ class BlockchainParserTXFeeOracle(TXFeeOracle):
         last_block: int = 0,
         next_oracle: Optional[TXFeeOracle] = None,
     ) -> None:
+        """
+         Args:
+         blocks_dir:  path to blocks folder (e.g. DATADIR/blocks)
+         index_dir:   path to blocks index folder (e.g. DATADIR/blocks/index)
+         first_block: height of the first block to retrieve in the pre-process stage
+         last_block:  height of the last block to retrieve in the pre-process stage. 0 specifies
+                      the last available block
+         """
         super().__init__(next_oracle=next_oracle)
         blockchain = Blockchain(blocks_dir)
         blocks_gen = blockchain.get_ordered_blocks(
