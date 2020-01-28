@@ -11,6 +11,9 @@ from feerates.tx_fee_oracle import TXFeeOracle
 
 def dump_block_feerates(h: BlockHeight, oracle: TXFeeOracle) -> None:
     filepath = os.path.join(DB_FOLDER, f"block_{h}_feerates")
+    if os.path.isfile(filepath):
+        return  # this block was already dumped
+    
     # use tmp suffix until we finish with that block (in case this crashes before we dumped all txs)
     filepath_tmp = f"{filepath}.tmp"
     with open(filepath_tmp, mode="w") as f:
