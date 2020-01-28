@@ -35,7 +35,7 @@ class TXFeeOracle:
 def dump_block_feerates(h: BlockHeight) -> None:
     filepath = os.path.join(DB_FOLDER, f"block_{h}_feerates")
     # use tmp suffix until we finish with that block (in case this crashes before we dumped all txs)
-    filepath_tmp = f"{DB_FOLDER}.tmp"
+    filepath_tmp = f"{filepath}.tmp"
     with open(filepath_tmp, mode="w") as f:
         block: Block = get_block_by_height(h)
         # we dump all transactions, including coinbase
