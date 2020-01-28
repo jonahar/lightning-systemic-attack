@@ -22,3 +22,7 @@ def msat_to_sat(msat: MSATOSHI) -> SATOSHI:
 
 def btc_to_sat(amount: BTC) -> SATOSHI:
     return SATOSHI(amount * (10 ** 8))
+
+
+def sat_to_btc(amount: SATOSHI) -> BTC:
+    return amount * (10 * -8)
