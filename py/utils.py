@@ -1,7 +1,10 @@
 import json
+import logging
+import sys
 import time
 from datetime import datetime
 from functools import wraps
+from logging import Logger
 
 from datatypes import Json
 
@@ -38,10 +41,41 @@ def timeit(print_args: bool):
             result = func(*args, **kwargs)
             t1 = time.time()
             print(
-                f"Exiting {func.__name__}. function ran for {t1 - t0} seconds"
+                f"Exiting {func.__name__}. Total runtime: {t1 - t0} seconds"
             )
             return result
         
         return wrapper
     
     return decorator
+
+
+def setup_logging(logger_name: str = None, filename: str = None) -> Logger:
+    """
+    setup a logger with a specific format, console handler and possibly file handler
+    
+    :param logger_name: the logger to setup. If none, setup the root logger
+    :param filename: log file. If None, only log to stdout
+    :return: the logger that was set-up
+    """
+    formatter = logging.Formatter(
+        fmt='%(asctime)s: %(levelname)s: %(module)s: %(funcName)s: %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+    )
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.DEBUG)  # the logger doesn't filter anything
+    
+    # console handler
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setFormatter(formatter)
+    ch.setLevel(logging.INFO)
+    logger.addHandler(ch)
+    
+    # file handler
+    if filename:
+        fh = logging.FileHandler(filename)
+        fh.setFormatter(formatter)
+        fh.setLevel(logging.DEBUG)
+        logger.addHandler(fh)
+    
+    return logger
