@@ -13,7 +13,7 @@ class TXFeeOracle:
     implement the method that actually looks for the feerate.
     """
     
-    def __init__(self, next_oracle: "TXFeeOracle"):
+    def __init__(self, next_oracle: Optional["TXFeeOracle"]):
         self.next_oracle = next_oracle
     
     @abstractmethod

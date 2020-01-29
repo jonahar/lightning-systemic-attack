@@ -12,7 +12,7 @@ class SQLTXFeeOracle(TXFeeOracle):
     columns `txid` and `feerate`
     """
     
-    def __init__(self, db_filepath: str, next_oracle: TXFeeOracle) -> None:
+    def __init__(self, db_filepath: str, next_oracle: Optional[TXFeeOracle]) -> None:
         super().__init__(next_oracle=next_oracle)
         self.sql_conn = sqlite3.connect(db_filepath)
         self.sql_cursor = self.sql_conn.cursor()

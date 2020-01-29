@@ -9,9 +9,8 @@ from feerates.tx_fee_oracle import TXFeeOracle
 
 
 class BlockchainInfoTXFeeOracle(TXFeeOracle):
-    def __init__(self, next_oracle: TXFeeOracle):
+    def __init__(self, next_oracle: Optional[TXFeeOracle]):
         super().__init__(next_oracle=next_oracle)
-        self.next_oracle = next_oracle
     
     def _get_tx_feerate_from_self(self, txid: TXID) -> Optional[FEERATE]:
         try:
