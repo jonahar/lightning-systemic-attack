@@ -1,8 +1,7 @@
 from typing import Dict, Optional
 
 from bitcoin_cli import (
-    get_transaction, get_tx_feerate, get_tx_incoming_value,
-    get_tx_outgoing_value,
+    get_transaction, get_tx_incoming_value, get_tx_outgoing_value
 )
 from blockchain_parser.blockchain import Blockchain
 from blockchain_parser.transaction import Transaction
@@ -70,16 +69,17 @@ class BlockchainParserTXFeeOracle(TXFeeOracle):
         return btc_to_sat(get_tx_incoming_value(txid))
     
     def _get_tx_feerate_from_self(self, txid: TXID) -> FEERATE:
-        if txid in self.TXS:
-            tx = self.TXS[txid]
-            if hasattr(tx, "feerate"):
-                # we already computed the feerate for that tx
-                return tx.feerate
-            incoming_value = self.__get_tx_incoming_value(txid)
-            outgoing_value = self.__get_tx_outgoing_value(txid)
-            fee = incoming_value - outgoing_value
-            feerate: FEERATE = fee / tx.size
-            tx.feerate = feerate  # save for future calls
-            return feerate
-        
-        return get_tx_feerate(txid)
+        try:
+            if txid in self.TXS:
+                tx = self.TXS[txid]
+                if hasattr(tx, "feerate"):
+                    # we already computed the feerate for that tx
+                    return tx.feerate
+                incoming_value = self.__get_tx_incoming_value(txid)
+                outgoing_value = self.__get_tx_outgoing_value(txid)
+                fee = incoming_value - outgoing_value
+                feerate: FEERATE = fee / tx.size
+                tx.feerate = feerate  # save for future calls
+                return feerate
+        except Exception as e:
+            logger.exception(f"{type(e)}:{str(e)}")

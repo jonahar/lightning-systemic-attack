@@ -3,6 +3,7 @@ import sys
 
 from bitcoin_cli import get_block_by_height
 from datatypes import Block, BlockHeight
+from feerates.bitcoind_oracle import BitcoindTXFeeOracle
 from feerates.blockchain_parser_oracle import BlockchainParserTXFeeOracle
 from feerates.feerates_logger import logger
 from feerates.oracle_factory import DB_FOLDER, blocks_dir, index_dir
@@ -45,7 +46,8 @@ if __name__ == "__main__":
         blocks_dir=blocks_dir,
         index_dir=index_dir,
         first_block=first_block - 1000,  # we load 1000 more blocks before the first block, to save time
-        last_block=last_block
+        last_block=last_block,
+        next_oracle=BitcoindTXFeeOracle(next_oracle=None),
     )
     
     dump_block_feerates_serial(first_block=first_block, last_block=last_block, oracle=oracle)
