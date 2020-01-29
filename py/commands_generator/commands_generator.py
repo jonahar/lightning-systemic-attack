@@ -202,7 +202,7 @@ class CommandsGenerator:
     def wait_until_miner_is_ready(self):
         self.__maybe_info("waiting until miner node is ready")
         self.__write_line("""
-    while [[ $(bcli 0 -getinfo 2>/dev/null | jq -r ".blocks") != "0" ]]; do
+    while [[ $(bcli 0 echo "sanity" 2>/dev/null | jq -r ".[0]") != "sanity" ]]; do
         sleep 1;
     done
     """)
