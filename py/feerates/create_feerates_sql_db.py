@@ -21,7 +21,10 @@ def dump_block_feerates(h: BlockHeight, oracle: TXFeeOracle) -> None:
         block: Block = get_block_by_height(h)
         # we dump all transactions, including coinbase
         for txid in block["tx"]:
-            f.write(f"{txid},{oracle.get_tx_feerate(txid)}\n")
+            feerate = oracle.get_tx_feerate(txid)
+            if feerate is None:
+                raise RuntimeError(f"Oracle couldn't retrieve feerate for a transaction in block {h}")
+            f.write(f"{txid},{feerate}\n")
     
     os.rename(filepath_tmp, filepath)
 
