@@ -18,6 +18,8 @@ TIMESTAMPS = List[TIMESTAMP]
 FEERATES = List[FEERATE]
 LABEL = str
 
+BYTE_IN_KBYTE = 1000
+
 # PLOT_DATA represents data for a single graph - feerate as a function of timestamp
 PLOT_DATA = Tuple[TIMESTAMPS, FEERATES, LABEL]
 
@@ -47,7 +49,7 @@ def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PLOT_DAT
                 timestamps.append(int(timestamp_str))
                 # feerate returned by `estimatesmartfee` is in BTC/kB
                 feerate_btc_kb = float(feerate_str)
-                feerate: FEERATE = btc_to_sat(feerate_btc_kb) * (10 ** -3)
+                feerate: FEERATE = btc_to_sat(feerate_btc_kb) / BYTE_IN_KBYTE
                 feerates.append(feerate)
         data[blocks].append(
             (timestamps, feerates, f"estimatesmartfee(mode={mode})")
@@ -59,12 +61,13 @@ def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PLOT_DAT
 @timeit(print_args=True)
 def get_first_block_after_time_t(t: TIMESTAMP) -> BlockHeight:
     """
-    return the height of the first block with timestamp greater to equal to
+    return the height of the first block with timestamp greater or equal to
     the given timestamp
     """
     low: int = 0
     high = blockchain_height()
     
+    # simple binary search
     while low < high:
         m = (low + high) // 2
         m_time = get_block_by_height(m)["time"]
