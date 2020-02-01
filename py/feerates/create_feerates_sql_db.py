@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
 """
 # After we dumped all blocks feerates, we wish to put them all in an SQLite DB:
-sort block_*_feerates > all_feerates_sorted.csv
+sort --parallel=4 block_*_feerates > all_feerates_sorted.csv
 # sqlite:
 sqlite3 feerates.sqlite
 CREATE TABLE IF NOT EXISTS "feerates" (txid TEXT PRIMARY KEY, feerate TEXT);
