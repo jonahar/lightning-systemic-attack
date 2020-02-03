@@ -2,14 +2,16 @@ import os
 import pickle
 import re
 from collections import defaultdict
+from datetime import datetime
 from functools import lru_cache
 from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bitcoin_cli import blockchain_height, get_block_by_height, get_transaction, get_tx_feerate
+from bitcoin_cli import blockchain_height, get_block_by_height, get_transaction
 from datatypes import Block, BlockHeight, FEERATE, TXID, btc_to_sat
+from feerates.oracle_factory import get_multi_layer_oracle
 from utils import now, timeit
 
 TIMESTAMP = int
@@ -24,6 +26,8 @@ BYTE_IN_KBYTE = 1000
 PLOT_DATA = Tuple[TIMESTAMPS, FEERATES, LABEL]
 
 estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)")
+
+feerate_oracle = get_multi_layer_oracle()
 
 
 def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PLOT_DATA]]:
@@ -117,7 +121,7 @@ def G(b: int, p: float) -> List[TXID]:
     txids_in_block = remove_coinbase_txid(block["tx"])
     txids_sorted = sorted(
         txids_in_block,
-        key=lambda txid: get_tx_feerate(txid),
+        key=lambda txid: feerate_oracle.get_tx_feerate(txid),
         reverse=True
     )
     return get_largest_prefix(txids=txids_sorted, max_size=p * block["size"])
@@ -128,21 +132,22 @@ def F(t: TIMESTAMP, n: int, p: float) -> FEERATE:
     """
     The function F(t,n,p) which is defined as:
         F(t,n,p) = min{ feerate(tx) | M <= height(tx) < M+n, tx ∈ G(b, p) }
-        
+    
+    Where M is the first block height that came after time t
     """
     first_block = get_first_block_after_time_t(t=t)
     return min(
-        get_tx_feerate(txid)
+        feerate_oracle.get_tx_feerate(txid)
         for b in range(first_block, first_block + n)
         for txid in G(b=b, p=p)
     )
 
 
 def make_F_graph(timestamps: TIMESTAMPS, n: int, p: float) -> PLOT_DATA:
-    feerates = [
-        F(t, n, p)
-        for t in timestamps
-    ]
+    """
+    create plot-data for the F(t,n,p) function
+    """
+    feerates = [F(t, n, p) for t in timestamps]
     return timestamps, feerates, f"F(t,n={n},p={p})"
 
 
@@ -162,11 +167,18 @@ def plot_figure(title: str, data: List[PLOT_DATA]):
     plt.legend(loc="best")
     plt.title(title)
     
-    plt.xlabel("timestamp")
-    plt.xticks(np.linspace(start=min_timestamp, stop=max_timestamp, num=10))
+    xticks = np.linspace(start=min_timestamp, stop=max_timestamp, num=10)
+    yticks = np.linspace(start=min_feerate, stop=max_feerate, num=10)
     
+    timestamp_to_date_str = lambda t: datetime.utcfromtimestamp(t).strftime('%Y-%m-%d %H:%M')
+    plt.xticks(
+        ticks=xticks,
+        labels=[timestamp_to_date_str(t) for t in xticks]
+    )
+    plt.xlabel("timestamp")
+    
+    plt.yticks(ticks=yticks)
     plt.ylabel("feerate")
-    plt.yticks(np.linspace(start=min_feerate, stop=max_feerate, num=10))
 
 
 def main():
