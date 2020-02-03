@@ -1,0 +1,14 @@
+blockchain-parser==0.1.4 # pip version is outdated. clone from github instead
+cycler==0.10.0
+decorator==4.4.1
+kiwisolver==1.1.0
+matplotlib==3.1.2
+networkx==2.4
+numpy==1.18.1
+pkg-resources==0.0.0
+plyvel==1.2.0
+pylightning==0.0.7.3
+pyparsing==2.4.6
+python-bitcoinlib==0.10.2
+python-dateutil==2.8.1
+six==1.14.0
