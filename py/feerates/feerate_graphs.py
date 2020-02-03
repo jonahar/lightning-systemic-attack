@@ -25,7 +25,7 @@ BYTE_IN_KBYTE = 1000
 # PLOT_DATA represents data for a single graph - feerate as a function of timestamp
 PLOT_DATA = Tuple[TIMESTAMPS, FEERATES, LABEL]
 
-estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)")
+estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)\.sanitized")
 
 feerate_oracle = get_multi_layer_oracle()
 
@@ -183,7 +183,7 @@ def plot_figure(title: str, data: List[PLOT_DATA]):
 
 def main():
     ln = os.path.expandvars("$LN")
-    fee_stats_dir = os.path.join(ln, "fee-statistics")
+    fee_stats_dir = os.path.join(ln, "data/fee-statistics")
     data = parse_estimation_files(fee_stats_dir)
     
     for num_blocks, plot_data_list in data.items():
