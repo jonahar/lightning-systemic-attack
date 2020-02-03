@@ -13,6 +13,8 @@ BITCOIN_CLI_WITH_CONF = (
     " -conf=/cs/labs/avivz/projects/bitcoin/bitcoin.conf"
 )
 
+get_transaction_cache_size = 2 ** 13
+
 
 def decode_stdout(result: subprocess.CompletedProcess) -> str:
     out = result.stdout.decode("utf-8")
@@ -117,7 +119,7 @@ def find_interesting_txids_in_last_t_blocks(t: int) -> Set[TXID]:
 
 # ----- Transactions -----
 
-@lru_cache(maxsize=8192)
+@lru_cache(maxsize=get_transaction_cache_size)
 def get_transaction(txid: TXID) -> TX:
     result = run_cli_command(["getrawtransaction", txid, "1"])
     return json.loads(decode_stdout(result))
