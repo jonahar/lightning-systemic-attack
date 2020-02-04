@@ -1,12 +1,12 @@
 import os
 import sys
+from concurrent.futures import ThreadPoolExecutor
 
 from bitcoin_cli import get_block_by_height
 from datatypes import Block, BlockHeight
 from feerates.bitcoind_oracle import BitcoindTXFeeOracle
-from feerates.blockchain_parser_oracle import BlockchainParserTXFeeOracle
 from feerates.feerates_logger import logger
-from feerates.oracle_factory import DB_FOLDER, blocks_dir, index_dir
+from feerates.oracle_factory import DB_FOLDER
 from feerates.tx_fee_oracle import TXFeeOracle
 
 
@@ -15,6 +15,7 @@ def dump_block_feerates(h: BlockHeight, oracle: TXFeeOracle) -> None:
     computes the feerate of all transactions in block at height h and dump them
     to a text file in the DB_FOLDER directory
     """
+    logger.info(f"Dumping feerates for block {h}")
     filepath = os.path.join(DB_FOLDER, f"block_{h}_feerates")
     if os.path.isfile(filepath):
         return  # this block was already dumped
@@ -36,8 +37,15 @@ def dump_block_feerates(h: BlockHeight, oracle: TXFeeOracle) -> None:
 
 def dump_block_feerates_serial(first_block: int, last_block: int, oracle: TXFeeOracle) -> None:
     for h in range(first_block, last_block + 1):
-        logger.info(f"Dumping feerates for block {h}")
         dump_block_feerates(h=h, oracle=oracle)
+
+
+def dump_block_feerates_parallel(first_block: int, last_block: int, oracle: TXFeeOracle) -> None:
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [
+            executor.submit(fn=dump_block_feerates, h=h, oracle=oracle)
+            for h in range(first_block, last_block + 1)
+        ]
 
 
 if __name__ == "__main__":
@@ -47,15 +55,9 @@ if __name__ == "__main__":
     first_block = int(sys.argv[1])
     last_block = int(sys.argv[2])
     
-    oracle = BlockchainParserTXFeeOracle(
-        blocks_dir=blocks_dir,
-        index_dir=index_dir,
-        first_block=first_block - 1000,  # we load 1000 more blocks before the first block, to save time
-        last_block=last_block,
-        next_oracle=BitcoindTXFeeOracle(next_oracle=None),
-    )
+    oracle = BitcoindTXFeeOracle(next_oracle=None)
     
-    dump_block_feerates_serial(first_block=first_block, last_block=last_block, oracle=oracle)
+    dump_block_feerates_parallel(first_block=first_block, last_block=last_block, oracle=oracle)
 
 """
 # After we dumped all blocks feerates, we wish to put them all in an SQLite DB:
