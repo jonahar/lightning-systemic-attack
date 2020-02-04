@@ -9,7 +9,7 @@ logger = setup_logging(logger_name="feerates_db_logger", filename="feerates_db.l
 
 ln = os.path.expandvars("$LN")
 DB_FOLDER = "/cs/labs/avivz/jonahar/bitcoin-datadir/feerates"
-DB_FILEPATH = os.path.join(ln, "feerates.sqlite")
+DB_FILEPATH = os.path.join(DB_FOLDER, "feerates.sqlite")
 
 # may be used by BlockchainParserTXFeeOracle
 blocks_dir = "/cs/labs/avivz/jonahar/bitcoin-datadir/blocks"
