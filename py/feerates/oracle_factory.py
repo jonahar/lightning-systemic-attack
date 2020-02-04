@@ -3,9 +3,6 @@ import os
 from feerates.bitcoind_oracle import BitcoindTXFeeOracle
 from feerates.sql_oracle import SQLTXFeeOracle
 from feerates.tx_fee_oracle import TXFeeOracle
-from utils import setup_logging
-
-logger = setup_logging(logger_name="feerates_db_logger", filename="feerates_db.log")
 
 ln = os.path.expandvars("$LN")
 DB_FOLDER = "/cs/labs/avivz/jonahar/bitcoin-datadir/feerates"
