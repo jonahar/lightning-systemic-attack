@@ -13,7 +13,7 @@ BITCOIN_CLI_WITH_CONF = (
     " -conf=/cs/labs/avivz/projects/bitcoin/bitcoin.conf"
 )
 
-get_transaction_cache_size = 2 ** 13
+get_transaction_cache_size = 2 ** 15
 
 
 def decode_stdout(result: subprocess.CompletedProcess) -> str:
