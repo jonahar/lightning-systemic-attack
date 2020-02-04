@@ -11,11 +11,15 @@ from feerates.tx_fee_oracle import TXFeeOracle
 
 
 def dump_block_feerates(h: BlockHeight, oracle: TXFeeOracle) -> None:
+    """
+    computes the feerate of all transactions in block at height h and dump them
+    to a text file in the DB_FOLDER directory
+    """
     filepath = os.path.join(DB_FOLDER, f"block_{h}_feerates")
     if os.path.isfile(filepath):
         return  # this block was already dumped
     
-    # use tmp suffix until we finish with that block (in case this crashes before we dumped all txs)
+    # use tmp suffix until we finish with that block (in case we crash before we dumped all txs)
     filepath_tmp = f"{filepath}.tmp"
     with open(filepath_tmp, mode="w") as f:
         block: Block = get_block_by_height(h)
@@ -23,7 +27,8 @@ def dump_block_feerates(h: BlockHeight, oracle: TXFeeOracle) -> None:
         for txid in block["tx"]:
             feerate = oracle.get_tx_feerate(txid)
             if feerate is None:
-                raise RuntimeError(f"Oracle couldn't retrieve feerate for a transaction in block {h}")
+                logger.error(f"Oracle couldn't retrieve feerate for a transaction in block {h}")
+                return
             f.write(f"{txid},{feerate}\n")
     
     os.rename(filepath_tmp, filepath)
@@ -31,11 +36,8 @@ def dump_block_feerates(h: BlockHeight, oracle: TXFeeOracle) -> None:
 
 def dump_block_feerates_serial(first_block: int, last_block: int, oracle: TXFeeOracle) -> None:
     for h in range(first_block, last_block + 1):
-        try:
-            logger.info(f"Dumping feerates for block {h}")
-            dump_block_feerates(h=h, oracle=oracle)
-        except Exception as e:
-            logger.exception(f"Failed to dump feerates for block {h}: {e}")
+        logger.info(f"Dumping feerates for block {h}")
+        dump_block_feerates(h=h, oracle=oracle)
 
 
 if __name__ == "__main__":
