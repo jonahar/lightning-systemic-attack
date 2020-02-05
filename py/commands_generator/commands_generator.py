@@ -5,6 +5,7 @@ from typing import Any, Dict, TextIO
 
 from commands_generator.clightning import ClightningCommandsGenerator
 from commands_generator.config_constants import *
+from commands_generator.eclair import EclairCommandsGenerator
 from commands_generator.lightning import LightningCommandsGenerator
 from commands_generator.lnd import LndCommandsGenerator
 from datatypes import NodeIndex
@@ -106,6 +107,21 @@ class CommandsGenerator:
             alias=alias,
         )
     
+    def __init_eclair_client(self, node_idx: NodeIndex) -> EclairCommandsGenerator:
+        info = self.topology[node_idx]
+        alias = info.get("alias", str(node_idx))
+        return EclairCommandsGenerator(
+            index=node_idx,
+            file=self.file,
+            lightning_dir=self.get_lightning_node_dir(node_idx),
+            listen_port=self.get_lightning_node_listen_port(node_idx),
+            rpc_port=self.get_lightning_node_rpc_port(node_idx),
+            bitcoin_rpc_port=self.get_bitcoin_node_rpc_port(node_idx),
+            zmqpubrawblock_port=self.get_bitcoin_node_zmqpubrawblock_port(node_idx),
+            zmqpubrawtx_port=self.get_bitcoin_node_zmqpubrawtx_port(node_idx),
+            alias=alias,
+        )
+    
     def __init_clients(self) -> Dict[NodeIndex, LightningCommandsGenerator]:
         """
         build LightningCommandsGenerator for each node in the topology.
@@ -118,6 +134,8 @@ class CommandsGenerator:
                 clients[idx] = self.__init_clightning_client(idx)
             elif client == "lnd":
                 clients[idx] = self.__init_lnd_client(idx)
+            elif client == "eclair":
+                clients[idx] = self.__init_eclair_client(idx)
             else:
                 raise TypeError(f"unsupported client: {client}")
         
