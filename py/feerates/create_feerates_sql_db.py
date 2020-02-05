@@ -9,6 +9,8 @@ from feerates.feerates_logger import logger
 from feerates.oracle_factory import DB_FOLDER
 from feerates.tx_fee_oracle import TXFeeOracle
 
+MAX_WORKERS = 16
+
 
 def dump_block_feerates(h: BlockHeight, oracle: TXFeeOracle) -> None:
     """
@@ -41,7 +43,7 @@ def dump_block_feerates_serial(first_block: int, last_block: int, oracle: TXFeeO
 
 
 def dump_block_feerates_parallel(first_block: int, last_block: int, oracle: TXFeeOracle) -> None:
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [
             executor.submit(fn=dump_block_feerates, h=h, oracle=oracle)
             for h in range(first_block, last_block + 1)
