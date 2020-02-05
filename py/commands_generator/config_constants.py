@@ -14,6 +14,8 @@ CLIGHTNING_BINARY = os.path.join(BIN, "lightningd")
 CLIGHTNING_BINARY_EVIL = os.path.join(BIN, "lightningd-evil")
 LND_BINARY = os.path.join(BIN, "lnd")
 LND_CLI_BINARY = os.path.join(BIN, "lncli")
+ECLAIR_NODE_JAR = os.path.join(BIN, "eclair.jar")
+ECLAIR_CLI = os.path.join(BIN, "eclair-cli")
 
 LIGHTNING_LISTEN_PORT_BASE = 12000
 LIGHTNING_RPC_PORT_BASE = 10000
