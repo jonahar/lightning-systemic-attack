@@ -12,23 +12,17 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         index: NodeIndex,
         file: TextIO,
         lightning_dir: str,
-        bitcoin_dir: str,
         listen_port: int,
         rpc_port: int,
-        rest_port: int,
         bitcoin_rpc_port: int,
         zmqpubrawblock_port: int,
         zmqpubrawtx_port: int,
         alias: str = None,
     ) -> None:
         super().__init__(index, file)
-        self.index = index
-        self.file = file
         self.lightning_dir = lightning_dir
-        self.bitcoin_dir = bitcoin_dir
         self.listen_port = listen_port
         self.rpc_port = rpc_port
-        self.rest_port = rest_port
         self.bitcoin_rpc_port = bitcoin_rpc_port
         self.zmqpubrawblock_port = zmqpubrawblock_port
         self.zmqpubrawtx_port = zmqpubrawtx_port
