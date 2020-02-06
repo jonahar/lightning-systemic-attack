@@ -59,6 +59,13 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
             f"""java -Declair.datadir="{self.lightning_dir}" -jar {ECLAIR_NODE_JAR} >/dev/null 2>&1 & """
         )
         self._write_line(f"echo $! >{self.__get_node_pid_file()} # $! the PID of the eclair node")
+        
+        # wait until node is ready
+        self._write_line(f"""
+        while [[ $({self.__eclair_cli_command_prefix()} getinfo 2>/dev/null | jq -r ".alias") != "{self.alias}" ]]; do
+            sleep 1;
+        done
+        """)
     
     def __eclair_cli_command_prefix(self) -> str:
         return f"{ECLAIR_CLI} -p kek -a localhost:{self.rpc_port} "
