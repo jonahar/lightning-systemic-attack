@@ -87,7 +87,14 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         self._write_line(f"""{self.__eclair_cli_command_prefix()} getinfo | jq -r ".nodeId" """)
     
     def wait_for_funds(self) -> None:
-        raise NotImplementedError()
+        # eclair doesn't provide such method. we have to talk to its bitcoind
+        # bitcoind shows balance as float, so we use bc to compare it to 0
+        self._write_line(f"""
+        # bc outputs 1 if the equality holds
+        while [[ $(echo "$(bcli {self.idx} -getinfo | jq -r '.balance') == 0" |bc -l) == 1 ]]; do
+            sleep 1
+        done
+        """)
     
     def establish_channel(
         self,
