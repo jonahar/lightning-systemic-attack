@@ -23,6 +23,15 @@ lncli(){
 }
 export -f lncli
 
+# alias for eclair-cli (Eclair)
+ecli(){
+    IDX=$1
+    LIGHTNING_RPC_PORT_BASE=10000
+    PORT=$((LIGHTNING_RPC_PORT_BASE + IDX))
+    eclair-cli -p kek -a localhost:$PORT "${@:2}"
+}
+export -f ecli
+
 bcli(){
     IDX=$1
     BITCOIN_RPC_PORT_BASE=18000
