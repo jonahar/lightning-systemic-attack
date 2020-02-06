@@ -28,6 +28,12 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         self.zmqpubrawtx_port = zmqpubrawtx_port
         self.alias = alias
     
+    def __get_node_pid_file(self) -> str:
+        """return the filepath in which the process id of this node is/should be stored"""
+        # TODO this method is not a single source of truth. the kill-daemons script
+        #  also has this filename hardcoded. think how to avoid it
+        return f"{self.lightning_dir}/node_pid"
+    
     def start(self) -> None:
         self._write_line(f"mkdir -p {self.lightning_dir}")
         # we provide all arguments to eclair via the conf file.
@@ -52,6 +58,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         self._write_line(
             f"""java -Declair.datadir="{self.lightning_dir}" -jar {ECLAIR_NODE_JAR} >/dev/null 2>&1 & """
         )
+        self._write_line(f"echo $! >{self.__get_node_pid_file()} # $! the PID of the eclair node")
     
     def __eclair_cli_command_prefix(self) -> str:
         return f"{ECLAIR_CLI} -p kek -a localhost:{self.rpc_port} "
