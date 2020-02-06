@@ -116,12 +116,6 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         amount_msat: int,
     ) -> None:
         raise NotImplementedError()
-        
-        # receiver_id_bash_var = f"ID_{receiver.idx}"
-        # receiver.set_id(receiver_id_bash_var)
-        # self._write_line(f"""
-        #     {self.__eclair_cli_command_prefix()} findroutetonode --nodeId=${receiver_id_bash_var} --amountMsat={amount_msat}
-        # """)
     
     def create_invoice(self, payment_req_bash_var, amount_msat: int) -> None:
         raise NotImplementedError()
