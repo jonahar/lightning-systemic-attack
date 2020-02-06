@@ -50,7 +50,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         """)
         
         self._write_line(
-            f""" java -Declair.datadir="{self.lightning_dir}" -jar {ECLAIR_NODE_JAR} 2>&1 1>/dev/null & """
+            f"""java -Declair.datadir="{self.lightning_dir}" -jar {ECLAIR_NODE_JAR} >/dev/null 2>&1 & """
         )
     
     def __eclair_cli_command_prefix(self) -> str:
