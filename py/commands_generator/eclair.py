@@ -84,7 +84,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         )
     
     def set_id(self, bash_var: str) -> None:
-        self._write_line(f"""{self.__eclair_cli_command_prefix()} getinfo | jq -r ".nodeId" """)
+        self._write_line(f"""{bash_var}=$({self.__eclair_cli_command_prefix()} getinfo | jq -r ".nodeId")""")
     
     def wait_for_funds(self) -> None:
         # eclair doesn't provide such method. we have to talk to its bitcoind
