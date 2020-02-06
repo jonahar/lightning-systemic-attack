@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-tmux kill-server > /dev/null 2>&1
-pkill bitcoind
 pkill lightningd
 pkill lnd
-sleep 2
+# eclair nodes store their pid in files
+find $LN/lightning-dirs -name "node_pid" -exec pkill --pidfile "{}" ";" > /dev/null 2>&1
+pkill bitcoind
+tmux kill-server > /dev/null 2>&1
+sleep 1
