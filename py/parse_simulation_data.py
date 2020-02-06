@@ -160,7 +160,9 @@ def export_tx_graph_to_dot(
         f.write("}\n")
 
 
-def extract_funding_txids(simulation_outfile: str) -> Set[TXID]:
+def __PARTIALLY_BROKEN_extract_funding_txids(simulation_outfile: str) -> Set[TXID]:
+    # FIXME: this method only catches funding txids created by c-lightning
+    
     p = re.compile("""{\\s+"tx".*?"txid".*?"channel_id".*?}""", flags=re.DOTALL)
     
     with open(simulation_outfile) as f:
@@ -195,7 +197,7 @@ datadir = os.path.join(ln, "simulations/datadir")
 outfile = os.path.join(ln, "simulations/simulation.out")
 
 db = TransactionDB(datadir=datadir)
-funding_txids = extract_funding_txids(outfile)
+funding_txids: Set[TXID] = {"PUT SOME INTERESTING TXIDS HERE"}
 
 txs_graph = db.transactions_sub_graph(sources=funding_txids)
 
