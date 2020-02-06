@@ -104,7 +104,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         peer_id_bash_var = f"ID_{peer.idx}"
         peer.set_id(bash_var=peer_id_bash_var)
         self.__write_eclair_cli_command(
-            args=f"connect --nodeId=${peer_id_bash_var} --host=localhost:{peer_listen_port}"
+            args=f"connect --uri=${{{peer_id_bash_var}}}@localhost:{peer_listen_port}"
         )
         self.__write_eclair_cli_command(
             args=f"open --nodeId=${peer_id_bash_var} --fundingSatoshis={INITIAL_CHANNEL_BALANCE_SAT}"
