@@ -3,4 +3,3 @@
 cd $LN
 rm -rf lightning-dirs   \
        bitcoin-dirs     \
-       dev/*.tmp        \
