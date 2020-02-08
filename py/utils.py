@@ -20,7 +20,7 @@ def now() -> str:
     return datetime.now().strftime("%Y-%m-%d_%H:%M")
 
 
-def timeit(print_args: bool):
+def timeit(logger: Logger, print_args: bool):
     """
     the `timeit` decorator logs entering and exiting from a function, and the total
     time it ran.
@@ -32,7 +32,7 @@ def timeit(print_args: bool):
         # in particular, its name
         @wraps(func)
         def wrapper(*args, **kwargs):
-            print(
+            logger.info(
                 f"Entering {func.__name__}"
                 +
                 (f" with args={args}, kwargs={kwargs}" if print_args else "")
@@ -40,8 +40,8 @@ def timeit(print_args: bool):
             t0 = time.time()
             result = func(*args, **kwargs)
             t1 = time.time()
-            print(
-                f"Exiting {func.__name__}. Total runtime: {t1 - t0} seconds"
+            logger.info(
+                f"Exiting {func.__name__}. Total runtime: {round(t1 - t0, 3)} seconds"
             )
             return result
         

@@ -12,7 +12,7 @@ import numpy as np
 from bitcoin_cli import blockchain_height, get_block_by_height, get_transaction
 from datatypes import Block, BlockHeight, FEERATE, TXID, btc_to_sat
 from feerates.oracle_factory import get_multi_layer_oracle
-from utils import now, timeit
+from utils import now, setup_logging, timeit
 
 TIMESTAMP = int
 
@@ -28,6 +28,8 @@ PLOT_DATA = Tuple[TIMESTAMPS, FEERATES, LABEL]
 estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)\.sanitized")
 
 feerate_oracle = get_multi_layer_oracle()
+
+logger = setup_logging(logger_name=__name__)
 
 
 def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PLOT_DATA]]:
@@ -62,7 +64,7 @@ def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PLOT_DAT
     return data
 
 
-@timeit(print_args=True)
+@timeit(logger=logger, print_args=True)
 def get_first_block_after_time_t(t: TIMESTAMP) -> BlockHeight:
     """
     return the height of the first block with timestamp greater or equal to
@@ -83,7 +85,7 @@ def get_first_block_after_time_t(t: TIMESTAMP) -> BlockHeight:
     return low
 
 
-@timeit(print_args=False)
+@timeit(logger=logger, print_args=False)
 def get_largest_prefix(txids: List[TXID], max_size: float) -> List[TXID]:
     """
     return the largest prefix of the given list such that the total size of
@@ -109,7 +111,7 @@ def remove_coinbase_txid(txids: List[TXID]) -> List[TXID]:
     return txids
 
 
-@timeit(print_args=True)
+@timeit(logger=logger, print_args=True)
 @lru_cache(8192)
 def G(b: int, p: float) -> List[TXID]:
     """
@@ -127,7 +129,7 @@ def G(b: int, p: float) -> List[TXID]:
     return get_largest_prefix(txids=txids_sorted, max_size=p * block["size"])
 
 
-@timeit(print_args=True)
+@timeit(logger=logger, print_args=True)
 def F(t: TIMESTAMP, n: int, p: float) -> FEERATE:
     """
     The function F(t,n,p) which is defined as:
