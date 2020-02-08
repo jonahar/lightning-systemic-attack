@@ -1,8 +1,9 @@
+import argparse
 import os
-import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 
-from bitcoin_cli import get_block_by_height
+from bitcoin_cli import blockchain_height, get_block_by_height
 from datatypes import Block, BlockHeight
 from feerates.bitcoind_oracle import BitcoindTXFeeOracle
 from feerates.feerates_logger import logger
@@ -67,16 +68,51 @@ def dump_blocks_feerates(first_block: int, last_block: int, oracle: TXFeeOracle)
         dump_block_feerates(h=h, oracle=oracle)
 
 
+def parse_args():
+    """
+    parse and return the program arguments
+    """
+    parser = argparse.ArgumentParser(description='dump blocks feerates to csv files')
+    parser.add_argument(
+        "first_block", type=int, action="store",
+        help="the first block to dump feerates for",
+    )
+    parser.add_argument(
+        "last_block", type=int, action="store",
+        help=(
+            "the last block to dump feerates for. if 0 is given, dump all "
+            "from first_block to the current blockchain height, indefinitely"
+        ),
+    )
+    parser.add_argument(
+        "bitcoin_cli", choices=["master", "user"], metavar="bitcoin_cli",
+        help="the bitcoin-cli to use. must be one of `master` or `user`",
+    )
+    
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: create_feerates_sql_db <first_block> <last_block>")
-        exit(1)
-    first_block = int(sys.argv[1])
-    last_block = int(sys.argv[2])
+    args = parse_args()
     
     oracle = BitcoindTXFeeOracle(next_oracle=None)
     
-    dump_blocks_feerates(first_block=first_block, last_block=last_block, oracle=oracle)
+    dump_blocks_feerates(first_block=args.first_block, last_block=args.last_block, oracle=oracle)
+    
+    if args.last_block != 0:
+        dump_blocks_feerates(first_block=args.first_block, last_block=args.last_block, oracle=oracle)
+    else:
+        # we dump all blocks from first_block to the current height, indefinitely
+        while True:
+            curr_height = blockchain_height()
+            logger.info(
+                f"Dumping all blocks from height {args.first_block} to current blockchain height ({curr_height})"
+            )
+            dump_blocks_feerates(first_block=args.first_block, last_block=curr_height, oracle=oracle)
+            logger.info("sleeping for 5 minutes")
+            time.sleep(60 * 5)
+            # we may change first_block to curr_height, but we're leaving this
+            # as it is in case some of the blocks failed in the last attempt
 
 """
 # After we dumped all blocks feerates, we wish to put them all in an SQLite DB:
