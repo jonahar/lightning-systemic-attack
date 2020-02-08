@@ -7,15 +7,26 @@ from typing import List, Optional, Set
 from datatypes import Address, BTC, Block, BlockHeight, FEERATE, TX, TXID, btc_to_sat
 
 ln = os.path.expandvars("$LN")
-BITCOIN_CLI_WITH_CONF = (
-    "/cs/usr/jonahar/bitcoin-datadir/bitcoin-cli-master "
-)
 
-# BITCOIN_CLI_WITH_CONF = (
-#     "/cs/usr/jonahar/bitcoin-datadir/bitcoin-cli "
-# )
+BITCOIN_CLI_MASTER = "/cs/usr/jonahar/bitcoin-datadir/bitcoin-cli-master "
+BITCOIN_CLI_USER = "/cs/usr/jonahar/bitcoin-datadir/bitcoin-cli "
 
-get_transaction_cache_size = 2 ** 15
+BITCOIN_CLI = BITCOIN_CLI_MASTER
+
+TRANSACTIONS_CACHE_SIZE = 2 ** 13  # 8192. probably enough to hold transactions of an entire block
+
+
+def set_bitcoin_cli(target: str) -> None:
+    """
+    set the bitcoin-cli to use for talking to bitcoind.
+    target should be one of `master` or `user`
+    """
+    global BITCOIN_CLI
+    if target == "master":
+        BITCOIN_CLI = BITCOIN_CLI_MASTER
+    elif target == "user":
+        BITCOIN_CLI = BITCOIN_CLI_USER
+    raise ValueError(f"unrecognized bitcoin-cli target: {target}")
 
 
 def decode_stdout(result: subprocess.CompletedProcess) -> str:
@@ -28,7 +39,7 @@ def decode_stdout(result: subprocess.CompletedProcess) -> str:
 
 def run_cli_command(args: List[str]) -> subprocess.CompletedProcess:
     return subprocess.run(
-        BITCOIN_CLI_WITH_CONF.split() + args,
+        BITCOIN_CLI.split() + args,
         stdout=subprocess.PIPE,
     )
 
@@ -64,7 +75,6 @@ def fund_addresses(addresses: List[Address]) -> Optional[str]:
     return initial_balance_txid
 
 
-@lru_cache(maxsize=2048)
 def get_block_by_hash(block_hash: str) -> Block:
     result = run_cli_command(["getblock", block_hash])
     return json.loads(decode_stdout(result))
@@ -121,7 +131,7 @@ def find_interesting_txids_in_last_t_blocks(t: int) -> Set[TXID]:
 
 # ----- Transactions -----
 
-@lru_cache(maxsize=get_transaction_cache_size)
+@lru_cache(maxsize=TRANSACTIONS_CACHE_SIZE)
 def get_transaction(txid: TXID) -> TX:
     result = run_cli_command(["getrawtransaction", txid, "1"])
     return json.loads(decode_stdout(result))
@@ -151,7 +161,7 @@ def get_tx_outgoing_value(txid: TXID) -> BTC:
     return sum(entry["value"] for entry in tx["vout"])
 
 
-@lru_cache(maxsize=8192)
+@lru_cache(maxsize=TRANSACTIONS_CACHE_SIZE)
 def get_tx_fee(txid: TXID) -> BTC:
     return get_tx_incoming_value(txid) - get_tx_outgoing_value(txid)
 
