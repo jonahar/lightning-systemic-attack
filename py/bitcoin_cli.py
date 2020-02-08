@@ -26,7 +26,8 @@ def set_bitcoin_cli(target: str) -> None:
         BITCOIN_CLI = BITCOIN_CLI_MASTER
     elif target == "user":
         BITCOIN_CLI = BITCOIN_CLI_USER
-    raise ValueError(f"unrecognized bitcoin-cli target: {target}")
+    else:
+        raise ValueError(f"unrecognized bitcoin-cli target: {target}")
 
 
 def decode_stdout(result: subprocess.CompletedProcess) -> str:
