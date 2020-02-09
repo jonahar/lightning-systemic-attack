@@ -4,7 +4,8 @@
         "client": "c-lightning",
         "peers": [
             "2"
-        ]
+        ],
+        "silent": false
     },
     "2": {
         "alias": "bob",
@@ -17,7 +18,6 @@
         "alias": "charlie",
         "client": "c-lightning",
         "evil": true,
-        "peers": [],
-        "silent": true
+        "peers": []
     }
 }
