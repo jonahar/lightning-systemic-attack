@@ -10,7 +10,7 @@ from feerates.feerates_logger import logger
 from feerates.oracle_factory import DB_FOLDER
 from feerates.tx_fee_oracle import TXFeeOracle
 
-MAX_WORKERS = 16
+MAX_WORKERS = None  # will be set by the executor according to number of CPUs
 
 
 def __dump_block_feerates_to_file(h: BlockHeight, oracle: TXFeeOracle, filepath: str) -> bool:
