@@ -12,11 +12,13 @@ from feerates.tx_fee_oracle import TXFeeOracle
 
 MAX_WORKERS = None  # will be set by the executor according to number of CPUs
 
+TSV_SEPARATOR = "\t"
+
 
 def __dump_block_feerates_to_file(h: BlockHeight, oracle: TXFeeOracle, filepath: str) -> bool:
     """
-    helper for dump_block_feerates. write results to a file in the given path.
-    returns true if all feerates were successfully written to the file
+    helper for dump_block_feerates. write feerates of txs in block h to a file in the given path.
+    returns true only if ALL feerates were successfully written to the file.
     """
     block: Block = get_block_by_height(h)
     executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
@@ -38,7 +40,7 @@ def __dump_block_feerates_to_file(h: BlockHeight, oracle: TXFeeOracle, filepath:
                 executor.shutdown(wait=False)
                 return False
             
-            f.write(f"{txid},{feerate}\n")
+            f.write(f"{txid}{TSV_SEPARATOR}{feerate}\n")
     
     executor.shutdown(wait=True)
     return True
@@ -50,7 +52,7 @@ def dump_block_feerates(h: BlockHeight, oracle: TXFeeOracle) -> None:
     to a text file in the DB_FOLDER directory
     """
     logger.info(f"Dumping feerates for block {h}")
-    filepath = os.path.join(DB_FOLDER, f"block_{h}_feerates")
+    filepath = os.path.join(DB_FOLDER, f"block_{h}_feerates.tsv")
     if os.path.isfile(filepath):
         return  # this block was already dumped
     
@@ -116,14 +118,26 @@ if __name__ == "__main__":
             # we may change first_block to curr_height, but we're leaving this
             # as it is in case some of the blocks failed in the last attempt
 
+# ----------
+
+
 """
-# After we dumped all blocks feerates, we wish to put them all in an SQLite DB:
-sort --parallel=4 block_*_feerates > all_feerates_sorted.csv
-# sqlite:
+# After we dump all feerates, we wish to create DB with all, for quick access.
+
+# create tsv file with all of the data
+time sort --parallel=16 block_*_feerates.tsv > all_feerates_sorted.tsv
+
+
+# build SQLite:
 sqlite3 feerates.sqlite
-CREATE TABLE IF NOT EXISTS "feerates" (txid TEXT PRIMARY KEY, feerate TEXT);
-.mode csv
-.import all_feerates_sorted.csv feerates
-# check table size
-select count(*) from feerates;
+> CREATE TABLE IF NOT EXISTS "feerates" (txid TEXT PRIMARY KEY, feerate TEXT);
+> .mode tabs
+> .import all_feerates_sorted.tsv feerates
+> select count(*) from feerates; -- check table size
+
+
+# build LevelDB:
+# to quickly build the db we use ldbsh: https://github.com/kanosaki/ldbsh
+ldbsh feerates_leveldb
+> load all_feerates_sorted.tsv
 """
