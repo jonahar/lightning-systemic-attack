@@ -1,7 +1,7 @@
 import os
 
 from feerates.bitcoind_oracle import BitcoindTXFeeOracle
-from feerates.sql_oracle import SQLTXFeeOracle
+from feerates.level_db_oracle import LevelDBTXFeeOracle
 from feerates.tx_fee_oracle import TXFeeOracle
 
 ln = os.path.expandvars("$LN")
@@ -17,8 +17,8 @@ index_dir = "/cs/labs/avivz/jonahar/bitcoin-datadir/blocks/index"
 def get_multi_layer_oracle() -> TXFeeOracle:
     layer_1 = BitcoindTXFeeOracle(next_oracle=None)
     
-    layer_0 = SQLTXFeeOracle(
-        db_filepath=SQLITE_DB_FILEPATH,
+    layer_0 = LevelDBTXFeeOracle(
+        db_filepath=LEVELDB_FILEPATH,
         next_oracle=layer_1,
     )
     return layer_0
