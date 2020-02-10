@@ -20,7 +20,7 @@ def now() -> str:
     return datetime.now().strftime("%Y-%m-%d_%H:%M")
 
 
-def timeit(logger: Logger, print_args: bool):
+def timeit(logger: Logger, print_args: bool = False):
     """
     the `timeit` decorator logs entering and exiting from a function, and the total
     time it ran.
