@@ -25,7 +25,7 @@ BYTE_IN_KBYTE = 1000
 # PLOT_DATA represents data for a single graph - feerate as a function of timestamp
 PLOT_DATA = Tuple[TIMESTAMPS, FEERATES, LABEL]
 
-estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)\.sanitized")
+estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)")
 
 feerate_oracle = get_multi_layer_oracle()
 
@@ -50,13 +50,17 @@ def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PLOT_DAT
         feerates = []
         with open(os.path.join(estimation_files_dir, entry)) as f:
             for line in f.readlines():
-                line = line[:-1] if line[-1] == "\n" else line
-                timestamp_str, feerate_str = line.split(",")
-                timestamps.append(int(timestamp_str))
-                # feerate returned by `estimatesmartfee` is in BTC/kB
-                feerate_btc_kb = float(feerate_str)
-                feerate: FEERATE = btc_to_sat(feerate_btc_kb) / BYTE_IN_KBYTE
-                feerates.append(feerate)
+                try:
+                    line_strip = line.strip()  # remove newline if exists
+                    timestamp_str, feerate_str = line_strip.split(",")
+                    timestamps.append(int(timestamp_str))
+                    # feerate returned by `estimatesmartfee` is in BTC/kB
+                    feerate_btc_kb = float(feerate_str)
+                    feerate: FEERATE = btc_to_sat(feerate_btc_kb) / BYTE_IN_KBYTE
+                    feerates.append(feerate)
+                except ValueError:
+                    logger.error(f"ignoring line in file `{entry}` with unexpected format: `{line_strip}`")
+        
         data[blocks].append(
             (timestamps, feerates, f"estimatesmartfee(mode={mode})")
         )
