@@ -1,5 +1,4 @@
 import os
-import pickle
 import re
 from collections import defaultdict
 from datetime import datetime
@@ -10,9 +9,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bitcoin_cli import blockchain_height, get_block_by_height, get_transaction
+from blockchain_parser.blockchain import Blockchain
 from datatypes import Block, BlockHeight, FEERATE, TXID, btc_to_sat
-from feerates.oracle_factory import get_multi_layer_oracle
-from utils import now, setup_logging, timeit
+from feerates.oracle_factory import blocks_dir, get_multi_layer_oracle, index_dir
+from utils import setup_logging, timeit
 
 TIMESTAMP = int
 
@@ -29,7 +29,7 @@ estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(
 
 feerate_oracle = get_multi_layer_oracle()
 
-logger = setup_logging(logger_name=__name__)
+logger = setup_logging(logger_name=__name__, filename="feerate_graphs.log")
 
 
 def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PLOT_DATA]]:
@@ -68,6 +68,7 @@ def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PLOT_DAT
     return data
 
 
+@lru_cache()
 @timeit(logger=logger, print_args=True)
 def get_first_block_after_time_t(t: TIMESTAMP) -> BlockHeight:
     """
@@ -89,17 +90,17 @@ def get_first_block_after_time_t(t: TIMESTAMP) -> BlockHeight:
     return low
 
 
-@timeit(logger=logger, print_args=False)
-def get_largest_prefix(txids: List[TXID], max_size: float) -> List[TXID]:
-    """
-    return the largest prefix of the given list such that the total size of
-    transactions in the prefix is less than or equal to max_size
-    """
-    total_size = 0
-    for i, txid in enumerate(txids):
-        if total_size + get_transaction(txid)["size"] > max_size:
-            return txids[:i]
-    return txids
+# @timeit(logger=logger, print_args=False)
+# def get_largest_prefix(txids: List[TXID], max_size: float) -> List[TXID]:
+#     """
+#     return the largest prefix of the given list such that the total size of
+#     transactions in the prefix is less than or equal to max_size
+#     """
+#     total_size = 0
+#     for i, txid in enumerate(txids):
+#         if total_size + get_transaction(txid)["size"] > max_size:
+#             return txids[:i]
+#     return txids
 
 
 def remove_coinbase_txid(txids: List[TXID]) -> List[TXID]:
@@ -115,22 +116,28 @@ def remove_coinbase_txid(txids: List[TXID]) -> List[TXID]:
     return txids
 
 
+@lru_cache()
 @timeit(logger=logger, print_args=True)
-@lru_cache(8192)
-def G(b: int, p: float) -> List[TXID]:
+def get_sorted_feerates_in_block(b: BlockHeight) -> FEERATES:
     """
-    the function G(b,p), which is defined as the set of the `p` top paying transactions
-    in block `b` (in terms of feerate)
+    return a sorted list of the feerates of all transactions in block b.
+    coinbase transaction is excluded!
     """
     block: Block = get_block_by_height(height=b)
-    # remove the coinbase transaction
     txids_in_block = remove_coinbase_txid(block["tx"])
-    txids_sorted = sorted(
-        txids_in_block,
-        key=lambda txid: feerate_oracle.get_tx_feerate(txid),
-        reverse=True
-    )
-    return get_largest_prefix(txids=txids_sorted, max_size=p * block["size"])
+    return sorted(map(lambda txid: feerate_oracle.get_tx_feerate(txid), txids_in_block))
+
+
+@lru_cache()
+@timeit(logger=logger, print_args=True)
+def get_feerates_in_G_b_p(b: BlockHeight, p: float) -> FEERATES:
+    """
+    return the feerates of the p top paying transactions in block b.
+    i.e. the feerates of all transactions in the set G(b,p) (defined in the paper)
+    """
+    feerates = get_sorted_feerates_in_block(b)
+    # FIXME: finding the p prefix by transactions size is expensive. instead we compute p prefix by tx count
+    return feerates[:int(p * len(feerates))]
 
 
 @timeit(logger=logger, print_args=True)
@@ -138,23 +145,66 @@ def F(t: TIMESTAMP, n: int, p: float) -> FEERATE:
     """
     The function F(t,n,p) which is defined as:
         F(t,n,p) = min{ feerate(tx) | M <= height(tx) < M+n, tx ∈ G(b, p) }
-    
     Where M is the first block height that came after time t
     """
-    first_block = get_first_block_after_time_t(t=t)
+    M = get_first_block_after_time_t(t)
     return min(
-        feerate_oracle.get_tx_feerate(txid)
-        for b in range(first_block, first_block + n)
-        for txid in G(b=b, p=p)
+        min(get_feerates_in_G_b_p(b, p))
+        for b in range(M, M + n)
     )
 
 
-def make_F_graph(timestamps: TIMESTAMPS, n: int, p: float) -> PLOT_DATA:
+def compute_F_values(
+    timestamps: TIMESTAMPS,
+    n_values: List[int],
+    p_values: List[float],
+) -> np.ndarray:
     """
-    create plot-data for the F(t,n,p) function
+    compute the function F for each combination of points.
+    return a 3-dimensional array with shape:
+        ( len(timestamps), len(n_values), len(p_values) )
+        
     """
-    feerates = [F(t, n, p) for t in timestamps]
-    return timestamps, feerates, f"F(t,n={n},p={p})"
+    try:
+        # there are many timestamps but only a few n and p values.
+        # to benefit the cache we should iterate timestamps in the outer loop
+        f_values = np.zeros(shape=(len(timestamps), len(n_values), len(p_values)))
+        for t_idx, t in enumerate(timestamps):
+            for n_idx, n in enumerate(n_values):
+                for p_idx, p in enumerate(p_values):
+                    f_values[t_idx, n_idx, p_idx] = F(t, n, p)
+        
+        return f_values
+    except KeyboardInterrupt:
+        values_computed = (t_idx + 1) * (n_idx + 1) * (p_idx + 1)
+        total_needed_values = len(timestamps) * len(n_values) * len(p_values)
+        print(
+            f"Terminating compute_F_values. "
+            f"Total values computed: {values_computed} out of {total_needed_values}"
+        )
+
+
+@timeit(logger=logger)
+def block_heights_to_timestamps(first_height: BlockHeight, last_height: BlockHeight) -> TIMESTAMPS:
+    """
+    return a list with the timestamps of all blocks from first_height to last_height (excluding)
+    """
+    blockchain = Blockchain(blocks_dir)
+    blocks_gen = blockchain.get_ordered_blocks(
+        index=index_dir,
+        start=first_height,
+        end=last_height,
+    )
+    res = [
+        int(datetime.timestamp(block.header.timestamp))
+        for block in blocks_gen
+    ]
+    if len(res) != (last_height - first_height):
+        logger.warning(
+            f"extracted timestamps for {len(res)} blocks. "
+            f"expected number was {last_height - first_height}"
+        )
+    return res
 
 
 def plot_figure(title: str, data: List[PLOT_DATA]):
@@ -192,17 +242,40 @@ def main():
     fee_stats_dir = os.path.join(ln, "data/fee-statistics")
     data = parse_estimation_files(fee_stats_dir)
     
-    for num_blocks, plot_data_list in data.items():
-        # we compute F at the timestamps of the first graph. they should all
-        # have the same timestamps anyway, but it doesn't really matter
-        timestamps = plot_data_list[0][0]
-        for p in [1, 0.9, 0.8]:
-            plot_data_list.append(make_F_graph(timestamps=timestamps, n=num_blocks, p=p))
-            # make_F_graph is computationally expensive. we don't want to lost it.
-            # dump the precomputed data
-            with open(f"{fee_stats_dir}/plot_data_{now()}.pickle", mode="wb") as f:
-                pickle.dump(data, f)
+    # find the timestamps in which to evaluate F
+    start_time = min(
+        min(plot_data[0])
+        for n, plot_data_list in data.items()
+        for plot_data in plot_data_list
+    )
+    end_time = max(
+        max(plot_data[0])
+        for n, plot_data_list in data.items()
+        for plot_data in plot_data_list
+    )
     
+    timestamps_to_eval_F = block_heights_to_timestamps(
+        first_height=get_first_block_after_time_t(start_time),
+        last_height=get_first_block_after_time_t(end_time),
+    )
+    
+    p_values = [1, 0.9, 0.8]
+    n_values = sorted(data.keys())
+    
+    f_values = compute_F_values(
+        timestamps=timestamps_to_eval_F,
+        n_values=n_values,
+        p_values=p_values,
+    )
+    
+    # add the computed F values to the graphs data
+    for n_idx, n in enumerate(n_values):
+        for p_idx, p in enumerate(p_values):
+            data[n].append(
+                (timestamps_to_eval_F, f_values[:, n_idx, p_idx], f"F(t,n={n},p={p})")
+            )
+    
+    # plot all
     for num_blocks, plot_data_list in data.items():
         # sort by label before drawing, so similar labels in different graphs will
         # share the same color
