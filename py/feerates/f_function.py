@@ -3,7 +3,7 @@ from typing import List
 
 import plyvel
 
-from bitcoin_cli import blockchain_height, get_block_by_height, get_transaction
+from bitcoin_cli import blockchain_height, get_block_by_height, get_transaction, set_bitcoin_cli
 from datatypes import Block, BlockHeight, FEERATE, TIMESTAMP, TXID
 from feerates.feerates_logger import logger
 from feerates.oracle_factory import get_f_values_db, get_multi_layer_oracle
@@ -19,6 +19,8 @@ and G(b,p) is the set of the p top paying transactions in block height b
 
 feerate_oracle = get_multi_layer_oracle()
 f_values_db: plyvel.DB = get_f_values_db()
+
+set_bitcoin_cli("user")
 
 
 @lru_cache(maxsize=2048)
@@ -64,12 +66,12 @@ def remove_coinbase_txid(txids: List[TXID]) -> List[TXID]:
 @timeit(logger=logger, print_args=True)
 def get_sorted_feerates_in_block(b: BlockHeight) -> List[FEERATE]:
     """
-    return a sorted list of the feerates of all transactions in block b.
+    return a sorted list (descending order) of the feerates of all transactions in block b.
     coinbase transaction is excluded!
     """
     block: Block = get_block_by_height(height=b)
     txids_in_block = remove_coinbase_txid(block["tx"])
-    return sorted(map(lambda txid: feerate_oracle.get_tx_feerate(txid), txids_in_block))
+    return sorted(map(lambda txid: feerate_oracle.get_tx_feerate(txid), txids_in_block), reverse=True)
 
 
 @lru_cache()
