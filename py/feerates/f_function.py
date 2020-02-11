@@ -95,8 +95,13 @@ def F(t: TIMESTAMP, n: int, p: float) -> FEERATE:
         return float(value.decode("utf8"))
     
     M = get_first_block_after_time_t(t)
+    
+    # G(b,p) might be empty if the block has no transactions. in that case we set
+    # its minimal fee to float("inf")
+    
     value: float = min(
         min(get_feerates_in_G_b_p(b, p))
+        if len(get_feerates_in_G_b_p(b, p)) > 0 else float("inf")
         for b in range(M, M + n)
     )
     f_values_db.put(db_key, str(value).encode("utf8"))
