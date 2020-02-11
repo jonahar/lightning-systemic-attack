@@ -2,19 +2,17 @@ import os
 import re
 from collections import defaultdict
 from datetime import datetime
-from functools import lru_cache
 from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bitcoin_cli import blockchain_height, get_block_by_height, get_transaction
 from blockchain_parser.blockchain import Blockchain
-from datatypes import Block, BlockHeight, FEERATE, TXID, btc_to_sat
-from feerates.oracle_factory import blocks_dir, get_multi_layer_oracle, index_dir
-from utils import setup_logging, timeit
-
-TIMESTAMP = int
+from datatypes import BlockHeight, FEERATE, TIMESTAMP, btc_to_sat
+from feerates.f_function import F, get_first_block_after_time_t
+from feerates.feerates_logger import logger
+from feerates.oracle_factory import blocks_dir, index_dir
+from utils import timeit
 
 TIMESTAMPS = List[TIMESTAMP]
 FEERATES = List[FEERATE]
@@ -26,10 +24,6 @@ BYTE_IN_KBYTE = 1000
 PLOT_DATA = Tuple[TIMESTAMPS, FEERATES, LABEL]
 
 estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)")
-
-feerate_oracle = get_multi_layer_oracle()
-
-logger = setup_logging(logger_name=__name__, filename="feerate_graphs.log")
 
 
 def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PLOT_DATA]]:
@@ -66,92 +60,6 @@ def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PLOT_DAT
         )
     
     return data
-
-
-@lru_cache()
-@timeit(logger=logger, print_args=True)
-def get_first_block_after_time_t(t: TIMESTAMP) -> BlockHeight:
-    """
-    return the height of the first block with timestamp greater or equal to
-    the given timestamp
-    """
-    low: int = 0
-    high = blockchain_height()
-    
-    # simple binary search
-    while low < high:
-        m = (low + high) // 2
-        m_time = get_block_by_height(m)["time"]
-        if m_time < t:
-            low = m + 1
-        else:
-            high = m
-    
-    return low
-
-
-# @timeit(logger=logger, print_args=False)
-# def get_largest_prefix(txids: List[TXID], max_size: float) -> List[TXID]:
-#     """
-#     return the largest prefix of the given list such that the total size of
-#     transactions in the prefix is less than or equal to max_size
-#     """
-#     total_size = 0
-#     for i, txid in enumerate(txids):
-#         if total_size + get_transaction(txid)["size"] > max_size:
-#             return txids[:i]
-#     return txids
-
-
-def remove_coinbase_txid(txids: List[TXID]) -> List[TXID]:
-    """
-    remove the txid of a coinbase transaction from the given list and return the
-    modified list.
-    this function assumes there is at most one such txid
-    """
-    for i, txid in enumerate(txids):
-        if "coinbase" in get_transaction(txid)["vin"][0]:
-            del txids[i]
-            return txids
-    return txids
-
-
-@lru_cache()
-@timeit(logger=logger, print_args=True)
-def get_sorted_feerates_in_block(b: BlockHeight) -> FEERATES:
-    """
-    return a sorted list of the feerates of all transactions in block b.
-    coinbase transaction is excluded!
-    """
-    block: Block = get_block_by_height(height=b)
-    txids_in_block = remove_coinbase_txid(block["tx"])
-    return sorted(map(lambda txid: feerate_oracle.get_tx_feerate(txid), txids_in_block))
-
-
-@lru_cache()
-@timeit(logger=logger, print_args=True)
-def get_feerates_in_G_b_p(b: BlockHeight, p: float) -> FEERATES:
-    """
-    return the feerates of the p top paying transactions in block b.
-    i.e. the feerates of all transactions in the set G(b,p) (defined in the paper)
-    """
-    feerates = get_sorted_feerates_in_block(b)
-    # FIXME: finding the p prefix by transactions size is expensive. instead we compute p prefix by tx count
-    return feerates[:int(p * len(feerates))]
-
-
-@timeit(logger=logger, print_args=True)
-def F(t: TIMESTAMP, n: int, p: float) -> FEERATE:
-    """
-    The function F(t,n,p) which is defined as:
-        F(t,n,p) = min{ feerate(tx) | M <= height(tx) < M+n, tx ∈ G(b, p) }
-    Where M is the first block height that came after time t
-    """
-    M = get_first_block_after_time_t(t)
-    return min(
-        min(get_feerates_in_G_b_p(b, p))
-        for b in range(M, M + n)
-    )
 
 
 def compute_F_values(

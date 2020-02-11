@@ -1,19 +1,19 @@
 from typing import Any, Dict
 
 Json = Dict[str, Any]
-TXID = str
-TX = Json
 Address = str
 BlockHash = str
-Block = Json
 BlockHeight = int
+Block = Json
 BTC = float
-SATOSHI = int
-MSATOSHI = int
 FEERATE = float  # in satoshi per byte
-
+MSATOSHI = int
 NodeIndex = int
 NodeIndexStr = str
+SATOSHI = int
+TIMESTAMP = int
+TXID = str
+TX = Json
 
 
 def msat_to_sat(msat: MSATOSHI) -> SATOSHI:
