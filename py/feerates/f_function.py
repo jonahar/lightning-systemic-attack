@@ -1,10 +1,12 @@
 from functools import lru_cache
 from typing import List
 
+import plyvel
+
 from bitcoin_cli import blockchain_height, get_block_by_height, get_transaction
 from datatypes import Block, BlockHeight, FEERATE, TIMESTAMP, TXID
 from feerates.feerates_logger import logger
-from feerates.oracle_factory import get_multi_layer_oracle
+from feerates.oracle_factory import get_f_values_db, get_multi_layer_oracle
 from utils import timeit
 
 """
@@ -16,6 +18,7 @@ and G(b,p) is the set of the p top paying transactions in block height b
 """
 
 feerate_oracle = get_multi_layer_oracle()
+f_values_db: plyvel.DB = get_f_values_db()
 
 
 @lru_cache()
@@ -77,13 +80,24 @@ def get_feerates_in_G_b_p(b: BlockHeight, p: float) -> List[FEERATE]:
     return feerates[:int(p * len(feerates))]
 
 
+def get_db_key(t, n, p) -> bytes:
+    return f"{t}-{n}-{p}".encode("utf8")
+
+
 @timeit(logger=logger, print_args=True)
 def F(t: TIMESTAMP, n: int, p: float) -> FEERATE:
     """
     See F doc in the top of this file
     """
+    db_key = get_db_key(t=t, n=n, p=p)
+    value: bytes = f_values_db.get(db_key)
+    if value:
+        return float(value.decode("utf8"))
+    
     M = get_first_block_after_time_t(t)
-    return min(
+    value: float = min(
         min(get_feerates_in_G_b_p(b, p))
         for b in range(M, M + n)
     )
+    f_values_db.put(db_key, str(value).encode("utf8"))
+    return value
