@@ -28,7 +28,6 @@ def get_block_time(h: BlockHeight) -> TIMESTAMP:
     return get_block_by_height(h)["time"]
 
 
-@timeit(logger=logger, print_args=True)
 def get_first_block_after_time_t(t: TIMESTAMP) -> BlockHeight:
     """
     return the height of the first block with timestamp greater or equal to
@@ -63,7 +62,6 @@ def remove_coinbase_txid(txids: List[TXID]) -> List[TXID]:
 
 
 @lru_cache()
-@timeit(logger=logger, print_args=True)
 def get_sorted_feerates_in_block(b: BlockHeight) -> List[FEERATE]:
     """
     return a sorted list (descending order) of the feerates of all transactions in block b.
@@ -75,7 +73,6 @@ def get_sorted_feerates_in_block(b: BlockHeight) -> List[FEERATE]:
 
 
 @lru_cache()
-@timeit(logger=logger, print_args=True)
 def get_feerates_in_G_b_p(b: BlockHeight, p: float) -> List[FEERATE]:
     """
     return the feerates of the p top paying transactions in block b.
