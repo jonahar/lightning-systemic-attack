@@ -76,7 +76,11 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         )
     
     def stop(self) -> None:
-        raise NotImplementedError()
+        # we use the process id we stored when we started this node
+        pid_filepath = self.__get_node_pid_file()
+        self._write_line(
+            f"pkill --pidfile {pid_filepath}"
+        )
     
     def set_address(self, bash_var: str) -> None:
         self._write_line(
@@ -115,10 +119,22 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         receiver: LightningCommandsGenerator,
         amount_msat: int,
     ) -> None:
-        raise NotImplementedError()
+        receiver_id_bash_var = f"ID_{receiver.idx}"
+        receiver.set_id(bash_var=receiver_id_bash_var)
+        find_route_command = (
+            self.__eclair_cli_command_prefix() +
+            f"findroutetonode --nodeId=${{{receiver_id_bash_var}}} --amountMsat={amount_msat}"
+        )
+        self._write_line(f"""
+        while [[ $({find_route_command}) == "route not found" ]]; do
+            sleep 1
+        done
+        """)
     
     def create_invoice(self, payment_req_bash_var, amount_msat: int) -> None:
-        raise NotImplementedError()
+        self.__write_eclair_cli_command(
+            f"""{payment_req_bash_var}=$(createinvoice --description="" --amountMsat={amount_msat} | jq -r ".serialized")"""
+        )
     
     def make_payments(
         self,
@@ -126,7 +142,10 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         num_payments: int,
         amount_msat: int,
     ) -> None:
-        raise NotImplementedError()
+        self._write_line(f"for i in $(seq 1 {num_payments}); do")
+        receiver.create_invoice(payment_req_bash_var="PAYMENT_REQ", amount_msat=amount_msat)
+        self.__write_eclair_cli_command("payinvoice --invoice=${PAYMENT_REQ}")
+        self._write_line("done")
     
     def print_node_htlcs(self) -> None:
         raise NotImplementedError()
@@ -135,7 +154,9 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         raise NotImplementedError()
     
     def dump_balance(self, filepath: str) -> None:
-        raise NotImplementedError()
+        self._write_line(
+            f"""echo "node {self.idx} balance: UNKNOWN (dump_balance not implemented)" >> {filepath}"""
+        )
     
     def reveal_preimages(self, peer: LightningCommandsGenerator = None) -> None:
         raise TypeError(f"Unsupported operation for {type(self).__name__}")
