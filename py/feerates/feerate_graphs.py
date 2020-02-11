@@ -1,8 +1,8 @@
 import os
 import re
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,13 +20,13 @@ LABEL = str
 
 BYTE_IN_KBYTE = 1000
 
-# PLOT_DATA represents data for a single graph - feerate as a function of timestamp
-PLOT_DATA = Tuple[TIMESTAMPS, FEERATES, LABEL]
+# PlotData represents data for a single graph - feerate as a function of timestamp
+PlotData = namedtuple("PlotData", ["timestamps", "feerates", "label"])
 
 estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)")
 
 
-def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PLOT_DATA]]:
+def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PlotData]]:
     """
     read all fee estimation files and prepare the plot data
     
@@ -56,7 +56,7 @@ def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PLOT_DAT
                     logger.error(f"ignoring line in file `{entry}` with unexpected format: `{line_strip}`")
         
         data[blocks].append(
-            (timestamps, feerates, f"estimatesmartfee(mode={mode})")
+            PlotData(timestamps=timestamps, feerates=feerates, label=f"estimatesmartfee(mode={mode})")
         )
     
     return data
@@ -115,7 +115,7 @@ def block_heights_to_timestamps(first_height: BlockHeight, last_height: BlockHei
     return res
 
 
-def plot_figure(title: str, data: List[PLOT_DATA]):
+def plot_figure(title: str, data: List[PlotData]):
     """
     add the given plot data to a new figure. all graphs on the same figure
     """
@@ -167,7 +167,7 @@ def main():
         last_height=get_first_block_after_time_t(end_time),
     )
     
-    p_values = [1, 0.9, 0.8]
+    p_values = [1, 0.9, 0.5, 0.1, 0.01]
     n_values = sorted(data.keys())
     
     f_values = compute_F_values(
@@ -180,7 +180,11 @@ def main():
     for n_idx, n in enumerate(n_values):
         for p_idx, p in enumerate(p_values):
             data[n].append(
-                (timestamps_to_eval_F, f_values[:, n_idx, p_idx], f"F(t,n={n},p={p})")
+                PlotData(
+                    timestamps=timestamps_to_eval_F,
+                    feerates=f_values[:, n_idx, p_idx],
+                    label=f"F(t,n={n},p={p})",
+                )
             )
     
     # plot all
