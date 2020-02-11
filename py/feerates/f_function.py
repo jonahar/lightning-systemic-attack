@@ -21,7 +21,11 @@ feerate_oracle = get_multi_layer_oracle()
 f_values_db: plyvel.DB = get_f_values_db()
 
 
-@lru_cache()
+@lru_cache(maxsize=2048)
+def get_block_time(h: BlockHeight) -> TIMESTAMP:
+    return get_block_by_height(h)["time"]
+
+
 @timeit(logger=logger, print_args=True)
 def get_first_block_after_time_t(t: TIMESTAMP) -> BlockHeight:
     """
@@ -34,7 +38,7 @@ def get_first_block_after_time_t(t: TIMESTAMP) -> BlockHeight:
     # simple binary search
     while low < high:
         m = (low + high) // 2
-        m_time = get_block_by_height(m)["time"]
+        m_time = get_block_time(m)
         if m_time < t:
             low = m + 1
         else:
