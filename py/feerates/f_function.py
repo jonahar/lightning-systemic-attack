@@ -3,7 +3,9 @@ from typing import List
 
 import plyvel
 
-from bitcoin_cli import blockchain_height, get_block_by_height, get_transaction, set_bitcoin_cli
+from bitcoin_cli import (
+    blockchain_height, get_block_by_height, get_block_time, get_transaction, set_bitcoin_cli,
+)
 from datatypes import Block, BlockHeight, FEERATE, TIMESTAMP, TXID
 from feerates.feerates_logger import logger
 from feerates.oracle_factory import get_f_values_db, get_multi_layer_oracle
@@ -22,11 +24,6 @@ feerate_oracle: TXFeeOracle = get_multi_layer_oracle()
 f_values_db: plyvel.DB = get_f_values_db()
 
 set_bitcoin_cli("user")
-
-
-@lru_cache(maxsize=2048)
-def get_block_time(h: BlockHeight) -> TIMESTAMP:
-    return get_block_by_height(h)["time"]
 
 
 def get_first_block_after_time_t(t: TIMESTAMP) -> BlockHeight:

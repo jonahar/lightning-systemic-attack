@@ -4,7 +4,9 @@ import subprocess
 from functools import lru_cache
 from typing import List, Optional, Set
 
-from datatypes import Address, BTC, Block, BlockHeight, FEERATE, TX, TXID, btc_to_sat
+from datatypes import (
+    Address, BTC, Block, BlockHeight, FEERATE, TIMESTAMP, TX, TXID, btc_to_sat,
+)
 
 ln = os.path.expandvars("$LN")
 
@@ -128,6 +130,11 @@ def find_interesting_txids_in_last_t_blocks(t: int) -> Set[TXID]:
         for txid in get_block_by_height(height)["tx"]
         if "coinbase" not in get_transaction(txid)["vin"][0]
     }
+
+
+@lru_cache(maxsize=4096)
+def get_block_time(h: BlockHeight) -> TIMESTAMP:
+    return get_block_by_height(h)["time"]
 
 
 # ----- Transactions -----
