@@ -7,7 +7,7 @@ from bitcoin_cli import blockchain_height, get_block_by_height, set_bitcoin_cli
 from datatypes import Block, BlockHeight
 from feerates.bitcoind_oracle import BitcoindTXFeeOracle
 from feerates.feerates_logger import logger
-from feerates.oracle_factory import DB_FOLDER
+from feerates.factory import DB_FOLDER
 from feerates.tx_fee_oracle import TXFeeOracle
 
 MAX_WORKERS = None  # will be set by the executor according to number of CPUs

@@ -6,6 +6,10 @@ from feerates.bitcoind_oracle import BitcoindTXFeeOracle
 from feerates.level_db_oracle import LevelDBTXFeeOracle
 from feerates.tx_fee_oracle import TXFeeOracle
 
+"""
+This module is responsible for building feerates oracles and various DBs
+"""
+
 ln = os.path.expandvars("$LN")
 DB_FOLDER = "/cs/labs/avivz/jonahar/bitcoin-datadir/feerates"
 SQLITE_DB_FILEPATH = os.path.join(DB_FOLDER, "feerates.sqlite")

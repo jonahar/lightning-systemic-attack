@@ -11,7 +11,7 @@ from blockchain_parser.blockchain import Blockchain
 from datatypes import BlockHeight, FEERATE, TIMESTAMP, btc_to_sat
 from feerates.f_function import F, get_first_block_after_time_t
 from feerates.feerates_logger import logger
-from feerates.oracle_factory import blocks_dir, index_dir
+from feerates.factory import blocks_dir, index_dir
 from utils import timeit
 
 TIMESTAMPS = List[TIMESTAMP]
