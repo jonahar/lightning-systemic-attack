@@ -7,10 +7,10 @@ from bitcoin_cli import (
     blockchain_height, get_block_by_height, get_block_time, get_transaction,
 )
 from datatypes import Block, BlockHeight, FEERATE, TIMESTAMP, TXID
-from feerates.feerates_logger import logger
 from feerates.factory import get_f_values_db, get_multi_layer_oracle
+from feerates.feerates_logger import logger
 from feerates.tx_fee_oracle import TXFeeOracle
-from utils import timeit
+from utils import leveldb_cache, timeit
 
 """
 This module is responsible for computing the F function. this is defined as
@@ -84,25 +84,18 @@ def get_db_key(t, n, p) -> bytes:
 
 
 @timeit(logger=logger, print_args=True)
+@leveldb_cache
 def F(t: TIMESTAMP, n: int, p: float) -> FEERATE:
     """
     See F doc in the top of this file
     """
-    # maybe the value was precomputed. try to load it from the db
-    db_key = get_db_key(t=t, n=n, p=p)
-    value: bytes = f_values_db.get(db_key)
-    if value:
-        return float(value.decode("utf8"))
-    
     M = get_first_block_after_time_t(t)
     
     # G(b,p) might be empty if the block has no transactions. in that case we set
     # its minimal fee to float("inf")
     
-    value: float = min(
+    return min(
         min(get_feerates_in_G_b_p(b, p))
         if len(get_feerates_in_G_b_p(b, p)) > 0 else float("inf")
         for b in range(M, M + n)
     )
-    f_values_db.put(db_key, str(value).encode("utf8"))
-    return value
