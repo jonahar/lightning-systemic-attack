@@ -118,6 +118,7 @@ def leveldb_cache(func):
     def deserialize_value(bytes) -> Any:
         return pickle.loads(bytes)
     
+    @wraps(func)
     def cached_func(*args, **kwargs):
         db_key = get_db_key(*args, **kwargs)
         value: bytes = db.get(db_key)
