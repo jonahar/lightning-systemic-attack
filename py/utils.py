@@ -1,10 +1,15 @@
 import json
 import logging
+import os
+import pickle
 import sys
 import time
 from datetime import datetime
 from functools import wraps
 from logging import Logger
+from typing import Any
+
+import plyvel
 
 from datatypes import Json
 
@@ -86,3 +91,42 @@ def setup_logging(
         logger.addHandler(fh)
     
     return logger
+
+
+CACHES_DIR = os.path.join(os.path.expandvars("$LN"), "data", "caches")
+
+
+def leveldb_cache(func):
+    """
+    this is a decorator that caches result for the function 'func'.
+    The cache is stored on disk, using LevelDB.
+    
+    The cache size is (currently) not configurable, and is unlimited
+    """
+    cache_name = f"{func.__name__}_py_function_leveldb"
+    cache_fullpath = os.path.join(CACHES_DIR, cache_name)
+    db = plyvel.DB(cache_fullpath, create_if_missing=True)
+    
+    def get_db_key(*args, **kwargs) -> bytes:
+        return pickle.dumps(
+            (args, sorted(kwargs.items()))
+        )
+    
+    def serialize_value(value: Any) -> bytes:
+        return pickle.dumps(value)
+    
+    def deserialize_value(bytes) -> Any:
+        return pickle.loads(bytes)
+    
+    def cached_func(*args, **kwargs):
+        db_key = get_db_key(*args, **kwargs)
+        value: bytes = db.get(db_key)
+        if value:
+            return deserialize_value(value)
+        
+        value = func(*args, **kwargs)
+        
+        db.put(db_key, serialize_value(value))
+        return value
+    
+    return cached_func
