@@ -7,6 +7,7 @@ from typing import List, Optional, Set
 from datatypes import (
     Address, BTC, Block, BlockHeight, FEERATE, TIMESTAMP, TX, TXID, btc_to_sat,
 )
+from utils import leveldb_cache
 
 ln = os.path.expandvars("$LN")
 
@@ -132,7 +133,7 @@ def find_interesting_txids_in_last_t_blocks(t: int) -> Set[TXID]:
     }
 
 
-@lru_cache(maxsize=4096)
+@leveldb_cache
 def get_block_time(h: BlockHeight) -> TIMESTAMP:
     return get_block_by_height(h)["time"]
 
