@@ -1,13 +1,11 @@
 from functools import lru_cache
 from typing import List
 
-import plyvel
-
 from bitcoin_cli import (
     blockchain_height, get_block_by_height, get_block_time, get_transaction,
 )
 from datatypes import Block, BlockHeight, FEERATE, TIMESTAMP, TXID
-from feerates.factory import get_f_values_db, get_multi_layer_oracle
+from feerates.factory import get_multi_layer_oracle
 from feerates.feerates_logger import logger
 from feerates.tx_fee_oracle import TXFeeOracle
 from utils import leveldb_cache, timeit
@@ -21,7 +19,6 @@ and G(b,p) is the set of the p top paying transactions in block height b
 """
 
 feerate_oracle: TXFeeOracle = get_multi_layer_oracle()
-f_values_db: plyvel.DB = get_f_values_db()
 
 
 def get_first_block_after_time_t(t: TIMESTAMP) -> BlockHeight:
@@ -77,10 +74,6 @@ def get_feerates_in_G_b_p(b: BlockHeight, p: float) -> List[FEERATE]:
     feerates = get_sorted_feerates_in_block(b)
     # FIXME: finding the p prefix by transactions size is expensive. instead we compute p prefix by tx count
     return feerates[:int(p * len(feerates))]
-
-
-def get_db_key(t, n, p) -> bytes:
-    return f"{t}-{n}-{p}".encode("utf8")
 
 
 @timeit(logger=logger, print_args=True)
