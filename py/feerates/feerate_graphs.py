@@ -7,11 +7,10 @@ from typing import Dict, List
 import matplotlib.pyplot as plt
 import numpy as np
 
-from blockchain_parser.blockchain import Blockchain
+from bitcoin_cli import get_block_time, set_bitcoin_cli
 from datatypes import BlockHeight, FEERATE, TIMESTAMP, btc_to_sat
 from feerates.f_function import F, get_first_block_after_time_t
 from feerates.feerates_logger import logger
-from feerates.factory import blocks_dir, index_dir
 from utils import timeit
 
 TIMESTAMPS = List[TIMESTAMP]
@@ -97,22 +96,11 @@ def block_heights_to_timestamps(first_height: BlockHeight, last_height: BlockHei
     """
     return a list with the timestamps of all blocks from first_height to last_height (excluding)
     """
-    blockchain = Blockchain(blocks_dir)
-    blocks_gen = blockchain.get_ordered_blocks(
-        index=index_dir,
-        start=first_height,
-        end=last_height,
-    )
-    res = [
-        int(datetime.timestamp(block.header.timestamp))
-        for block in blocks_gen
+    
+    return [
+        get_block_time(h=h)
+        for h in range(first_height, last_height)
     ]
-    if len(res) != (last_height - first_height):
-        logger.warning(
-            f"extracted timestamps for {len(res)} blocks. "
-            f"expected number was {last_height - first_height}"
-        )
-    return res
 
 
 def plot_figure(title: str, data: List[PlotData]):
@@ -146,6 +134,8 @@ def plot_figure(title: str, data: List[PlotData]):
 
 
 def main():
+    set_bitcoin_cli("user")
+    
     ln = os.path.expandvars("$LN")
     fee_stats_dir = os.path.join(ln, "data/fee-statistics")
     data = parse_estimation_files(fee_stats_dir)
