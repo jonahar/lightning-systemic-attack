@@ -7,6 +7,7 @@ from bitcoin_cli import blockchain_height, get_block_by_height, get_transaction,
 from datatypes import Block, BlockHeight, FEERATE, TIMESTAMP, TXID
 from feerates.feerates_logger import logger
 from feerates.oracle_factory import get_f_values_db, get_multi_layer_oracle
+from feerates.tx_fee_oracle import TXFeeOracle
 from utils import timeit
 
 """
@@ -17,7 +18,7 @@ Where M is the first block height that came after time t
 and G(b,p) is the set of the p top paying transactions in block height b
 """
 
-feerate_oracle = get_multi_layer_oracle()
+feerate_oracle: TXFeeOracle = get_multi_layer_oracle()
 f_values_db: plyvel.DB = get_f_values_db()
 
 set_bitcoin_cli("user")
@@ -92,6 +93,7 @@ def F(t: TIMESTAMP, n: int, p: float) -> FEERATE:
     """
     See F doc in the top of this file
     """
+    # maybe the value was precomputed. try to load it from the db
     db_key = get_db_key(t=t, n=n, p=p)
     value: bytes = f_values_db.get(db_key)
     if value:
