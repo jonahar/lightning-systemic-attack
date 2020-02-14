@@ -20,7 +20,14 @@ def __dump_block_feerates_to_file(h: BlockHeight, oracle: TXFeeOracle, filepath:
     helper for dump_block_feerates. write feerates of txs in block h to a file in the given path.
     returns true only if ALL feerates were successfully written to the file.
     """
-    block: Block = get_block_by_height(h)
+    try:
+        block: Block = get_block_by_height(h)
+    except Exception:
+        # TODO change this except. get_block_by_height should either declare
+        #  exactly what it raises, or return None if it fails
+        logger.error(f"Failed to retrieve block {h} from bitcoind")
+        return False
+    
     executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
     # submit all jobs to the pool
     txid_to_future = {
