@@ -93,7 +93,7 @@ def F(t: TIMESTAMP, n: int, p: float) -> FEERATE:
         if len(get_feerates_in_G_b_p(b, p)) > 0 else float("inf")
         for b in range(M, M + n)
     )
-    if res == float("inf"):
-        raise ValueError(f"invalid F value computed. F(t={t},n={n},p={p})={res}")
+    if res < 0 or res == float("inf"):
+        raise ValueError(f"invalid F value computed. F(t={t},n={n},p={p}) = {res}")
     
     return res
