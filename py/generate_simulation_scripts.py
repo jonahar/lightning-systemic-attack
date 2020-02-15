@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-
 import os
+from itertools import product
 
 ln = os.path.expandvars("$LN")
 simulations_dir = os.path.join(ln, "simulations")
 
 # set these to customize the simulation
-topology = os.path.join(ln, "topologies/topology-1-5-1.json")
-num_victims = 5
+topology = os.path.join(ln, "topologies/topology-1-10-1.json")
+num_victims = 10
 payments_per_victim = 400
 channel_balance = 0.1
 blockmaxweight_values = [100000]
 num_blocks = 200
 block_time = 150
+htlcs = [50, 100, 200, 400]
+delays = [3, 7, 10]
 
 # the following are derived from the previous variables. probably shouldn't be modified
 amount_msat = int(
@@ -27,8 +29,8 @@ num_payments = num_victims * payments_per_victim
 # payments we try. Anyway, each channel is limited by max_accepted_htlc
 num_payments = int(num_payments * 1.2)
 
-for blockmaxweight in blockmaxweight_values:
-    script_name = f"steal-attack-{num_victims}-victims-blockmaxweight={blockmaxweight}"
+for blockmaxweight, htlc, delay in product(blockmaxweight_values, htlcs, delays):
+    script_name = f"steal-attack-{num_victims}-victims-blockmaxweight={blockmaxweight}-htlc={htlc}-delay={delay}"
     datadir = os.path.join(simulations_dir, f"{script_name}")
     script_file = os.path.join(simulations_dir, f"{script_name}.sh")
     output_file = os.path.join(simulations_dir, f"{script_name}.out")
