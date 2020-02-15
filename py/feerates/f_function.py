@@ -1,12 +1,13 @@
 from functools import lru_cache
+from math import ceil
 from typing import List
 
 from bitcoin_cli import (
     blockchain_height, get_block_by_height, get_block_time, get_transaction,
 )
 from datatypes import Block, BlockHeight, FEERATE, TIMESTAMP, TXID
-from feerates.oracle_factory import get_multi_layer_oracle
 from feerates.feerates_logger import logger
+from feerates.oracle_factory import get_multi_layer_oracle
 from feerates.tx_fee_oracle import TXFeeOracle
 from utils import leveldb_cache, timeit
 
@@ -73,7 +74,7 @@ def get_feerates_in_G_b_p(b: BlockHeight, p: float) -> List[FEERATE]:
     """
     feerates = get_sorted_feerates_in_block(b)
     # FIXME: finding the p prefix by transactions size is expensive. instead we compute p prefix by tx count
-    return feerates[:int(p * len(feerates))]
+    return feerates[:ceil(p * len(feerates))]
 
 
 @timeit(logger=logger, print_args=True)
@@ -87,6 +88,8 @@ def F(t: TIMESTAMP, n: int, p: float) -> FEERATE:
     # G(b,p) might be empty if the block has no transactions. in that case we set
     # its minimal fee to float("inf")
     
+    # TODO: assert that the result is never float("inf"). think what to do if it is
+    #  perhaps we need to invalidate the cache
     return min(
         min(get_feerates_in_G_b_p(b, p))
         if len(get_feerates_in_G_b_p(b, p)) > 0 else float("inf")
