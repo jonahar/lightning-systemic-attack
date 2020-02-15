@@ -88,10 +88,12 @@ def F(t: TIMESTAMP, n: int, p: float) -> FEERATE:
     # G(b,p) might be empty if the block has no transactions. in that case we set
     # its minimal fee to float("inf")
     
-    # TODO: assert that the result is never float("inf"). think what to do if it is
-    #  perhaps we need to invalidate the cache
-    return min(
+    res = min(
         min(get_feerates_in_G_b_p(b, p))
         if len(get_feerates_in_G_b_p(b, p)) > 0 else float("inf")
         for b in range(M, M + n)
     )
+    if res == float("inf"):
+        raise ValueError(f"invalid F value computed. F(t={t},n={n},p={p})={res}")
+    
+    return res
