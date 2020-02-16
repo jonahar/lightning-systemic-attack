@@ -6,15 +6,15 @@ ln = os.path.expandvars("$LN")
 simulations_dir = os.path.join(ln, "simulations")
 
 # set these to customize the simulation
-topology = os.path.join(ln, "topologies/topology-1-10-1.json")
-num_victims = 10
+topology = os.path.join(ln, "topologies/topology-1-5-1.json")
+num_victims = 5
 payments_per_victim = 400
 channel_balance = 0.1
-blockmaxweight_values = [100000]
 num_blocks = 200
 block_time = 150
-htlcs = [50, 100, 200, 400]
-delays = [3, 7, 10]
+blockmaxweight_values = [100000]
+htlcs = [50, 100, 200, 300, 400]
+delays = [4, 5, 6, 7, 8, 9, 10]
 
 # the following are derived from the previous variables. probably shouldn't be modified
 amount_msat = int(
