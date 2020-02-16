@@ -70,10 +70,10 @@ for num_victims in graph_data:
             delay_to_amouont_dict = graph_data[num_victims][blockmaxweight][htlc_count]
             delays = sorted(delay_to_amouont_dict.keys())
             amounts_stolen = list(map(lambda delay: delay_to_amouont_dict[delay], delays))
-            plt.plot(delays, amounts_stolen, label=f"max_htlc={htlc_count}",  marker="o")
+            plt.plot(delays, amounts_stolen, label=f"max_htlc={htlc_count}", marker="o")
             plt.legend(loc="best")
             plt.title(f"{num_victims} victims, blockmaxweight={blockmaxweight}")
-            plt.xlabel('delay')
+            plt.xlabel('Commitment broadcast delay')
             plt.ylabel('BTC stolen')
 
 plt.show()
