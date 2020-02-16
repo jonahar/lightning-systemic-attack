@@ -2,9 +2,10 @@
 
 # the directory in which we put all nodes source code. MUST be an absolute path
 ROOT_DIR="${HOME}/nodes"
-cd "${ROOT_DIR}"
+
 
 # Download and compile Berkeley DB (bitcoin-core dependency)
+cd "${ROOT_DIR}"
 mkdir bdb
 cd bdb
 wget https://download.oracle.com/berkeley-db/db-4.8.30.tar.gz
@@ -17,26 +18,44 @@ sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' dbinc/atomic
 cd build_unix
 ../dist/configure --disable-shared --enable-cxx --with-pic --prefix=$BDB_PREFIX
 make install
-cd "${ROOT_DIR}"
+
 
 # make sure libzmq is installed. required for bitcoind to work with lnd
 sudo apt install libzmq3-dev
 
+# if no root access is available, compile libzmq from source
+cd "${ROOT_DIR}"
+git clone git@github.com:zeromq/libzmq.git
+cd libzmq
+ZMQ_PREFIX="$(realpath .)/build"
+mkdir -p $ZMQ_PREFIX
+./autogen.sh
+./configure --prefix=$ZMQ_PREFIX
+make
+make install
+# bitcoin's configure will use pkg-config to locate libzmq. add the path that
+# contains libzmq.pc to the PKG_CONFIG_PATH environment variable
+export PKG_CONFIG_PATH="$ZMQ_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+
 # download and compile bitcoin-core
+cd "${ROOT_DIR}"
 git clone https://github.com/bitcoin/bitcoin.git
 cd bitcoin
 git checkout v0.19.0.1 # select the wanted version
 ./autogen.sh
-./configure CPPFLAGS="-I${BDB_PREFIX}/include/ -O2" LDFLAGS="-L${BDB_PREFIX}/lib/" --with-zmq --enable-zmq
+./configure CPPFLAGS="-I${BDB_PREFIX}/include/ -I${ZMQ_PREFIX}/include/ -O2" LDFLAGS="-L${BDB_PREFIX}/lib/ -L${ZMQ_PREFIX}/lib/" --with-zmq --enable-zmq
 make
-cd "${ROOT_DIR}"
+
 
 # download and compile c-lightning
+cd "${ROOT_DIR}"
 git clone https://github.com/ElementsProject/lightning.git
 cd lightning
 git checkout v0.8.0
 ./configure
 make
+
 
 # download GO version 1.13
 cd "${ROOT_DIR}"
@@ -47,7 +66,9 @@ export GOROOT="${ROOT_DIR}/goroot/go"
 export GOPATH="${ROOT_DIR}/gopath/go"
 export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 
+
 # download and compile LND
+cd "${ROOT_DIR}"
 git clone git@github.com:lightningnetwork/lnd.git
 cd lnd
 git checkout v0.9.0-beta
