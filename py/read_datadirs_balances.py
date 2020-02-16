@@ -63,14 +63,14 @@ for entry in os.listdir(simulations):
 
 for num_victims in graph_data:
     for blockmaxweight in graph_data[num_victims]:
-        # simulations with the same num_victims and blockmaxweight goes no the same figure
+        # simulations with the same num_victims and blockmaxweight goes on the same figure
         plt.figure()
         for htlc_count in graph_data[num_victims][blockmaxweight]:
-            # simulation with different htlc_count will be different graphs on the same figure
+            # simulations with different htlc_count will be different graphs on the same figure
             delay_to_amouont_dict = graph_data[num_victims][blockmaxweight][htlc_count]
             delays = sorted(delay_to_amouont_dict.keys())
             amounts_stolen = list(map(lambda delay: delay_to_amouont_dict[delay], delays))
-            plt.plot(delays, amounts_stolen, label=f"max_htlc={htlc_count}")
+            plt.plot(delays, amounts_stolen, label=f"max_htlc={htlc_count}",  marker="o")
             plt.legend(loc="best")
             plt.title(f"{num_victims} victims, blockmaxweight={blockmaxweight}")
             plt.xlabel('delay')
