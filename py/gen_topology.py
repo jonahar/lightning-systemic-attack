@@ -1,6 +1,7 @@
 import json
+import sys
 
-num_victims = 10
+num_victims = int(sys.argv[1]) if len(sys.argv) > 1 else 10
 sender = 1
 receiver = 3
 first_victim = 4
