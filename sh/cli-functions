@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # alias for lightning-cli (c-lightning)
-lcli(){
+lcli() {
     IDX=$1
     lightning-cli \
         --conf=$LN/conf/clightning.conf \
@@ -11,12 +11,12 @@ lcli(){
 export -f lcli
 
 # alias for lncli (lnd)
-lncli(){
+lncli() {
     IDX=$1
     LIGHTNING_RPC_PORT_BASE=10000
     PORT=$((LIGHTNING_RPC_PORT_BASE + IDX))
     $LN/bin/lncli \
-        --rpcserver localhost:${PORT}  \
+        --rpcserver localhost:${PORT} \
         --lnddir $LN/lightning-dirs/${IDX} \
         --no-macaroons \
         "${@:2}"
@@ -24,7 +24,7 @@ lncli(){
 export -f lncli
 
 # alias for eclair-cli (Eclair)
-ecli(){
+ecli() {
     IDX=$1
     LIGHTNING_RPC_PORT_BASE=10000
     PORT=$((LIGHTNING_RPC_PORT_BASE + IDX))
@@ -32,7 +32,7 @@ ecli(){
 }
 export -f ecli
 
-bcli(){
+bcli() {
     IDX=$1
     BITCOIN_RPC_PORT_BASE=18000
     PORT=$((BITCOIN_RPC_PORT_BASE + IDX))
@@ -40,33 +40,33 @@ bcli(){
 }
 export -f bcli
 
-bcli-main(){
+bcli-main() {
     bcli 0 "$@"
 }
 export -f bcli-main
 
-gettransaction(){
+gettransaction() {
     txid=$1
     RAW_TRANSACTION=$(bcli-main getrawtransaction $txid)
     bcli-main decoderawtransaction $RAW_TRANSACTION
 }
 export -f gettransaction
 
-getblock(){
+getblock() {
     blockheight=$1
     blockhash=$(bcli-main getblockhash $blockheight)
     bcli-main getblock $blockhash
 }
 export -f getblock
 
-mine(){
+mine() {
     BLOCKS_TO_MINE=$1
-    bcli-main generatetoaddress $BLOCKS_TO_MINE $(bcli-main getnewaddress) > /dev/null
+    bcli-main generatetoaddress $BLOCKS_TO_MINE $(bcli-main getnewaddress) >/dev/null
 }
 export -f mine
 
 # print blockchain height and mempool size for each node
-stat(){
+stat() {
     MAX_NODE_IDX=$1
     for i in $(seq 0 $MAX_NODE_IDX); do
         if [[ $(bcli $i echo "testo" 2>/dev/null | jq -r ".[0]") == "testo" ]]; then
@@ -89,7 +89,12 @@ stat(){
 }
 export -f stat
 
-listpeers(){
+listpeers() {
     lcli $1 listpeers | less
 }
 export -f listpeers
+
+ce() {
+    clean-env
+}
+export -f ce
