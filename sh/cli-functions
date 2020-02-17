@@ -17,7 +17,7 @@ lncli(){
     PORT=$((LIGHTNING_RPC_PORT_BASE + IDX))
     $LN/bin/lncli \
         --rpcserver localhost:${PORT}  \
-        --lnddir /home/jona/ln/lightning-dirs/${IDX} \
+        --lnddir $LN/lightning-dirs/${IDX} \
         --no-macaroons \
         "${@:2}"
 }
