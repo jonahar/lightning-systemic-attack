@@ -88,26 +88,30 @@ class LndCommandsGenerator(LightningCommandsGenerator):
             f"  >{self.lightning_dir}/lnd.log 2>&1 &"
         )
         
-        # give the node a moment to be ready to accept requests
-        self._write_line("sleep 1")
+        # below are some really nasty hacks. sorry about that (blame LND)
         
-        # the `create` command of lncli doesn't accept arguments - it must run interactively.
-        # It also fails to read input directly from file, as it expects a terminal input.
+        # the `create` and `unlock` commands of lncli don't accept arguments - they must
+        # run interactively. They also fail to read input directly from file, as they
+        # expect a terminal input (they fail with 'inappropriate ioctl for device').
         # That's why we are using `script`
-        self._write_line(
-            f"script -q -c \"{self.__lncli_cmd_prefix()} create\" "
-            f" <<< \"\"\"00000000\n00000000\nn\n\n\"\"\" | tail -n1"
-        )
         
-        self._write_line("sleep 1")
+        # we need to create+unlock the wallet and to check whether the node is ready to accept requests.
+        # there is no simple command to check whether it is created/unlocked, so we try
+        # both many times, until the node is ready
         
-        self._write_line(
-            f"script -q -c \"{self.__lncli_cmd_prefix()} unlock\" "
-            f" <<< \"00000000\n\" >/dev/null"
-        )
-        
-        # give the node another moment to be ready to accept wallet requests
-        self._write_line("sleep 1")
+        self._write_line(f"""
+        # wait until node is ready to accept requests
+        timeout_counter=1
+        while [[ $({self.__lncli_cmd_prefix()} getinfo 2>/dev/null | jq -r ".alias") != {self.alias} ]]; do
+            # create the wallet. it may be already created, but who cares
+            script -q -c "{self.__lncli_cmd_prefix()} create"  <<< "00000000\n00000000\nn\n\n" >/dev/null
+            # unlock the wallet. it may be already unlocked, but who cares
+            # we timeout the unlock command since, empirically, it gets stuck if running too close to the first create command
+            script -q -c "timeout -s SIGKILL ${{timeout_counter}}s {self.__lncli_cmd_prefix()} unlock" <<< "00000000\n" >/dev/null
+            timeout_counter=$((timeout_counter+1))
+            sleep 1
+        done
+        """)
     
     def stop(self) -> None:
         self.__write_lncli_command("stop")
