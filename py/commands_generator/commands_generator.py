@@ -273,6 +273,7 @@ class CommandsGenerator:
         self.__maybe_info("starting all lightning nodes")
         for idx, info in self.topology.items():
             self.clients[idx].start()
+            self.__maybe_info(f"lightning node {idx} started")
     
     def fund_nodes(self) -> None:
         """generate code to fund nodes"""
