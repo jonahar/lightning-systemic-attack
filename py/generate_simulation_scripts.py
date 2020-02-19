@@ -46,14 +46,11 @@ for blockmaxweight, htlc, delay in product(blockmaxweight_values, htlcs, delays)
             --dump-data "{datadir}" \\
             --block-time {block_time} \\
             --bitcoin-blockmaxweight {blockmaxweight} \\
+            --simulation-number 1 \\
             --outfile $LN/generated_commands
         
-        cd $LN
-        source sh/cli-functions
-        clean-env
         
         bash generated_commands 2>&1 | tee {output_file}
-        kill-daemons # kill all daemons before we terminate
         exit 0
         """
         
