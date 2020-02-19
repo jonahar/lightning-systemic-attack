@@ -66,7 +66,7 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         self._write_line(f"mkdir -p {self.lightning_dir}")
         
         alias_flag = f"--alias={self.alias}" if self.alias else ""
-        self._write_line(
+        lnd_cmd = (
             f"{LND_BINARY}"
             f"  --configfile={LND_CONF_PATH}"
             f"  --datadir={self.lightning_dir}"
@@ -95,25 +95,27 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         # expect a terminal input (they fail with 'inappropriate ioctl for device').
         # That's why we are using `script`
         
-        # we need to create+unlock the wallet and to check whether the node is ready to accept requests.
-        # there is no simple command to check whether it is created/unlocked, so we try
-        # both many times, until the node is ready
+        # we need to create and unlock the wallet and to check whether the node is ready to accept requests.
+        # there is no simple command to check whether it is created/unlocked.
+        # empirically, if we don't wait enough time between starting lnd/create/unlock commands,
+        # the communication with lnd is down, and nothing else works besides killing lnd and start
+        # it again. that's why we are trying all commands until the node is ready, with incremented
+        # time interval to wait between commands
         
         self._write_line(f"""
-        # wait until node is ready to accept requests
-        timeout_counter=2
-        while [[ $({self.__lncli_cmd_prefix()} getinfo 2>/dev/null | jq -r ".alias") != {self.alias} ]]; do
-            # create the wallet. it may be already created, but who cares.
-            script -q -c "{self.__lncli_cmd_prefix()} create"  <<< "00000000\n00000000\nn\n\n" >/dev/null
-
-            sleep 1
-            
-            # unlock the wallet. it may be already unlocked, but who cares.
-            # we timeout the unlock command since, empirically, it gets stuck if running too
-            # close to the first create command
-            script -q -c "timeout -s SIGKILL ${{timeout_counter}}s {self.__lncli_cmd_prefix()} unlock" <<< "00000000\n" >/dev/null
-            
-            timeout_counter=$((timeout_counter+1)) # wait a bit longer next time, in case that wasn't enough
+        wait_interval=1
+        while true; do
+            {lnd_cmd}
+            lnd_pid=$!
+            sleep $wait_interval
+            script -q -c "timeout -s SIGKILL ${{wait_interval}}s {self.__lncli_cmd_prefix()} create"  <<< "00000000\n00000000\nn\n\n" >/dev/null
+            sleep $wait_interval
+            script -q -c "timeout -s SIGKILL ${{wait_interval}}s {self.__lncli_cmd_prefix()} unlock" <<< "00000000\n" >/dev/null
+            if [[ $({self.__lncli_cmd_prefix()} getinfo 2>/dev/null | jq -r ".alias") == {self.alias} ]]; then
+                break
+            fi
+            kill -s SIGKILL $lnd_pid
+            wait_interval=$((wait_interval+1)) # wait a bit longer next time, in case that wasn't enough
         done
         """)
     
