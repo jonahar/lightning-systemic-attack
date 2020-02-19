@@ -22,110 +22,131 @@
             "22",
             "23"
         ],
-        "evil": true
+        "client": "c-lightning"
     },
     "3": {
         "peers": [],
-        "evil": true
+        "evil": true,
+        "client": "c-lightning"
     },
     "4": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "5": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "6": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "7": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "8": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "9": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "10": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "11": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "12": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "13": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "14": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "15": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "16": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "17": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "18": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "19": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "20": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "21": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "22": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     },
     "23": {
         "peers": [
             "3"
-        ]
+        ],
+        "client": "lnd"
     }
 }
