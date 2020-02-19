@@ -444,7 +444,7 @@ class CommandsGenerator:
         """
         return (
             f"{self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} generatetoaddress "
-            f" {num_blocks} $({self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} getnewaddress)"
+            f" {num_blocks} $({self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} getnewaddress) >/dev/null"
         )
     
     def mine(self, num_blocks):
