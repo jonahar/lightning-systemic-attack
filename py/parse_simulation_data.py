@@ -3,7 +3,7 @@ import json
 import os
 import re
 from functools import reduce
-from typing import Callable, Dict, Iterable, Set
+from typing import Callable, Dict, Iterable, List, Set
 
 import networkx as nx
 from networkx.algorithms.traversal.breadth_first_search import bfs_edges
@@ -21,10 +21,6 @@ class TransactionDB:
         self.__add_fee_to_tx_data()
         self.__add_height_to_tx_data()
         self.__txs_graph: DiGraph = self.__build_txs_graph()
-    
-    @property
-    def full_txs_graph(self) -> DiGraph:
-        return self.__txs_graph
     
     def __load_blocks(self) -> Dict[BlockHash, Block]:
         blocks = {}
@@ -46,7 +42,7 @@ class TransactionDB:
         
         return txs
     
-    def get_tx_incoming_value(self, txid: TXID) -> float:
+    def __get_tx_incoming_value(self, txid: TXID) -> float:
         return sum(
             self.txs[src_entry["txid"]]["vout"][src_entry["vout"]]["value"]
             for src_entry in self.txs[txid]["vin"] if "coinbase" not in src_entry
@@ -61,21 +57,18 @@ class TransactionDB:
         #     value += self.txs[src_txid]["vout"][index]["value"]
         # return value
     
-    def get_tx_outgoing_value(self, txid: TXID) -> float:
+    def __get_tx_outgoing_value(self, txid: TXID) -> float:
         return sum(
             entry["value"]
             for entry in self.txs[txid]["vout"]
         )
-    
-    def __get_tx_fee(self, txid: TXID) -> BTC:
-        return self.get_tx_incoming_value(txid) - self.get_tx_outgoing_value(txid)
     
     def __add_fee_to_tx_data(self) -> None:
         """add a 'fee' attribute for each tx"""
         for txid, tx in self.txs.items():
             if "coinbase" in tx["vin"][0]:
                 continue  # don't include fee for coinbase transaction
-            tx["fee"] = self.__get_tx_fee(txid)
+            tx["fee"] = self.__get_tx_incoming_value(txid) - self.__get_tx_outgoing_value(txid)
     
     def __add_height_to_tx_data(self) -> None:
         """add a 'height' attribute for each tx"""
@@ -107,6 +100,10 @@ class TransactionDB:
         
         return txs_graph
     
+    @property
+    def full_txs_graph(self) -> DiGraph:
+        return self.__txs_graph
+    
     def transactions_sub_graph(self, sources: Iterable[TXID]) -> DiGraph:
         """
         return a directed graph that contains the given transactions and
@@ -119,6 +116,34 @@ class TransactionDB:
         )
         all_nodes = children.union(sources)
         return self.__txs_graph.subgraph(nodes=all_nodes)
+    
+    def get_tx_fee(self, txid: TXID) -> BTC:
+        return self.full_txs_graph.nodes[txid]["fee"]
+    
+    def get_htlcs_claimed_by_timeout(self, funding_txid: TXID) -> List[TXID]:
+        """
+        return a list of txids that claimed an HTLC output from the given
+        commitment transaction, using timeout-claim (as opposed to success-claim)
+        """
+        
+        funding_children = self.full_txs_graph.out_edges(funding_txid)
+        if len(funding_children) != 1:
+            raise ValueError(f"funding transaction expected to have 1 child, but has {len(funding_children)}")
+        
+        commitment_txid = next(iter(funding_children))[1]
+        
+        # from the bolt:
+        # " HTLC-Timeout and HTLC-Success Transactions... are almost identical,
+        #   except the HTLC-timeout transaction is timelocked "
+        #
+        # i.e. if the child_tx has a non-zero locktime, it is an HTLC-timeout
+        # TODO: what about claiming of local/remote outputs? are they locked? check it
+        
+        return [
+            child_tx
+            for _, child_tx in self.full_txs_graph.out_edges(commitment_txid)
+            if self.full_txs_graph.nodes[child_tx]["tx"]["locktime"] > 0
+        ]
 
 
 def export_tx_graph_to_dot(
@@ -179,25 +204,17 @@ def __PARTIALLY_BROKEN_extract_funding_txids(simulation_outfile: str) -> Set[TXI
     return funding_txids
 
 
-def print_commitments_sizes(db: TransactionDB, funding_txids: Set[TXID]) -> None:
-    for funding in funding_txids:
-        successors = list(db.full_txs_graph.successors(funding))
-        assert len(successors) == 1
-        commitment_tx = db.full_txs_graph.nodes[successors[0]]["tx"]
-        print(
-            f"commitment {commitment_tx['txid'][-4:]}"
-            f"\tsize={commitment_tx['size']}"
-            f"\tvsize={commitment_tx['vsize']}"
-            f"\tweight={commitment_tx['weight']}"
-        )
-
-
 ln = os.path.expandvars("$LN")
 datadir = os.path.join(ln, "simulations/datadir")
 outfile = os.path.join(ln, "simulations/simulation.out")
 
 db = TransactionDB(datadir=datadir)
-funding_txids: Set[TXID] = {"PUT SOME INTERESTING TXIDS HERE"}
+funding_txids: Set[TXID] = __PARTIALLY_BROKEN_extract_funding_txids(outfile)
+
+print("How many HTLCs were claimed using timeout from each channel:")
+for funding_txid in funding_txids:
+    htlcs_stolen = db.get_htlcs_claimed_by_timeout(funding_txid=funding_txid)
+    print(len(htlcs_stolen))
 
 txs_graph = db.transactions_sub_graph(sources=funding_txids)
 
