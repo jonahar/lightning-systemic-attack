@@ -111,6 +111,7 @@ class LndCommandsGenerator(LightningCommandsGenerator):
             timeout -s SIGKILL ${{wait_interval}}s script -q -c "{self.__lncli_cmd_prefix()} create"  <<< "00000000\n00000000\nn\n\n" >/dev/null
             sleep $wait_interval
             timeout -s SIGKILL ${{wait_interval}}s  script -q -c "{self.__lncli_cmd_prefix()} unlock" <<< "00000000\n" >/dev/null
+            sleep $wait_interval
             if [[ $({self.__lncli_cmd_prefix()} getinfo 2>/dev/null | jq -r ".alias") == {self.alias} ]]; then
                 break
             fi
