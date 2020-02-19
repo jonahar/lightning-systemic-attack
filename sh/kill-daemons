@@ -3,6 +3,6 @@
 pkill --signal SIGKILL lightningd
 pkill --signal SIGKILL lnd
 # eclair nodes store their pid in files
-find $LN/lightning-dirs -name "node_pid" -exec pkill --signal SIGKILL --pidfile "{}" ";" > /dev/null 2>&1
+find /tmp/lightning-simulations -name "node_pid" -exec pkill --signal SIGKILL --pidfile "{}" ";" > /dev/null 2>&1
 pkill --signal SIGKILL bitcoind
 sleep 1

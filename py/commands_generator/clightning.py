@@ -1,11 +1,7 @@
 from typing import TextIO
 
-from commands_generator.config_constants import (
-    CLIGHTNING_BINARY,
-    CLIGHTNING_BINARY_EVIL,
-    CLIGHTNING_CONF_PATH,
-    INITIAL_CHANNEL_BALANCE_SAT,
-)
+from commands_generator.config_constants import (CLIGHTNING_BINARY, CLIGHTNING_BINARY_EVIL, CLIGHTNING_CLI_BINARY,
+                                                 CLIGHTNING_CONF_PATH, INITIAL_CHANNEL_BALANCE_SAT)
 from commands_generator.lightning import LightningCommandsGenerator
 from datatypes import NodeIndex
 
@@ -18,7 +14,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         self,
         idx: NodeIndex,
         file: TextIO,
-        lightning_dir: str,
+        datadir: str,
         listen_port: int,
         bitcoin_rpc_port: int,
         alias: str = None,
@@ -26,7 +22,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         silent: bool = False,
     ) -> None:
         super().__init__(index=idx, file=file)
-        self.lightning_dir = lightning_dir
+        self.datadir = datadir
         self.alias = alias
         self.evil = evil
         self.silent = silent
@@ -34,7 +30,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         self.bitcoin_rpc_port = bitcoin_rpc_port
     
     def start(self) -> None:
-        self._write_line(f"mkdir -p {self.lightning_dir}")
+        self._write_line(f"mkdir -p {self.datadir}")
         
         binary = CLIGHTNING_BINARY_EVIL if self.evil or self.silent else CLIGHTNING_BINARY
         
@@ -46,7 +42,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         self._write_line(
             f"{binary} "
             f"  --conf={CLIGHTNING_CONF_PATH}"
-            f"  --lightning-dir={self.lightning_dir}"
+            f"  --lightning-dir={self.datadir}"
             f"  --addr=localhost:{self.listen_port}"
             f"  --log-file=log"  # relative to lightning-dir
             f"  {alias_flag}"
@@ -58,18 +54,23 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
             f"  --daemon"
         )
     
+    def __lightning_cli_command_prefix(self) -> str:
+        return (
+            f"""{CLIGHTNING_CLI_BINARY} --conf="{CLIGHTNING_CONF_PATH}" --lightning-dir="{self.datadir}" """
+        )
+    
     def stop(self) -> None:
-        self._write_line(f"lcli {self.idx} stop")
+        self._write_line(f"{self.__lightning_cli_command_prefix()} stop")
     
     def set_address(self, bash_var: str) -> None:
-        self._write_line(f"{bash_var}=$(lcli {self.idx} newaddr | jq -r '.address')")
+        self._write_line(f"{bash_var}=$({self.__lightning_cli_command_prefix()} newaddr | jq -r '.address')")
     
     def set_id(self, bash_var: str) -> None:
-        self._write_line(f"{bash_var}=$(lcli {self.idx} getinfo | jq -r '.id')")
+        self._write_line(f"{bash_var}=$({self.__lightning_cli_command_prefix()} getinfo | jq -r '.id')")
     
     def wait_for_funds(self) -> None:
         self._write_line(f"""
-    while [[ $(lcli {self.idx} listfunds | jq -r ".outputs") == "[]" ]]; do
+    while [[ $({self.__lightning_cli_command_prefix()} listfunds | jq -r ".outputs") == "[]" ]]; do
         sleep 1
     done
     """)
@@ -77,8 +78,9 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
     def establish_channel(self, peer: LightningCommandsGenerator, peer_listen_port: int) -> None:
         bash_var = f"ID_{peer.idx}"
         peer.set_id(bash_var=bash_var)
-        self._write_line(f"lcli {self.idx} connect ${bash_var} localhost:{peer_listen_port}")
-        self._write_line(f"lcli {self.idx} fundchannel ${bash_var} {INITIAL_CHANNEL_BALANCE_SAT}")
+        self._write_line(f"{self.__lightning_cli_command_prefix()} connect ${bash_var} localhost:{peer_listen_port}")
+        self._write_line(
+            f"{self.__lightning_cli_command_prefix()} fundchannel ${bash_var} {INITIAL_CHANNEL_BALANCE_SAT}")
     
     def __set_riskfactor(self) -> None:
         self._write_line("RISKFACTOR=1")
@@ -87,7 +89,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         self.__set_riskfactor()
         receiver.set_id(bash_var="RECEIVER_ID")
         self._write_line(f"""
-    while [[ "$(lcli {self.idx} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")" == "null" ]]; do
+    while [[ "$({self.__lightning_cli_command_prefix()} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")" == "null" ]]; do
         sleep 1;
     done
         """)
@@ -95,7 +97,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
     def create_invoice(self, payment_req_bash_var, amount_msat: int) -> None:
         self._write_line(f"""LABEL="invoice-label-$(date +%s.%N)" """)
         self._write_line(
-            f"""{payment_req_bash_var}=$(lcli {self.idx} invoice {amount_msat} $LABEL "" | jq -r ".bolt11")"""
+            f"""{payment_req_bash_var}=$({self.__lightning_cli_command_prefix()} invoice {amount_msat} $LABEL "" | jq -r ".bolt11")"""
         )
     
     def make_payments(
@@ -109,34 +111,35 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         self._write_line(f"for i in $(seq 1 {num_payments}); do")
         receiver.create_invoice(payment_req_bash_var="PAYMENT_REQ", amount_msat=amount_msat)
         self._write_line(
-            f"""PAYMENT_HASH=$(lcli {self.idx} decodepay $PAYMENT_REQ | jq -r ".payment_hash")"""
+            f"""PAYMENT_HASH=$({self.__lightning_cli_command_prefix()} decodepay $PAYMENT_REQ | jq -r ".payment_hash")"""
         )
         self._write_line(
-            f"""ROUTE=$(lcli {self.idx} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")"""
+            f"""ROUTE=$({self.__lightning_cli_command_prefix()} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")"""
         )
         self._write_line(
-            f"""lcli {self.idx} sendpay "$ROUTE" "$PAYMENT_HASH" > /dev/null"""
+            f"""{self.__lightning_cli_command_prefix()} sendpay "$ROUTE" "$PAYMENT_HASH" > /dev/null"""
         )
         self._write_line(f"done")
     
     def print_node_htlcs(self) -> None:
         self._write_line(
-            f"""lcli {self.idx} listpeers| jq ".peers[] | .channels[0].htlcs" | jq length"""
+            f"""{self.__lightning_cli_command_prefix()} listpeers| jq ".peers[] | .channels[0].htlcs" | jq length"""
         )
     
     def close_all_channels(self) -> None:
         self._write_line(
-            f"""PEER_IDS=$(lcli {self.idx} listpeers | jq -r ".peers[] | .id")"""
+            f"""PEER_IDS=$({self.__lightning_cli_command_prefix()} listpeers | jq -r ".peers[] | .id")"""
         )
         self._write_line(f"""
     for id in $PEER_IDS; do
-        lcli {self.idx} close $id {CLOSE_CHANNEL_TIMEOUT_SEC}
+        {self.__lightning_cli_command_prefix()} close $id {CLOSE_CHANNEL_TIMEOUT_SEC}
     done
         """)
     
     def dump_balance(self, filepath: str) -> None:
         self._write_line(f"""printf "node {self.idx} balance: " >> {filepath}""")
-        self._write_line(f"lcli {self.idx} listfunds | jq '.outputs[] | .value' | jq -s add >> {filepath}")
+        self._write_line(
+            f"{self.__lightning_cli_command_prefix()} listfunds | jq '.outputs[] | .value' | jq -s add >> {filepath}")
     
     def reveal_preimages(self, peer: "LightningCommandsGenerator" = None) -> None:
         if peer:
@@ -144,7 +147,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         else:
             self._write_line("PEER_ID=")  # make this variable empty
         self._write_line(f"""
-    while [[ $(lcli {self.idx} revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
+    while [[ $({self.__lightning_cli_command_prefix()} revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
         sleep 1
     done
     """)
@@ -152,4 +155,4 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
     def sweep_funds(self) -> None:
         addr_var = f"ADDR_{self.idx}"
         self.set_address(bash_var=addr_var)
-        self._write_line(f"lcli {self.idx} withdraw ${{{addr_var}}} all")
+        self._write_line(f"{self.__lightning_cli_command_prefix()} withdraw ${{{addr_var}}} all")

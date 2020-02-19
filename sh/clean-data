@@ -1,5 +1,3 @@
 #!/usr/bin/env bash
 
-cd $LN
-rm -rf lightning-dirs   \
-       bitcoin-dirs     \
+rm -rf /tmp/lightning-simulations

@@ -8,6 +8,7 @@ from commands_generator.config_constants import *
 from commands_generator.eclair import EclairCommandsGenerator
 from commands_generator.lightning import LightningCommandsGenerator
 from commands_generator.lnd import LndCommandsGenerator
+from commands_generator.resources_allocator import ResourcesAllocator
 from datatypes import NodeIndex
 
 
@@ -41,17 +42,35 @@ class CommandsGenerator:
     
     VERSION: str = "A.113"
     
-    def __init__(self, file: TextIO, topology: dict, bitcoin_block_max_weight: int, verbose: bool):
+    DEFAULT_SIMULATION = 1
+    
+    def __init__(
+        self,
+        file: TextIO,
+        topology: Dict[str, Any],
+        bitcoin_block_max_weight: int,
+        verbose: bool = True,
+        simulation_number: int = DEFAULT_SIMULATION,
+    ) -> None:
         """
-        :param file: file-like object
-        :param topology: topology dictionary
+        Initialize a new commands generator
+        
+        Args:
+            file: file-like object to write the commands to
+            topology: a topology dictionary, as described above
+            bitcoin_block_max_weight: the maximum bitcoin block weight
+            verbose: If True, generate echo commands with information
+            simulation_number: an int between 1 and 6. simulations with different
+                               numbers are able to run in parallel (they will be
+                               allocated different ports/directories)
         """
         self.file = file
         self.topology = self.__sanitize_topology_keys(topology)
         if BITCOIN_MINER_IDX in topology:
-            raise ValueError("Invalid id {BITCOIN_MINER_ID}: reserved for bitcoin miner node")
+            raise ValueError(f"Invalid id {BITCOIN_MINER_IDX}: reserved for bitcoin miner node")
         self.bitcoin_block_max_weight = bitcoin_block_max_weight
         self.verbose = verbose
+        self.resources_allocator = ResourcesAllocator(simulation=simulation_number)
         
         # each LightningCommandsGenerator should generate lightning node commands
         # according to the node's chosen implementation
@@ -76,15 +95,15 @@ class CommandsGenerator:
     def __init_clightning_client(self, node_idx: NodeIndex) -> ClightningCommandsGenerator:
         info = self.topology[node_idx]
         alias = info.get("alias", str(node_idx))
-        lightning_dir = self.get_lightning_node_dir(node_idx=node_idx)
+        lightning_dir = self.resources_allocator.get_lightning_node_datadir(node_idx=node_idx)
         evil = info.get("evil", False)
         silent = info.get("silent", False)
         return ClightningCommandsGenerator(
             idx=node_idx,
             file=self.file,
-            lightning_dir=lightning_dir,
-            listen_port=self.get_lightning_node_listen_port(node_idx),
-            bitcoin_rpc_port=self.get_bitcoin_node_rpc_port(node_idx),
+            datadir=lightning_dir,
+            listen_port=self.resources_allocator.get_lightning_node_listen_port(node_idx),
+            bitcoin_rpc_port=self.resources_allocator.get_bitcoin_node_rpc_port(node_idx),
             alias=alias,
             evil=evil,
             silent=silent,
@@ -96,14 +115,14 @@ class CommandsGenerator:
         return LndCommandsGenerator(
             index=node_idx,
             file=self.file,
-            lightning_dir=self.get_lightning_node_dir(node_idx),
-            bitcoin_dir=self.get_bitcoin_node_dir(node_idx),
-            listen_port=self.get_lightning_node_listen_port(node_idx),
-            rpc_port=self.get_lightning_node_rpc_port(node_idx),
-            rest_port=self.get_lightning_node_rest_port(node_idx),
-            bitcoin_rpc_port=self.get_bitcoin_node_rpc_port(node_idx),
-            zmqpubrawblock_port=self.get_bitcoin_node_zmqpubrawblock_port(node_idx),
-            zmqpubrawtx_port=self.get_bitcoin_node_zmqpubrawtx_port(node_idx),
+            lightning_dir=self.resources_allocator.get_lightning_node_datadir(node_idx),
+            bitcoin_dir=self.resources_allocator.get_bitcoin_node_datadir(node_idx),
+            listen_port=self.resources_allocator.get_lightning_node_listen_port(node_idx),
+            rpc_port=self.resources_allocator.get_lightning_node_rpc_port(node_idx),
+            rest_port=self.resources_allocator.get_lightning_node_rest_port(node_idx),
+            bitcoin_rpc_port=self.resources_allocator.get_bitcoin_node_rpc_port(node_idx),
+            zmqpubrawblock_port=self.resources_allocator.get_bitcoin_node_zmqpubrawblock_port(node_idx),
+            zmqpubrawtx_port=self.resources_allocator.get_bitcoin_node_zmqpubrawtx_port(node_idx),
             alias=alias,
         )
     
@@ -113,12 +132,12 @@ class CommandsGenerator:
         return EclairCommandsGenerator(
             index=node_idx,
             file=self.file,
-            lightning_dir=self.get_lightning_node_dir(node_idx),
-            listen_port=self.get_lightning_node_listen_port(node_idx),
-            rpc_port=self.get_lightning_node_rpc_port(node_idx),
-            bitcoin_rpc_port=self.get_bitcoin_node_rpc_port(node_idx),
-            zmqpubrawblock_port=self.get_bitcoin_node_zmqpubrawblock_port(node_idx),
-            zmqpubrawtx_port=self.get_bitcoin_node_zmqpubrawtx_port(node_idx),
+            lightning_dir=self.resources_allocator.get_lightning_node_datadir(node_idx),
+            listen_port=self.resources_allocator.get_lightning_node_listen_port(node_idx),
+            rpc_port=self.resources_allocator.get_lightning_node_rpc_port(node_idx),
+            bitcoin_rpc_port=self.resources_allocator.get_bitcoin_node_rpc_port(node_idx),
+            zmqpubrawblock_port=self.resources_allocator.get_bitcoin_node_zmqpubrawblock_port(node_idx),
+            zmqpubrawtx_port=self.resources_allocator.get_bitcoin_node_zmqpubrawtx_port(node_idx),
             alias=alias,
         )
     
@@ -141,45 +160,9 @@ class CommandsGenerator:
         
         return clients
     
-    @staticmethod
-    def get_lightning_node_dir(node_idx: NodeIndex) -> str:
-        return os.path.join(LIGHTNING_DIR_BASE, str(node_idx))
-    
-    @staticmethod
-    def get_lightning_node_rpc_port(node_idx: NodeIndex) -> int:
-        return LIGHTNING_RPC_PORT_BASE + node_idx
-    
-    @staticmethod
-    def get_lightning_node_rest_port(node_idx: NodeIndex) -> int:
-        return LIGHTNING_REST_PORT_BASE + node_idx
-    
-    @staticmethod
-    def get_lightning_node_listen_port(node_idx: NodeIndex) -> int:
-        return LIGHTNING_LISTEN_PORT_BASE + node_idx
-    
     def __write_line(self, line: str) -> None:
         self.file.write(line)
         self.file.write("\n")
-    
-    @staticmethod
-    def get_bitcoin_node_dir(node_idx: NodeIndex) -> str:
-        return os.path.join(BITCOIN_DIR_BASE, str(node_idx))
-    
-    @staticmethod
-    def get_bitcoin_node_rpc_port(node_idx: NodeIndex) -> int:
-        return BITCOIN_RPC_PORT_BASE + node_idx
-    
-    @staticmethod
-    def get_bitcoin_node_listen_port(node_idx: NodeIndex) -> int:
-        return BITCOIN_LISTEN_PORT_BASE + node_idx
-    
-    @staticmethod
-    def get_bitcoin_node_zmqpubrawblock_port(node_idx: NodeIndex) -> int:
-        return ZMQPUBRAWBLOCK_PORT_BASE + node_idx
-    
-    @staticmethod
-    def get_bitcoin_node_zmqpubrawtx_port(node_idx: NodeIndex) -> int:
-        return ZMQPUBRAWTX_PORT_BASE + node_idx
     
     def shebang(self) -> None:
         self.__write_line("#!/usr/bin/env bash")
@@ -194,19 +177,19 @@ class CommandsGenerator:
         self.__write_line(f"sleep {seconds}")
     
     def __start_bitcoin_node(self, idx: NodeIndex):
-        datadir = self.get_bitcoin_node_dir(idx)
+        datadir = self.resources_allocator.get_bitcoin_node_datadir(idx)
         
         self.__write_line(f"mkdir -p {datadir}")
         self.__write_line(
             f"bitcoind"
             f"  -conf={BITCOIN_CONF_PATH}"
-            f"  -port={self.get_bitcoin_node_listen_port(idx)}"
-            f"  -rpcport={self.get_bitcoin_node_rpc_port(idx)}"
+            f"  -port={self.resources_allocator.get_bitcoin_node_listen_port(idx)}"
+            f"  -rpcport={self.resources_allocator.get_bitcoin_node_rpc_port(idx)}"
             f"  -datadir={datadir}"
             f"  -daemon"
             f"  -blockmaxweight={self.bitcoin_block_max_weight}"
-            f"  -zmqpubrawblock=tcp://127.0.0.1:{self.get_bitcoin_node_zmqpubrawblock_port(idx)}"
-            f"  -zmqpubrawtx=tcp://127.0.0.1:{self.get_bitcoin_node_zmqpubrawtx_port(idx)}"
+            f"  -zmqpubrawblock=tcp://127.0.0.1:{self.resources_allocator.get_bitcoin_node_zmqpubrawblock_port(idx)}"
+            f"  -zmqpubrawtx=tcp://127.0.0.1:{self.resources_allocator.get_bitcoin_node_zmqpubrawtx_port(idx)}"
         )
     
     def start_bitcoin_miner(self):
@@ -217,10 +200,18 @@ class CommandsGenerator:
         for idx in self.topology.keys():
             self.__start_bitcoin_node(idx=int(idx))
     
+    # TODO move this method, as well as all other bitcoin-cli commands to a new module `BitcoinCommandsGenerator`
+    def __bitcoin_cli_cmd_prefix(self, node_idx: NodeIndex) -> str:
+        return (
+            f"{BITCOIN_CLI_BINARY} "
+            f" -conf={BITCOIN_CONF_PATH} "
+            f" -rpcport={self.resources_allocator.get_bitcoin_node_rpc_port(node_idx)} "
+        )
+    
     def wait_until_miner_is_ready(self):
         self.__maybe_info("waiting until miner node is ready")
-        self.__write_line("""
-    while [[ $(bcli 0 echo "sanity" 2>/dev/null | jq -r ".[0]") != "sanity" ]]; do
+        self.__write_line(f"""
+    while [[ $({self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} echo "sanity" 2>/dev/null | jq -r ".[0]") != "sanity" ]]; do
         sleep 1;
     done
     """)
@@ -230,30 +221,26 @@ class CommandsGenerator:
         generate code that waits until all bitcoin nodes have reached the given height
         """
         self.__maybe_info(f"waiting until all bitcoin nodes have reached height {height}")
-        node_ids = " ".join(map(str, self.topology.keys()))
-        
-        self.__write_line(f"""
-    for i in {node_ids}; do
-        while [[ $(bcli $i -getinfo | jq ".blocks") -lt "{height}" ]]; do
-            sleep 1
-        done
-    done
-        """)
+        for node_idx in self.topology:
+            self.__write_line(f"""
+            while [[ $({self.__bitcoin_cli_cmd_prefix(node_idx)} -getinfo | jq ".blocks") -lt "{height}" ]]; do
+                sleep 1
+            done
+            """)
     
     def connect_bitcoin_nodes_to_miner(self):
         self.__maybe_info("connecting all bitcoin nodes to the miner node")
         # connect all nodes to the miner
-        miner_idx = int(BITCOIN_MINER_IDX)
-        miner_listen_port = self.get_bitcoin_node_listen_port(miner_idx)
+        miner_listen_port = self.resources_allocator.get_bitcoin_node_listen_port(BITCOIN_MINER_IDX)
         for node_idx in self.topology.keys():
-            node_listen_port = self.get_bitcoin_node_listen_port(int(node_idx))
+            node_listen_port = self.resources_allocator.get_bitcoin_node_listen_port(node_idx)
             # miner adds node
             self.__write_line(
-                f"bcli {miner_idx} addnode 127.0.0.1:{node_listen_port} add"
+                f"{self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} addnode 127.0.0.1:{node_listen_port} add"
             )
             # node adds miner
             self.__write_line(
-                f"bcli {node_idx} addnode 127.0.0.1:{miner_listen_port} add"
+                f"{self.__bitcoin_cli_cmd_prefix(node_idx)} addnode 127.0.0.1:{miner_listen_port} add"
             )
     
     def connect_bitcoin_nodes_in_circle(self):
@@ -263,9 +250,9 @@ class CommandsGenerator:
         for i in range(num_nodes):
             peer_1_idx = int(all_nodes[i % num_nodes])
             peer_2_idx = int(all_nodes[(i + 1) % num_nodes])
-            peer_2_listen_port = self.get_bitcoin_node_listen_port(peer_2_idx)
+            peer_2_listen_port = self.resources_allocator.get_bitcoin_node_listen_port(peer_2_idx)
             self.__write_line(
-                f"bcli {peer_1_idx} addnode 127.0.0.1:{peer_2_listen_port} add"
+                f"{self.__bitcoin_cli_cmd_prefix(peer_1_idx)} addnode 127.0.0.1:{peer_2_listen_port} add"
             )
     
     def start_lightning_nodes(self) -> None:
@@ -279,7 +266,7 @@ class CommandsGenerator:
         """generate code to fund nodes"""
         self.__maybe_info("funding lightning nodes")
         # mine enough blocks to fund the nodes and to unlock coinbase coins
-        self.__write_line(f"mine {100 + len(self.topology)}")
+        self.mine(num_blocks=100 + len(self.topology))
         
         for idx in self.topology:
             self.clients[idx].set_address(bash_var=f"ADDR_{idx}")
@@ -288,7 +275,7 @@ class CommandsGenerator:
             # we fund these nodes with many small transactions instead of one big transaction,
             # so they have enough outputs to funds the different channels
             for _ in range(len(self.topology[idx]["peers"])):
-                self.__write_line(f"bcli {BITCOIN_MINER_IDX} sendtoaddress $ADDR_{idx} 1")
+                self.__write_line(f"{self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} sendtoaddress $ADDR_{idx} 1")
         
         self.mine(10)
     
@@ -307,7 +294,7 @@ class CommandsGenerator:
                 self.__maybe_info(f"establishing channel from {node_idx} to {peer_idx}")
                 self.clients[node_idx].establish_channel(
                     peer=self.clients[peer_idx],
-                    peer_listen_port=self.get_lightning_node_listen_port(int(peer_idx))
+                    peer_listen_port=self.resources_allocator.get_lightning_node_listen_port(int(peer_idx))
                 )
     
     def wait_for_funding_transactions(self):
@@ -318,7 +305,7 @@ class CommandsGenerator:
         self.__maybe_info("waiting for funding transactions to enter miner's mempool")
         num_channels = sum(map(lambda entry: len(entry["peers"]), self.topology.values()))
         self.__write_line(f"""
-    while [[ $(bcli 0 getmempoolinfo | jq -r ".size") != "{num_channels}" ]]; do
+    while [[ $({self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} getmempoolinfo | jq -r ".size") != "{num_channels}" ]]; do
         sleep 1;
     done
     """)
@@ -377,9 +364,9 @@ class CommandsGenerator:
         self.clients[node_idx] = ClightningCommandsGenerator(
             idx=node_idx,
             file=self.file,
-            lightning_dir=self.get_lightning_node_dir(node_idx),
-            listen_port=self.get_lightning_node_listen_port(node_idx),
-            bitcoin_rpc_port=self.get_bitcoin_node_rpc_port(node_idx),
+            datadir=self.resources_allocator.get_lightning_node_datadir(node_idx),
+            listen_port=self.resources_allocator.get_lightning_node_listen_port(node_idx),
+            bitcoin_rpc_port=self.resources_allocator.get_bitcoin_node_rpc_port(node_idx),
             silent=True,
         )
         self.clients[node_idx].start()
@@ -394,7 +381,8 @@ class CommandsGenerator:
     
     def __set_blockchain_height(self):
         """set a bash variable BLOCKCHAIN_HEIGHT with the current height"""
-        self.__write_line("""BLOCKCHAIN_HEIGHT=$(bcli 0 -getinfo | jq ".blocks")""")
+        self.__write_line(
+            f"""BLOCKCHAIN_HEIGHT=$({self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} -getinfo | jq ".blocks")""")
     
     def advance_blockchain(self, num_blocks: int, block_time_sec: int):
         """
@@ -412,9 +400,9 @@ class CommandsGenerator:
         self.__write_line(f"DEST_HEIGHT=$((BLOCKCHAIN_HEIGHT + {num_blocks}))")
         
         self.__write_line(f"""
-    while [[ $(bcli 0 -getinfo | jq ".blocks") -lt $DEST_HEIGHT ]]; do
+    while [[ $({self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} -getinfo | jq ".blocks") -lt $DEST_HEIGHT ]]; do
         sleep {block_time_sec}
-        mine 1
+        {self.__get_mine_command(num_blocks=1)}
     done
         """)
     
@@ -448,8 +436,19 @@ class CommandsGenerator:
         
         self.__write_line(f"cd - > /dev/null")  # go back to where we were
     
+    def __get_mine_command(self, num_blocks) -> str:
+        """
+        an helper method for mine(). this could be used by other methods if they want
+        to inject a mine command in a more complex bash code (e.g. mine inside a bash for-loop)
+        """
+        return (
+            f"{self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} generatetoaddress "
+            f" {num_blocks} $({self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} getnewaddress)"
+        )
+    
     def mine(self, num_blocks):
-        self.__write_line(f"mine {num_blocks}")
+        """generate code to mine num_blocks blocks. blocks are mined by the miner node"""
+        self.__write_line(self.__get_mine_command(num_blocks))
     
     def info(self, msg: str) -> None:
         """generate command to echo the given message"""
@@ -496,6 +495,10 @@ def parse_args():
         help="set bitcoin's block maximum weight",
     )
     parser.add_argument(
+        "--simulation-number", type=int, default=CommandsGenerator.DEFAULT_SIMULATION,
+        help="set bitcoin's block maximum weight",
+    )
+    parser.add_argument(
         "--outfile", action="store", metavar="OUTFILE",
         help="output file to write commands to. default to stdout if not given",
     )
@@ -515,6 +518,7 @@ def main() -> None:
         topology=topology,
         bitcoin_block_max_weight=args.bitcoin_blockmaxweight,
         verbose=True,
+        simulation_number=args.simulation_number,
     )
     cg.shebang()
     cg.generated_code_comment()
