@@ -101,14 +101,17 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         
         self._write_line(f"""
         # wait until node is ready to accept requests
-        timeout_counter=1
+        timeout_counter=2
         while [[ $({self.__lncli_cmd_prefix()} getinfo 2>/dev/null | jq -r ".alias") != {self.alias} ]]; do
-            # create the wallet. it may be already created, but who cares
+            # create the wallet. it may be already created, but who cares.
             script -q -c "{self.__lncli_cmd_prefix()} create"  <<< "00000000\n00000000\nn\n\n" >/dev/null
-            # unlock the wallet. it may be already unlocked, but who cares
-            # we timeout the unlock command since, empirically, it gets stuck if running too close to the first create command
+            
+            # unlock the wallet. it may be already unlocked, but who cares.
+            # we timeout the unlock command since, empirically, it gets stuck if running too
+            # close to the first create command
             script -q -c "timeout -s SIGKILL ${{timeout_counter}}s {self.__lncli_cmd_prefix()} unlock" <<< "00000000\n" >/dev/null
-            timeout_counter=$((timeout_counter+1))
+            
+            timeout_counter=$((timeout_counter+1)) # wait a bit longer next time, in case that wasn't enough
             sleep 1
         done
         """)
