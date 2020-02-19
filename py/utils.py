@@ -103,9 +103,17 @@ def leveldb_cache(func):
     
     The cache size is (currently) not configurable, and is unlimited
     """
-    cache_name = f"{func.__name__}_py_function_leveldb"
-    cache_fullpath = os.path.join(CACHES_DIR, cache_name)
-    db = plyvel.DB(cache_fullpath, create_if_missing=True)
+    try:
+        cache_name = f"{func.__name__}_py_function_leveldb"
+        cache_fullpath = os.path.join(CACHES_DIR, cache_name)
+        db = plyvel.DB(cache_fullpath, create_if_missing=True)
+    except plyvel.IOError:
+        print(
+            f"WARNING: leveldb_cache: IOERROR occurred when trying to open leveldb `{cache_name}`. "
+            f"function `{func.__name__}` will NOT be cached",
+            file=sys.stderr,
+        )
+        return func
     
     def get_db_key(*args, **kwargs) -> bytes:
         return pickle.dumps(
