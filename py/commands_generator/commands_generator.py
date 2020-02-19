@@ -193,10 +193,11 @@ class CommandsGenerator:
         )
     
     def start_bitcoin_miner(self):
-        self.__maybe_info("starting all bitcoin nodes")
+        self.__maybe_info("starting bitcoin miner node")
         self.__start_bitcoin_node(idx=int(BITCOIN_MINER_IDX))
     
     def start_bitcoin_nodes(self):
+        self.__maybe_info("starting all bitcoin nodes")
         for idx in self.topology.keys():
             self.__start_bitcoin_node(idx=int(idx))
     
