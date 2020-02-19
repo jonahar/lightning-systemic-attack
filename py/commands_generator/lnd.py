@@ -103,7 +103,7 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         # time interval to wait between commands
         
         self._write_line(f"""
-        wait_interval=1
+        wait_interval=2
         while true; do
             {lnd_cmd}
             lnd_pid=$!
@@ -115,7 +115,7 @@ class LndCommandsGenerator(LightningCommandsGenerator):
                 break
             fi
             kill -s SIGKILL $lnd_pid
-            wait_interval=$((wait_interval+1)) # wait a bit longer next time, in case that wasn't enough
+            wait_interval=$((wait_interval+2)) # wait a bit longer next time, in case that wasn't enough
         done
         """)
     
