@@ -4,6 +4,7 @@ from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.figure import Figure
 
 from datatypes import FEERATE, TIMESTAMP
 
@@ -16,11 +17,11 @@ class PlotData:
     label: str
 
 
-def plot_figure(title: str, plot_data_list: List[PlotData]):
+def plot_figure(title: str, plot_data_list: List[PlotData]) -> Figure:
     """
     add the given plot data to a new figure. all graphs on the same figure
     """
-    plt.figure()
+    fig = plt.figure()
     for plot_data in plot_data_list:
         plt.plot(plot_data.timestamps, plot_data.feerates, label=plot_data.label)
     
@@ -44,3 +45,5 @@ def plot_figure(title: str, plot_data_list: List[PlotData]):
     
     plt.yticks(ticks=yticks)
     plt.ylabel("feerate")
+    
+    return fig
