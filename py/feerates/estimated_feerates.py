@@ -3,7 +3,8 @@ import re
 from collections import defaultdict
 from typing import Dict, List
 
-from datatypes import FEERATE, PlotData, btc_to_sat
+from datatypes import FEERATE, btc_to_sat
+from feerates.draw_plot import PlotData
 from feerates.feerates_logger import logger
 
 BYTE_IN_KBYTE = 1000

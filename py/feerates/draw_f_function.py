@@ -1,12 +1,12 @@
 import os
-from datetime import datetime
 from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from bitcoin_cli import get_block_time, set_bitcoin_cli
-from datatypes import BlockHeight, PlotData, TIMESTAMP
+from datatypes import BlockHeight, TIMESTAMP
+from feerates.draw_plot import PlotData, plot_figure
 from feerates.estimated_feerates import parse_estimation_files
 from feerates.f_function import F, get_first_block_after_time_t
 from feerates.feerates_logger import logger
@@ -53,36 +53,6 @@ def block_heights_to_timestamps(first_height: BlockHeight, last_height: BlockHei
         get_block_time(h=h)
         for h in range(first_height, last_height)
     ]
-
-
-def plot_figure(title: str, plot_data_list: List[PlotData]):
-    """
-    add the given plot data to a new figure. all graphs on the same figure
-    """
-    plt.figure()
-    for plot_data in plot_data_list:
-        plt.plot(plot_data.timestamps, plot_data.feerates, label=plot_data.label)
-    
-    min_timestamp = min(min(plot_data.timestamps) for plot_data in plot_data_list)
-    max_timestamp = max(max(plot_data.timestamps) for plot_data in plot_data_list)
-    min_feerate = min(min(plot_data.feerates) for plot_data in plot_data_list)
-    max_feerate = max(max(plot_data.feerates) for plot_data in plot_data_list)
-    # graph config
-    plt.legend(loc="best")
-    plt.title(title)
-    
-    xticks = np.linspace(start=min_timestamp, stop=max_timestamp, num=10)
-    yticks = np.linspace(start=min_feerate, stop=max_feerate, num=10)
-    
-    timestamp_to_date_str = lambda t: datetime.utcfromtimestamp(t).strftime('%Y-%m-%d %H:%M')
-    plt.xticks(
-        ticks=xticks,
-        labels=[timestamp_to_date_str(t) for t in xticks]
-    )
-    plt.xlabel("timestamp")
-    
-    plt.yticks(ticks=yticks)
-    plt.ylabel("feerate")
 
 
 def main():
