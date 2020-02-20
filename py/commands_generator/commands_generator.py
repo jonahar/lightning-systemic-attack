@@ -194,12 +194,21 @@ class CommandsGenerator:
     
     def start_bitcoin_miner(self):
         self.__maybe_info("starting bitcoin miner node")
-        self.__start_bitcoin_node(idx=int(BITCOIN_MINER_IDX))
+        self.__start_bitcoin_node(idx=BITCOIN_MINER_IDX)
+    
+    def stop_bitcoin_miner(self):
+        self.__maybe_info("stopping bitcoin miner node")
+        self.__write_line(f"{self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} stop")
     
     def start_bitcoin_nodes(self):
         self.__maybe_info("starting all bitcoin nodes")
         for idx in self.topology.keys():
-            self.__start_bitcoin_node(idx=int(idx))
+            self.__start_bitcoin_node(idx=idx)
+    
+    def stop_bitcoin_nodes(self):
+        self.__maybe_info("stopping all bitcoin nodes")
+        for idx in self.topology.keys():
+            self.__write_line(f"{self.__bitcoin_cli_cmd_prefix(idx)} stop")
     
     # TODO move this method, as well as all other bitcoin-cli commands to a new module `BitcoinCommandsGenerator`
     def __bitcoin_cli_cmd_prefix(self, node_idx: NodeIndex) -> str:
@@ -262,6 +271,13 @@ class CommandsGenerator:
         for idx, info in self.topology.items():
             self.clients[idx].start()
             self.__maybe_info(f"lightning node {idx} started")
+    
+    def stop_lightning_nodes(self) -> None:
+        """generate code to stop all lightning nodes"""
+        self.__maybe_info("stopping all lightning nodes")
+        for idx, info in self.topology.items():
+            self.clients[idx].stop()
+            self.__maybe_info(f"lightning node {idx} stopped")
     
     def fund_nodes(self) -> None:
         """generate code to fund nodes"""
@@ -559,6 +575,10 @@ def main() -> None:
         # channels are still waiting to forget a peer
         cg.advance_blockchain(num_blocks=100, block_time_sec=5)
         cg.dump_simulation_data(dir=args.dump_data)
+    
+    cg.stop_all_lightning_nodes()
+    cg.stop_bitcoin_nodes()
+    cg.stop_bitcoin_miner()
     
     cg.info("Done")
     
