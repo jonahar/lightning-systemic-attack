@@ -1,68 +1,20 @@
 import os
-import re
-from collections import defaultdict, namedtuple
 from datetime import datetime
-from typing import Dict, List
+from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from bitcoin_cli import get_block_time, set_bitcoin_cli
-from datatypes import BlockHeight, FEERATE, TIMESTAMP, btc_to_sat
+from datatypes import BlockHeight, PlotData, TIMESTAMP
+from feerates.estimated_feerates import parse_estimation_files
 from feerates.f_function import F, get_first_block_after_time_t
 from feerates.feerates_logger import logger
 from utils import timeit
 
-TIMESTAMPS = List[TIMESTAMP]
-FEERATES = List[FEERATE]
-LABEL = str
-
-BYTE_IN_KBYTE = 1000
-
-# PlotData represents data for a single graph - feerate as a function of timestamp
-PlotData = namedtuple("PlotData", ["timestamps", "feerates", "label"])
-
-estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)")
-
-
-def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PlotData]]:
-    """
-    read all fee estimation files and prepare the plot data
-    
-    returns a dictionary from blocks_count (number of blocks used for the estimation)
-    to a list of 'graphs' (represented by PLOT_DATA)
-    """
-    data = defaultdict(list)
-    for entry in os.listdir(estimation_files_dir):
-        match = estimation_sample_file_regex.match(entry)
-        if not match:
-            continue  # not an estimation file
-        blocks: int = int(match.group(1))
-        mode: str = match.group(2)
-        timestamps = []
-        feerates = []
-        with open(os.path.join(estimation_files_dir, entry)) as f:
-            for line in f.readlines():
-                try:
-                    line_strip = line.strip()  # remove newline if exists
-                    timestamp_str, feerate_str = line_strip.split(",")
-                    timestamps.append(int(timestamp_str))
-                    # feerate returned by `estimatesmartfee` is in BTC/kB
-                    feerate_btc_kb = float(feerate_str)
-                    feerate: FEERATE = btc_to_sat(feerate_btc_kb) / BYTE_IN_KBYTE
-                    feerates.append(feerate)
-                except ValueError:
-                    logger.error(f"ignoring line in file `{entry}` with unexpected format: `{line_strip}`")
-        
-        data[blocks].append(
-            PlotData(timestamps=timestamps, feerates=feerates, label=f"estimatesmartfee(mode={mode})")
-        )
-    
-    return data
-
 
 def compute_F_values(
-    timestamps: TIMESTAMPS,
+    timestamps: List[TIMESTAMP],
     n_values: List[int],
     p_values: List[float],
 ) -> np.ndarray:
@@ -92,7 +44,7 @@ def compute_F_values(
 
 
 @timeit(logger=logger)
-def block_heights_to_timestamps(first_height: BlockHeight, last_height: BlockHeight) -> TIMESTAMPS:
+def block_heights_to_timestamps(first_height: BlockHeight, last_height: BlockHeight) -> List[TIMESTAMP]:
     """
     return a list with the timestamps of all blocks from first_height to last_height (excluding)
     """
@@ -103,18 +55,18 @@ def block_heights_to_timestamps(first_height: BlockHeight, last_height: BlockHei
     ]
 
 
-def plot_figure(title: str, data: List[PlotData]):
+def plot_figure(title: str, plot_data_list: List[PlotData]):
     """
     add the given plot data to a new figure. all graphs on the same figure
     """
     plt.figure()
-    for timestamps, feerates, label in data:
-        plt.plot(timestamps, feerates, label=label)
+    for plot_data in plot_data_list:
+        plt.plot(plot_data.timestamps, plot_data.feerates, label=plot_data.label)
     
-    min_timestamp = min(min(t) for t, f, l in data)
-    max_timestamp = max(max(t) for t, f, l in data)
-    min_feerate = min(min(f) for t, f, l in data)
-    max_feerate = max(max(f) for t, f, l in data)
+    min_timestamp = min(min(plot_data.timestamps) for plot_data in plot_data_list)
+    max_timestamp = max(max(plot_data.timestamps) for plot_data in plot_data_list)
+    min_feerate = min(min(plot_data.feerates) for plot_data in plot_data_list)
+    max_feerate = max(max(plot_data.feerates) for plot_data in plot_data_list)
     # graph config
     plt.legend(loc="best")
     plt.title(title)
@@ -142,12 +94,12 @@ def main():
     
     # find the timestamps in which to evaluate F
     start_time = min(
-        min(plot_data[0])
+        min(plot_data.timestamps)
         for n, plot_data_list in data.items()
         for plot_data in plot_data_list
     )
     end_time = max(
-        max(plot_data[0])
+        max(plot_data.timestamps)
         for n, plot_data_list in data.items()
         for plot_data in plot_data_list
     )
@@ -181,8 +133,8 @@ def main():
     for num_blocks, plot_data_list in data.items():
         # sort by label before drawing, so similar labels in different graphs will
         # share the same color
-        plot_data_list.sort(key=lambda tuple: tuple[2])
-        plot_figure(title=f"feerate(n={num_blocks})", data=plot_data_list)
+        plot_data_list.sort(key=lambda plot_data: plot_data.label)
+        plot_figure(title=f"feerate(n={num_blocks})", plot_data_list=plot_data_list)
     
     plt.show()
 

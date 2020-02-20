@@ -1,4 +1,5 @@
-from typing import Any, Dict
+from dataclasses import dataclass
+from typing import Any, Dict, List
 
 Json = Dict[str, Any]
 Address = str
@@ -14,6 +15,14 @@ SATOSHI = int
 TIMESTAMP = int
 TXID = str
 TX = Json
+
+
+@dataclass
+class PlotData:
+    """PlotData represents data for a single graph - feerate as a function of timestamp"""
+    timestamps: List[TIMESTAMP]
+    feerates: List[FEERATE]
+    label: str
 
 
 def msat_to_sat(msat: MSATOSHI) -> SATOSHI:
