@@ -16,7 +16,3 @@ LND_BINARY = os.path.join(BIN, "lnd")
 LND_CLI_BINARY = os.path.join(BIN, "lncli")
 ECLAIR_NODE_JAR = os.path.join(BIN, "eclair.jar")
 ECLAIR_CLI = os.path.join(BIN, "eclair-cli")
-
-INITIAL_CHANNEL_BALANCE_SAT = 10000000  # 0.1 BTC
-
-BITCOIN_MINER_IDX = 0

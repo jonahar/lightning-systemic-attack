@@ -1,7 +1,6 @@
 from typing import TextIO
 
 from commands_generator.config_constants import (
-    INITIAL_CHANNEL_BALANCE_SAT,
     LND_BINARY,
     LND_CLI_BINARY,
     LND_CONF_PATH,
@@ -147,13 +146,14 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         self,
         peer: LightningCommandsGenerator,
         peer_listen_port: int,
+        initial_balance_sat: int,
     ) -> None:
         peer.set_id(bash_var=f"ID_{peer.idx}")
         self.__write_lncli_command(
             f"connect ${{ID_{peer.idx}}}@localhost:{peer_listen_port}"
         )
         self.__write_lncli_command(
-            f"openchannel --node_key=${{ID_{peer.idx}}} --local_amt={INITIAL_CHANNEL_BALANCE_SAT}"
+            f"openchannel --node_key=${{ID_{peer.idx}}} --local_amt={initial_balance_sat}"
         )
     
     def wait_to_route(

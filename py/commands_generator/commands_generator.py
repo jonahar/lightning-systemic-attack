@@ -11,6 +11,9 @@ from commands_generator.lnd import LndCommandsGenerator
 from commands_generator.resources_allocator import ResourcesAllocator
 from datatypes import NodeIndex
 
+INITIAL_CHANNEL_BALANCE_SAT = 10000000  # 0.1 BTC
+BITCOIN_MINER_IDX = 0
+
 
 class CommandsGenerator:
     """
@@ -311,7 +314,8 @@ class CommandsGenerator:
                 self.__maybe_info(f"establishing channel from {node_idx} to {peer_idx}")
                 self.clients[node_idx].establish_channel(
                     peer=self.clients[peer_idx],
-                    peer_listen_port=self.resources_allocator.get_lightning_node_listen_port(int(peer_idx))
+                    peer_listen_port=self.resources_allocator.get_lightning_node_listen_port(peer_idx),
+                    initial_balance_sat=INITIAL_CHANNEL_BALANCE_SAT,
                 )
     
     def wait_for_funding_transactions(self):

@@ -1,7 +1,9 @@
 from typing import TextIO
 
-from commands_generator.config_constants import (CLIGHTNING_BINARY, CLIGHTNING_BINARY_EVIL, CLIGHTNING_CLI_BINARY,
-                                                 CLIGHTNING_CONF_PATH, INITIAL_CHANNEL_BALANCE_SAT)
+from commands_generator.config_constants import (
+    CLIGHTNING_BINARY, CLIGHTNING_BINARY_EVIL, CLIGHTNING_CLI_BINARY,
+    CLIGHTNING_CONF_PATH,
+)
 from commands_generator.lightning import LightningCommandsGenerator
 from datatypes import NodeIndex
 
@@ -75,12 +77,17 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
     done
     """)
     
-    def establish_channel(self, peer: LightningCommandsGenerator, peer_listen_port: int) -> None:
+    def establish_channel(
+        self,
+        peer: LightningCommandsGenerator,
+        peer_listen_port: int,
+        initial_balance_sat: int,
+    ) -> None:
         bash_var = f"ID_{peer.idx}"
         peer.set_id(bash_var=bash_var)
         self._write_line(f"{self.__lightning_cli_command_prefix()} connect ${bash_var} localhost:{peer_listen_port}")
         self._write_line(
-            f"{self.__lightning_cli_command_prefix()} fundchannel ${bash_var} {INITIAL_CHANNEL_BALANCE_SAT}")
+            f"{self.__lightning_cli_command_prefix()} fundchannel ${bash_var} {initial_balance_sat}")
     
     def __set_riskfactor(self) -> None:
         self._write_line("RISKFACTOR=1")

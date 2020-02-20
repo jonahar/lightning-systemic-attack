@@ -64,17 +64,18 @@ class LightningCommandsGenerator(ABC):
         self,
         peer: "LightningCommandsGenerator",
         peer_listen_port: int,
+        initial_balance_sat: int,
     ) -> None:
         """
         generate code to open a channel with another node. Channel is funded
-        with INITIAL_CHANNEL_BALANCE_SAT satoshi by this node
+        by this node
         
         Args:
             peer: a LightningCommandsGenerator of the peer we want to connect to.
                   may be useful to generate peer identifying information (id, etc.)
             peer_listen_port: the port on which the peer is listening
+            initial_balance_sat: the channel balance in satoshis
         """
-        # TODO change API to receive channel initial balance parameter
         pass
     
     @abstractmethod

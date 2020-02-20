@@ -1,6 +1,6 @@
 from typing import TextIO
 
-from commands_generator.config_constants import ECLAIR_CLI, ECLAIR_NODE_JAR, INITIAL_CHANNEL_BALANCE_SAT
+from commands_generator.config_constants import ECLAIR_CLI, ECLAIR_NODE_JAR
 from commands_generator.lightning import LightningCommandsGenerator
 from datatypes import NodeIndex
 
@@ -104,6 +104,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         self,
         peer: LightningCommandsGenerator,
         peer_listen_port: int,
+        initial_balance_sat: int,
     ) -> None:
         peer_id_bash_var = f"ID_{peer.idx}"
         peer.set_id(bash_var=peer_id_bash_var)
@@ -111,7 +112,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
             args=f"connect --uri=${{{peer_id_bash_var}}}@localhost:{peer_listen_port}"
         )
         self.__write_eclair_cli_command(
-            args=f"open --nodeId=${peer_id_bash_var} --fundingSatoshis={INITIAL_CHANNEL_BALANCE_SAT}"
+            args=f"open --nodeId=${peer_id_bash_var} --fundingSatoshis={initial_balance_sat}"
         )
     
     def wait_to_route(
