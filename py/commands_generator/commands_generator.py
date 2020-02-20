@@ -4,12 +4,12 @@ import sys
 from typing import Any, Dict, TextIO
 
 from commands_generator.clightning import ClightningCommandsGenerator
-from commands_generator.config_constants import *
 from commands_generator.eclair import EclairCommandsGenerator
 from commands_generator.lightning import LightningCommandsGenerator
 from commands_generator.lnd import LndCommandsGenerator
 from commands_generator.resources_allocator import ResourcesAllocator
 from datatypes import NodeIndex
+from paths import BITCOIN_CLI_BINARY, BITCOIN_CONF_PATH
 
 INITIAL_CHANNEL_BALANCE_SAT = 10000000  # 0.1 BTC
 BITCOIN_MINER_IDX = 0

@@ -1,8 +1,8 @@
 from typing import TextIO
 
-from commands_generator.config_constants import ECLAIR_CLI, ECLAIR_NODE_JAR
 from commands_generator.lightning import LightningCommandsGenerator
 from datatypes import NodeIndex
+from paths import ECLAIR_CLI, ECLAIR_NODE_JAR
 
 
 class EclairCommandsGenerator(LightningCommandsGenerator):

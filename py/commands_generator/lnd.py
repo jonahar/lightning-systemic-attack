@@ -1,12 +1,12 @@
 from typing import TextIO
 
-from commands_generator.config_constants import (
+from commands_generator.lightning import LightningCommandsGenerator
+from datatypes import NodeIndex, msat_to_sat
+from paths import (
     LND_BINARY,
     LND_CLI_BINARY,
     LND_CONF_PATH,
 )
-from commands_generator.lightning import LightningCommandsGenerator
-from datatypes import NodeIndex, msat_to_sat
 
 
 class LndCommandsGenerator(LightningCommandsGenerator):

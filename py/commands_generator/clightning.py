@@ -1,11 +1,10 @@
 from typing import TextIO
 
-from commands_generator.config_constants import (
-    CLIGHTNING_BINARY, CLIGHTNING_BINARY_EVIL, CLIGHTNING_CLI_BINARY,
-    CLIGHTNING_CONF_PATH,
-)
 from commands_generator.lightning import LightningCommandsGenerator
 from datatypes import NodeIndex
+from paths import (
+    CLIGHTNING_CONF_PATH, LIGHTNINGD_BINARY, LIGHTNINGD_BINARY_EVIL, LIGHTNING_CLI_BINARY,
+)
 
 CLOSE_CHANNEL_TIMEOUT_SEC = 60
 
@@ -34,7 +33,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
     def start(self) -> None:
         self._write_line(f"mkdir -p {self.datadir}")
         
-        binary = CLIGHTNING_BINARY_EVIL if self.evil or self.silent else CLIGHTNING_BINARY
+        binary = LIGHTNINGD_BINARY_EVIL if self.evil or self.silent else LIGHTNINGD_BINARY
         
         alias_flag = f"--alias={self.alias}" if self.alias else ""
         evil_flag = "--evil" if self.evil else ""
@@ -58,7 +57,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
     
     def __lightning_cli_command_prefix(self) -> str:
         return (
-            f"""{CLIGHTNING_CLI_BINARY} --conf="{CLIGHTNING_CONF_PATH}" --lightning-dir="{self.datadir}" """
+            f"""{LIGHTNING_CLI_BINARY} --conf="{CLIGHTNING_CONF_PATH}" --lightning-dir="{self.datadir}" """
         )
     
     def stop(self) -> None:
