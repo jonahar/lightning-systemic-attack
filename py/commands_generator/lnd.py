@@ -103,20 +103,23 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         # time interval to wait between commands
         
         self._write_line(f"""
-        wait_interval=2
+        wait_interval=2 # how long we wait between commands
+        lncli_timeout=5 # how long we let lncli run
         while true; do
             {lnd_cmd}
             lnd_pid=$!
             sleep $wait_interval
-            timeout -s SIGKILL ${{wait_interval}}s script -q -c "{self.__lncli_cmd_prefix()} create"  <<< "00000000\n00000000\nn\n\n" >/dev/null
+            timeout -s SIGKILL ${{lncli_timeout}}s script -q -c "{self.__lncli_cmd_prefix()} create"  <<< "00000000\n00000000\nn\n\n" >/dev/null
             sleep $wait_interval
-            timeout -s SIGKILL ${{wait_interval}}s  script -q -c "{self.__lncli_cmd_prefix()} unlock" <<< "00000000\n" >/dev/null
+            timeout -s SIGKILL ${{lncli_timeout}}s  script -q -c "{self.__lncli_cmd_prefix()} unlock" <<< "00000000\n" >/dev/null
             sleep $wait_interval
             if [[ $({self.__lncli_cmd_prefix()} getinfo 2>/dev/null | jq -r ".alias") == {self.alias} ]]; then
                 break
             fi
             kill -s SIGKILL $lnd_pid
-            wait_interval=$((wait_interval+2)) # wait a bit longer next time, in case that wasn't enough
+            # wait a bit longer next time, in case that wasn't enough
+            wait_interval=$((wait_interval+2))
+            lncli_timeout=$((lncli_timeout+2))
         done
         """)
     
