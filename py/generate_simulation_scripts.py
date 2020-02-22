@@ -13,7 +13,6 @@ channel_balance = 0.1
 num_blocks = 120
 block_time = 120
 blockmaxweight_values = [100_000, 200_000, 300_000, 400_000]
-htlcs = [483]
 delays = [10]
 
 # the following are derived from the previous variables. probably shouldn't be modified
@@ -29,8 +28,8 @@ num_payments = num_victims * payments_per_victim
 # payments we try. Anyway, each channel is limited by max_accepted_htlc
 num_payments = int(num_payments * 2)
 
-for blockmaxweight, htlc, delay in product(blockmaxweight_values, htlcs, delays):
-    script_name = f"steal-attack-{num_victims}-victims-blockmaxweight={blockmaxweight}-htlc={htlc}-delay={delay}"
+for blockmaxweight, delay in product(blockmaxweight_values, delays):
+    script_name = f"steal-attack-{num_victims}-victims-blockmaxweight={blockmaxweight}-htlc={payments_per_victim}-delay={delay}"
     datadir = os.path.join(simulations_dir, f"{script_name}")
     script_file = os.path.join(simulations_dir, f"{script_name}.sh")
     output_file = os.path.join(simulations_dir, f"{script_name}.out")
