@@ -441,12 +441,13 @@ class CommandsGenerator:
         
         self.__set_blockchain_height()
         # dump blocks + transactions
-        self.__write_line("""
+        self.__write_line(f"""
     for i in $(seq 1 $BLOCKCHAIN_HEIGHT); do
-        getblock $i > block_$i.json
+        BLOCK_HASH=$({self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} getblockhash $i)
+        {self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} getblock $BLOCK_HASH > block_$i.json
         TXS_IN_BLOCK=$(jq -r ".tx[]" < block_$i.json)
         for TX in $TXS_IN_BLOCK; do
-            gettransaction $TX > tx_$TX.json
+            {self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} getrawtransaction $TX true > tx_$TX.json
         done
     done
         """)
