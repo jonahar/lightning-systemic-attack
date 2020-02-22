@@ -27,7 +27,7 @@ amount_msat = int(
 num_payments = num_victims * payments_per_victim
 # some of the payments fail with no special reason. increase a bit the number of
 # payments we try. Anyway, each channel is limited by max_accepted_htlc
-num_payments = int(num_payments * 1.2)
+num_payments = int(num_payments * 2)
 
 for blockmaxweight, htlc, delay in product(blockmaxweight_values, htlcs, delays):
     script_name = f"steal-attack-{num_victims}-victims-blockmaxweight={blockmaxweight}-htlc={htlc}-delay={delay}"
@@ -51,7 +51,7 @@ for blockmaxweight, htlc, delay in product(blockmaxweight_values, htlcs, delays)
             --simulation-number $SIMULATION \\
             --outfile $COMMANDS_FILE
         
-        
+        rm -rf /tmp/lightning-simulations/$SIMULATION
         bash $COMMANDS_FILE 2>&1 | tee {output_file}
         exit 0
         """
