@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-LIGHTNING_DIRS="/tmp/lightning-simulations/1/lightning-datadirs"
-
 # the functions in this file only works for nodes running in simulation number SIMULATION_NUM
 SIMULATION_NUM=1
+
+LIGHTNING_DIRS="/tmp/lightning-simulations/${SIMULATION_NUM}/lightning-datadirs"
 
 # These are defined according to the ResourcesAllocator
 LIGHTNING_RPC_CODE=1
