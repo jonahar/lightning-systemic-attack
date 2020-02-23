@@ -129,6 +129,7 @@ def get_tx_fee(txid: TXID) -> BTC:
     return get_tx_incoming_value(txid) - get_tx_outgoing_value(txid)
 
 
+@leveldb_cache
 def get_tx_size(txid: TXID) -> int:
     """
     return the tx size in bytes
