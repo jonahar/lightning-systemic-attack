@@ -35,6 +35,8 @@ def compute_F_values(
         
         return f_values
     except KeyboardInterrupt:
+        # in case the computation takes very long time and we interrupt it.
+        # print some stats before returning
         values_computed = (t_idx + 1) * (n_idx + 1) * (p_idx + 1)
         total_needed_values = len(timestamps) * len(n_values) * len(p_values)
         print(
