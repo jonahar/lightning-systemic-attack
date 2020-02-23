@@ -6,7 +6,7 @@ mkdir -p $SAMPLES_DIR
 cd $SAMPLES_DIR
 
 sample() {
-    for n in 1 2 4 6 12 36 100; do
+    for n in 1 2 3 4 6 12 36 100; do
         for mode in ECONOMICAL CONSERVATIVE; do
             outfile="estimatesmartfee_blocks=${n}_mode=${mode}"
             printf '%(%s)T,' >>${outfile} # current unix time and comma separator
