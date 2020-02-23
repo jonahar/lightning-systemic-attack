@@ -129,8 +129,15 @@ def get_tx_fee(txid: TXID) -> BTC:
     return get_tx_incoming_value(txid) - get_tx_outgoing_value(txid)
 
 
+def get_tx_size(txid: TXID) -> int:
+    """
+    return the tx size in bytes
+    """
+    return get_transaction(txid)["size"]
+
+
 def get_tx_feerate(txid: TXID) -> Feerate:
-    tx_size = get_transaction(txid)["size"]
+    tx_size = get_tx_size(txid)
     fee_sat = btc_to_sat(get_tx_fee(txid))
     return fee_sat / tx_size
 
@@ -172,3 +179,7 @@ def get_txs_in_block(height: BlockHeight, include_coinbase=True) -> List[TXID]:
         txids.remove(coinbase_txid)
     
     return txids
+
+
+def get_block_size(height: BlockHeight) -> int:
+    return get_block_by_height(height)["size"]
