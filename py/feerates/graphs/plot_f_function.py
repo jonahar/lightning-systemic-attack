@@ -60,9 +60,7 @@ def block_heights_to_timestamps(first_height: BlockHeight, last_height: BlockHei
 def main():
     set_bitcoin_cli("user")
     
-    ln = os.path.expandvars("$LN")
-    fee_stats_dir = os.path.join(ln, "data/fee-statistics")
-    data = parse_estimation_files(fee_stats_dir)
+    data = parse_estimation_files()
     
     # find the timestamps in which to evaluate F
     start_time = min(

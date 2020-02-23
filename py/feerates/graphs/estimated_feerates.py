@@ -14,8 +14,10 @@ BYTE_IN_KBYTE = 1000
 
 estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)")
 
+estimation_files_dir = os.path.join(LN, "data/fee-statistics")
 
-def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PlotData]]:
+
+def parse_estimation_files() -> Dict[int, List[PlotData]]:
     """
     read all fee estimation files and prepare the plot data
     
@@ -61,8 +63,7 @@ def get_top_p_minimal_feerate(samples: Iterable[float], p: float) -> float:
 
 
 if __name__ == "__main__":
-    fee_stats_dir = os.path.join(LN, "data/fee-statistics")
-    data = parse_estimation_files(fee_stats_dir)
+    data = parse_estimation_files()
     
     p_values = [0.2, 0.5, 0.8]
     for num_blocks, plot_data_list in data.items():
