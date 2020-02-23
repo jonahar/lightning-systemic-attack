@@ -6,10 +6,10 @@ import numpy as np
 
 from bitcoin_cli import get_block_time, set_bitcoin_cli
 from datatypes import BlockHeight, TIMESTAMP
-from feerates.draw_plot import PlotData, plot_figure
-from feerates.estimated_feerates import parse_estimation_files
-from feerates.f_function import F, get_first_block_after_time_t
-from feerates.feerates_logger import logger
+from feerates import logger
+from feerates.graphs.plot_utils import PlotData, plot_figure
+from feerates.graphs.estimated_feerates import parse_estimation_files
+from feerates.graphs.f_function import F, get_first_block_after_time_t
 from utils import timeit
 
 

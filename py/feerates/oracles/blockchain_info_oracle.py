@@ -4,8 +4,8 @@ from typing import Optional
 from bitcoin_cli import (
     get_transaction, )
 from datatypes import FEERATE, TXID
-from feerates.feerates_logger import logger
-from feerates.tx_fee_oracle import TXFeeOracle
+from feerates import logger
+from feerates.oracles.tx_fee_oracle import TXFeeOracle
 
 
 class BlockchainInfoTXFeeOracle(TXFeeOracle):

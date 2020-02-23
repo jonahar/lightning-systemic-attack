@@ -6,9 +6,9 @@ from bitcoin_cli import (
     blockchain_height, get_block_by_height, get_block_time, get_transaction,
 )
 from datatypes import Block, BlockHeight, FEERATE, TIMESTAMP, TXID
-from feerates.feerates_logger import logger
-from feerates.oracle_factory import get_multi_layer_oracle
-from feerates.tx_fee_oracle import TXFeeOracle
+from feerates import logger
+from feerates.oracles.oracle_factory import get_multi_layer_oracle
+from feerates.oracles.tx_fee_oracle import TXFeeOracle
 from utils import leveldb_cache, timeit
 
 """

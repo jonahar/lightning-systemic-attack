@@ -2,7 +2,7 @@ import sqlite3
 from typing import Optional
 
 from datatypes import FEERATE, TXID
-from feerates.tx_fee_oracle import TXFeeOracle
+from feerates.oracles.tx_fee_oracle import TXFeeOracle
 
 
 class SQLTXFeeOracle(TXFeeOracle):

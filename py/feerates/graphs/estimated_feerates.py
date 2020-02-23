@@ -6,8 +6,8 @@ from typing import Dict, Iterable, List
 import matplotlib.pyplot as plt
 
 from datatypes import FEERATE, btc_to_sat
-from feerates.draw_plot import PlotData, plot_figure
-from feerates.feerates_logger import logger
+from feerates import logger
+from feerates.graphs.plot_utils import PlotData, plot_figure
 from paths import LN
 
 BYTE_IN_KBYTE = 1000
@@ -63,8 +63,6 @@ def get_top_p_minimal_feerate(samples: Iterable[float], p: float) -> float:
 if __name__ == "__main__":
     fee_stats_dir = os.path.join(LN, "data/fee-statistics")
     data = parse_estimation_files(fee_stats_dir)
-    
-    del data[100]
     
     p_values = [0.2, 0.5, 0.8]
     for num_blocks, plot_data_list in data.items():

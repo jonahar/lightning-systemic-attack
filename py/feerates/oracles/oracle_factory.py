@@ -1,8 +1,8 @@
 import os
 
-from feerates.bitcoind_oracle import BitcoindTXFeeOracle
-from feerates.level_db_oracle import LevelDBTXFeeOracle
-from feerates.tx_fee_oracle import TXFeeOracle
+from feerates.oracles.bitcoind_oracle import BitcoindTXFeeOracle
+from feerates.oracles.level_db_oracle import LevelDBTXFeeOracle
+from feerates.oracles.tx_fee_oracle import TXFeeOracle
 
 """
 This module is responsible for building feerates oracles and various DBs

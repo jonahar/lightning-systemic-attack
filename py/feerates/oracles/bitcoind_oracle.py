@@ -2,8 +2,8 @@ from typing import Optional
 
 import bitcoin_cli
 from datatypes import FEERATE, TXID
-from feerates.feerates_logger import logger
-from feerates.tx_fee_oracle import TXFeeOracle
+from feerates import logger
+from feerates.oracles.tx_fee_oracle import TXFeeOracle
 
 
 class BitcoindTXFeeOracle(TXFeeOracle):

@@ -3,7 +3,7 @@ from typing import Optional
 import plyvel
 
 from datatypes import FEERATE, TXID
-from feerates.tx_fee_oracle import TXFeeOracle
+from feerates.oracles.tx_fee_oracle import TXFeeOracle
 
 
 class LevelDBTXFeeOracle(TXFeeOracle):

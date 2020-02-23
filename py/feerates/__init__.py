@@ -5,6 +5,8 @@ from logging.handlers import RotatingFileHandler
 
 from paths import LN
 
+# setting up a logger for the feerates module
+
 logger = logging.getLogger("feerates_logger")
 
 fmt = "%(asctime)s: %(levelname)s: %(module)s: %(funcName)s: %(message)s"
