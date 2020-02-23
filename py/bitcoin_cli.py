@@ -77,21 +77,6 @@ def fund_addresses(addresses: List[Address]) -> Optional[str]:
     return initial_balance_txid
 
 
-def get_block_by_hash(block_hash: str) -> Block:
-    result = run_cli_command(["getblock", block_hash])
-    return json.loads(decode_stdout(result))
-
-
-def get_block_by_height(height: BlockHeight) -> Block:
-    result = run_cli_command(["getblockhash", str(height)])
-    block_hash = decode_stdout(result)
-    return get_block_by_hash(block_hash)
-
-
-def num_tx_in_block(block: Block) -> int:
-    return len(block['tx'])
-
-
 def blockchain_height() -> int:
     result = run_cli_command(["-getinfo"])
     return json.loads(decode_stdout(result))["blocks"]
@@ -100,12 +85,6 @@ def blockchain_height() -> int:
 def get_mempool_txids() -> List[TXID]:
     result = run_cli_command(["getrawmempool"])
     return json.loads(decode_stdout(result))
-
-
-def show_tx_in_block(block_height):
-    block: Block = get_block_by_height(block_height)
-    for txid in block['tx']:
-        print(txid)
 
 
 @leveldb_cache
@@ -154,3 +133,42 @@ def get_tx_feerate(txid: TXID) -> Feerate:
     tx_size = get_transaction(txid)["size"]
     fee_sat = btc_to_sat(get_tx_fee(txid))
     return fee_sat / tx_size
+
+
+# ----- Blocks -----
+
+
+def get_block_by_hash(block_hash: str) -> Block:
+    result = run_cli_command(["getblock", block_hash])
+    return json.loads(decode_stdout(result))
+
+
+def get_block_by_height(height: BlockHeight) -> Block:
+    result = run_cli_command(["getblockhash", str(height)])
+    block_hash = decode_stdout(result)
+    return get_block_by_hash(block_hash)
+
+
+def num_tx_in_block(block: Block) -> int:
+    return len(block['tx'])
+
+
+def get_txs_in_block(height: BlockHeight, include_coinbase=True) -> List[TXID]:
+    """
+    return a list of transactions in block 'height'
+    if include_coinbase is False, the coinbase transaction of the block is not included
+    """
+    block: Block = get_block_by_height(height)
+    txids = block["tx"]
+    
+    if not include_coinbase:
+        # the coinbase tx is usually the first, but we loop until we find it, in case it's not
+        coinbase_txid = None
+        for txid in txids:
+            if "coinbase" in get_transaction(txid)["vin"][0]:
+                coinbase_txid = txid
+                break
+        # we assume coinbase_txid was found
+        txids.remove(coinbase_txid)
+    
+    return txids
