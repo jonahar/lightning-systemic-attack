@@ -103,8 +103,8 @@ def leveldb_cache(func):
     
     The cache size is (currently) not configurable, and is unlimited
     """
+    cache_name = f"{func.__name__}_py_function_leveldb"
     try:
-        cache_name = f"{func.__name__}_py_function_leveldb"
         cache_fullpath = os.path.join(CACHES_DIR, cache_name)
         db = plyvel.DB(cache_fullpath, create_if_missing=True)
     except plyvel.IOError:
