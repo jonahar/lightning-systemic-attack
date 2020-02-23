@@ -3,7 +3,7 @@ import time
 
 from lightning import LightningRpc, Millisatoshi  # pip3 install pylightning
 
-from bitcoin_cli import find_interesting_txids_in_last_t_blocks, mine, show_num_tx_in_last_t_blocks
+from bitcoin_cli import mine
 from lightning_cli import make_many_payments, wait_to_route
 
 ln = os.path.expandvars("$LN")
@@ -43,6 +43,3 @@ mine(1)
 for _ in range(20):
     mine(1)
     time.sleep(5)
-
-show_num_tx_in_last_t_blocks(t=30)
-txs = find_interesting_txids_in_last_t_blocks(t=30)
