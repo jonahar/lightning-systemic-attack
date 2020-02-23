@@ -5,7 +5,7 @@ from typing import List
 from bitcoin_cli import (
     blockchain_height, get_block_by_height, get_block_time, get_transaction,
 )
-from datatypes import Block, BlockHeight, FEERATE, TIMESTAMP, TXID
+from datatypes import Block, BlockHeight, Feerate, Timestamp, TXID
 from feerates import logger
 from feerates.oracles.oracle_factory import get_multi_layer_oracle
 from feerates.oracles.tx_fee_oracle import TXFeeOracle
@@ -22,7 +22,7 @@ and G(b,p) is the set of the p top paying transactions in block height b
 feerate_oracle: TXFeeOracle = get_multi_layer_oracle()
 
 
-def get_first_block_after_time_t(t: TIMESTAMP) -> BlockHeight:
+def get_first_block_after_time_t(t: Timestamp) -> BlockHeight:
     """
     return the height of the first block with timestamp greater or equal to
     the given timestamp
@@ -56,7 +56,7 @@ def remove_coinbase_txid(txids: List[TXID]) -> List[TXID]:
 
 
 @lru_cache()
-def get_sorted_feerates_in_block(b: BlockHeight) -> List[FEERATE]:
+def get_sorted_feerates_in_block(b: BlockHeight) -> List[Feerate]:
     """
     return a sorted list (descending order) of the feerates of all transactions in block b.
     coinbase transaction is excluded!
@@ -67,7 +67,7 @@ def get_sorted_feerates_in_block(b: BlockHeight) -> List[FEERATE]:
 
 
 @lru_cache()
-def get_feerates_in_G_b_p(b: BlockHeight, p: float) -> List[FEERATE]:
+def get_feerates_in_G_b_p(b: BlockHeight, p: float) -> List[Feerate]:
     """
     return the feerates of the p top paying transactions in block b.
     i.e. the feerates of all transactions in the set G(b,p) (defined in the paper)
@@ -79,7 +79,7 @@ def get_feerates_in_G_b_p(b: BlockHeight, p: float) -> List[FEERATE]:
 
 @timeit(logger=logger, print_args=True)
 @leveldb_cache
-def F(t: TIMESTAMP, n: int, p: float) -> FEERATE:
+def F(t: Timestamp, n: int, p: float) -> Feerate:
     """
     See F doc in the top of this file
     """

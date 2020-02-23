@@ -5,7 +5,7 @@ from typing import Dict, Iterable, List
 
 import matplotlib.pyplot as plt
 
-from datatypes import FEERATE, btc_to_sat
+from datatypes import Feerate, btc_to_sat
 from feerates import logger
 from feerates.graphs.plot_utils import PlotData, plot_figure
 from paths import LN
@@ -39,7 +39,7 @@ def parse_estimation_files(estimation_files_dir: str) -> Dict[int, List[PlotData
                     timestamps.append(int(timestamp_str))
                     # feerate returned by `estimatesmartfee` is in BTC/kB
                     feerate_btc_kb = float(feerate_str)
-                    feerate: FEERATE = btc_to_sat(feerate_btc_kb) / BYTE_IN_KBYTE
+                    feerate: Feerate = btc_to_sat(feerate_btc_kb) / BYTE_IN_KBYTE
                     feerates.append(feerate)
                 except ValueError:
                     logger.error(f"ignoring line in file `{entry}` with unexpected format: `{line_strip}`")

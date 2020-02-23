@@ -4,9 +4,7 @@ import subprocess
 from functools import lru_cache
 from typing import List, Optional, Set
 
-from datatypes import (
-    Address, BTC, Block, BlockHeight, FEERATE, TIMESTAMP, TX, TXID, btc_to_sat,
-)
+from datatypes import (Address, BTC, Block, BlockHeight, Feerate, TX, TXID, Timestamp, btc_to_sat)
 from utils import leveldb_cache
 
 ln = os.path.expandvars("$LN")
@@ -134,7 +132,7 @@ def find_interesting_txids_in_last_t_blocks(t: int) -> Set[TXID]:
 
 
 @leveldb_cache
-def get_block_time(h: BlockHeight) -> TIMESTAMP:
+def get_block_time(h: BlockHeight) -> Timestamp:
     return get_block_by_height(h)["time"]
 
 
@@ -175,7 +173,7 @@ def get_tx_fee(txid: TXID) -> BTC:
     return get_tx_incoming_value(txid) - get_tx_outgoing_value(txid)
 
 
-def get_tx_feerate(txid: TXID) -> FEERATE:
+def get_tx_feerate(txid: TXID) -> Feerate:
     tx_size = get_transaction(txid)["size"]
     fee_sat = btc_to_sat(get_tx_fee(txid))
     return fee_sat / tx_size

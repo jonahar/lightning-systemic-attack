@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bitcoin_cli import get_block_time, set_bitcoin_cli
-from datatypes import BlockHeight, TIMESTAMP
+from datatypes import BlockHeight, Timestamp
 from feerates import logger
 from feerates.graphs.plot_utils import PlotData, plot_figure
 from feerates.graphs.estimated_feerates import parse_estimation_files
@@ -14,7 +14,7 @@ from utils import timeit
 
 
 def compute_F_values(
-    timestamps: List[TIMESTAMP],
+    timestamps: List[Timestamp],
     n_values: List[int],
     p_values: List[float],
 ) -> np.ndarray:
@@ -46,7 +46,7 @@ def compute_F_values(
 
 
 @timeit(logger=logger)
-def block_heights_to_timestamps(first_height: BlockHeight, last_height: BlockHeight) -> List[TIMESTAMP]:
+def block_heights_to_timestamps(first_height: BlockHeight, last_height: BlockHeight) -> List[Timestamp]:
     """
     return a list with the timestamps of all blocks from first_height to last_height (excluding)
     """

@@ -3,7 +3,7 @@ from typing import Optional
 
 from bitcoin_cli import (
     get_transaction, )
-from datatypes import FEERATE, TXID
+from datatypes import Feerate, TXID
 from feerates import logger
 from feerates.oracles.tx_fee_oracle import TXFeeOracle
 
@@ -12,7 +12,7 @@ class BlockchainInfoTXFeeOracle(TXFeeOracle):
     def __init__(self, next_oracle: Optional[TXFeeOracle]):
         super().__init__(next_oracle=next_oracle)
     
-    def _get_tx_feerate_from_self(self, txid: TXID) -> Optional[FEERATE]:
+    def _get_tx_feerate_from_self(self, txid: TXID) -> Optional[Feerate]:
         try:
             conn = http.client.HTTPSConnection("blockchain.info")
             conn.request("GET", f"/q/txfee/{txid}")

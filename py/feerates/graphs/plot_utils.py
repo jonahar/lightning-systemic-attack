@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
 
-from datatypes import FEERATE, TIMESTAMP
+from datatypes import Feerate, Timestamp
 
 
 @dataclass
 class PlotData:
     """PlotData represents data for a single graph - feerate as a function of timestamp"""
-    timestamps: List[TIMESTAMP]
-    feerates: List[FEERATE]
+    timestamps: List[Timestamp]
+    feerates: List[Feerate]
     label: str
 
 

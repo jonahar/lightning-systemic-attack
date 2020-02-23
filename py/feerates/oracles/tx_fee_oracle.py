@@ -2,7 +2,7 @@ from abc import abstractmethod
 from functools import lru_cache
 from typing import Optional
 
-from datatypes import FEERATE, TXID
+from datatypes import Feerate, TXID
 
 
 class TXFeeOracle:
@@ -18,11 +18,11 @@ class TXFeeOracle:
         self.next_oracle = next_oracle
     
     @abstractmethod
-    def _get_tx_feerate_from_self(self, txid: TXID) -> Optional[FEERATE]:
+    def _get_tx_feerate_from_self(self, txid: TXID) -> Optional[Feerate]:
         pass
     
     @lru_cache(maxsize=4096)  # enough to hold transactions of an entire block
-    def get_tx_feerate(self, txid: TXID) -> Optional[FEERATE]:
+    def get_tx_feerate(self, txid: TXID) -> Optional[Feerate]:
         feerate = self._get_tx_feerate_from_self(txid)
         if feerate is None and self.next_oracle:
             feerate = self.next_oracle.get_tx_feerate(txid)

@@ -1,7 +1,7 @@
 import sqlite3
 from typing import Optional
 
-from datatypes import FEERATE, TXID
+from datatypes import Feerate, TXID
 from feerates.oracles.tx_fee_oracle import TXFeeOracle
 
 
@@ -17,7 +17,7 @@ class SQLTXFeeOracle(TXFeeOracle):
         self.sql_conn = sqlite3.connect(db_filepath)
         self.sql_cursor = self.sql_conn.cursor()
     
-    def _get_tx_feerate_from_self(self, txid: TXID) -> Optional[FEERATE]:
+    def _get_tx_feerate_from_self(self, txid: TXID) -> Optional[Feerate]:
         self.sql_cursor.execute("SELECT feerate FROM feerates WHERE txid=(?)", [txid])
         res = self.sql_cursor.fetchone()
         if res:
