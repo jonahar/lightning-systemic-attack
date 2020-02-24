@@ -4,23 +4,23 @@ import matplotlib.pyplot as plt
 
 from bitcoin_cli import get_tx_size, get_txs_in_block
 from datatypes import BlockHeight, Feerate
+from feerates import logger
 from feerates.graphs.estimated_feerates import get_top_p_minimal_feerate, parse_estimation_files
 from feerates.graphs.f_function import get_first_block_after_time_t
 from feerates.graphs.plot_f_function import block_heights_to_timestamps
 from feerates.graphs.plot_utils import PlotData
 from feerates.oracles.oracle_factory import get_multi_layer_oracle
+from utils import timeit
 
 feerates_oracle = get_multi_layer_oracle()
 
 
+@timeit(logger=logger, print_args=True)
 def get_block_space_for_feerate(height: BlockHeight, feerate: Feerate) -> float:
     """
     return the portion of the block (percentage: a number between 0 and 100) that
     contains transactions with feerate at most 'feerate'.
-    That is the part of the block that a transaction with feerate 'feerate' could've
-    have occupy
-    
-    This portion is defined by the size of all
+    That is the part of the block that a transaction with feerate 'feerate' could've occupy
     
     """
     txids = get_txs_in_block(height=height, include_coinbase=False)
@@ -48,9 +48,9 @@ def get_block_space_for_feerate(height: BlockHeight, feerate: Feerate) -> float:
     return (counted_txs_size_bytes / all_txs_size_bytes) * 100
 
 
-def get_block_space_data(block_heights: List[BlockHeight], minimal_feerate: float) -> List[float]:
+def get_block_space_data(block_heights: List[BlockHeight], feerate: float) -> List[float]:
     return [
-        get_block_space_for_feerate(height=height, feerate=minimal_feerate)
+        get_block_space_for_feerate(height=height, feerate=feerate)
         for height in block_heights
     ]
 
@@ -79,6 +79,6 @@ if __name__ == "__main__":
             for p in p_values:
                 block_spaces: List[float] = get_block_space_data(
                     block_heights=block_heights,
-                    minimal_feerate=get_top_p_minimal_feerate(plot_data.feerates, p=p)
+                    feerate=get_top_p_minimal_feerate(samples=plot_data.feerates, p=p)
                 )
                 plt.plot(timestamps, block_spaces, label=plot_data.label)
