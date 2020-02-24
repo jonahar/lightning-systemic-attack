@@ -87,11 +87,6 @@ def get_mempool_txids() -> List[TXID]:
     return json.loads(decode_stdout(result))
 
 
-@leveldb_cache
-def get_block_time(h: BlockHeight) -> Timestamp:
-    return get_block_by_height(h)["time"]
-
-
 # ----- Transactions -----
 
 @lru_cache(maxsize=TRANSACTIONS_CACHE_SIZE)
@@ -184,3 +179,8 @@ def get_txs_in_block(height: BlockHeight, include_coinbase=True) -> List[TXID]:
 
 def get_block_size(height: BlockHeight) -> int:
     return get_block_by_height(height)["size"]
+
+
+@leveldb_cache
+def get_block_time(h: BlockHeight) -> Timestamp:
+    return get_block_by_height(h)["time"]
