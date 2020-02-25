@@ -106,8 +106,8 @@ def serialize_value(value: Any) -> bytes:
     return pickle.dumps(value)
 
 
-def deserialize_value(bytes) -> Any:
-    return pickle.loads(bytes)
+def deserialize_value(serialized_value: bytes) -> Any:
+    return pickle.loads(serialized_value)
 
 
 def get_leveldb_cache_fullpath(func_name: str) -> str:
