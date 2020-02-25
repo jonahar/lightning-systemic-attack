@@ -136,6 +136,12 @@ def get_tx_size(txid: TXID) -> int:
     return get_transaction(txid)["size"]
 
 
+@lru_cache(maxsize=4096)
+@leveldb_cache(value_to_str=str, str_to_value=int)
+def get_tx_weight(txid: TXID) -> int:
+    return get_transaction(txid)["weight"]
+
+
 def get_tx_feerate(txid: TXID) -> Feerate:
     tx_size = get_tx_size(txid)
     fee_sat = btc_to_sat(get_tx_fee(txid))
