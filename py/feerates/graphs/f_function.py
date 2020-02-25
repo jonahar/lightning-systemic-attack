@@ -78,7 +78,7 @@ def get_feerates_in_G_b_p(b: BlockHeight, p: float) -> List[Feerate]:
 
 
 @timeit(logger=logger, print_args=True)
-@leveldb_cache
+@leveldb_cache(value_to_str=str, str_to_value=float)
 def F(t: Timestamp, n: int, p: float) -> Feerate:
     """
     See F doc in the top of this file

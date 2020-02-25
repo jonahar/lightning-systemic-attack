@@ -128,7 +128,7 @@ def get_tx_fee(txid: TXID) -> BTC:
 # we first check the in-memory cache, and then the disk cache
 
 @lru_cache(maxsize=4096)
-@leveldb_cache
+@leveldb_cache(value_to_str=str, str_to_value=int)
 def get_tx_size(txid: TXID) -> int:
     """
     return the tx size in bytes
@@ -185,6 +185,6 @@ def get_block_size(height: BlockHeight) -> int:
     return get_block_by_height(height)["size"]
 
 
-@leveldb_cache
+@leveldb_cache(value_to_str=str, str_to_value=int)
 def get_block_time(h: BlockHeight) -> Timestamp:
     return get_block_by_height(h)["time"]

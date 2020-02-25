@@ -6,13 +6,13 @@ from typing import Callable, List
 from utils import leveldb_cache, sqlite_cache
 
 
-@leveldb_cache
-def test_method_with_leveldb_cache(x: str):
+@leveldb_cache(value_to_str=str, str_to_value=str)
+def test_method_with_leveldb_cache(x: str) -> str:
     return x
 
 
 @sqlite_cache(value_to_str=str, str_to_value=str)
-def test_method_with_sqlite_cache(x: str):
+def test_method_with_sqlite_cache(x: str) -> str:
     return x
 
 

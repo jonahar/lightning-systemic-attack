@@ -16,7 +16,7 @@ feerates_oracle = get_multi_layer_oracle()
 
 
 @timeit(logger=logger, print_args=True)
-@leveldb_cache
+@leveldb_cache(value_to_str=str, str_to_value=float)
 def get_block_space_for_feerate(height: BlockHeight, feerate: Feerate) -> float:
     """
     return the portion of the block (percentage: a number between 0 and 100) that
@@ -26,6 +26,7 @@ def get_block_space_for_feerate(height: BlockHeight, feerate: Feerate) -> float:
     
     
     """
+    # TODO use weight instead of size
     txids = get_txs_in_block(height=height, include_coinbase=False)
     
     # find transactions that pay MORE than 'feerate' and sum their size
