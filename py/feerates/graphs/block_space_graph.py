@@ -20,33 +20,23 @@ feerates_oracle = get_multi_layer_oracle()
 def get_block_space_for_feerate(height: BlockHeight, feerate: Feerate) -> float:
     """
     return the portion of the block (percentage: a number between 0 and 100) that
-    contains transactions with feerate at most 'feerate'.
-    That is the part of the block that a transaction with feerate 'feerate' could've occupy
+    may be filled with a transaction with feerate 'feerate'.
+    that is the amount of the block that contains transactions with feerate less
+    than 'feerate', or an empty part of the block (in case the block is less than 1MB)
+    
     
     """
     txids = get_txs_in_block(height=height, include_coinbase=False)
     
-    if len(txids) == 0:
-        # there are no non-coinbase transactions in this block. no transactions
-        # entered this block, and it's assumed that we could'nt occupy any space
-        # in the block
-        return 0
+    # find transactions that pay MORE than 'feerate' and sum their size
+    occupied_part_size = sum(map(
+        lambda txid: get_tx_size(txid),
+        filter(lambda txid: feerates_oracle.get_tx_feerate(txid) > feerate, txids)
+    ))
     
-    # the size of all non-coinbase txs in the block
-    all_txs_size_bytes: int = sum(map(lambda txid: get_tx_size(txid), txids))
+    total_block_size = 1_000_000
     
-    # the size of txs whose feerate is smaller than the given feerate
-    counted_txs_size_bytes: float = sum(
-        map(
-            lambda txid: get_tx_size(txid),
-            filter(
-                lambda txid: feerates_oracle.get_tx_feerate(txid) <= feerate,
-                txids,
-            )
-        )
-    )
-    
-    return (counted_txs_size_bytes / all_txs_size_bytes) * 100
+    return (1 - (occupied_part_size / total_block_size)) * 100
 
 
 def get_block_space_data(block_heights: List[BlockHeight], feerate: float) -> List[float]:
@@ -71,7 +61,7 @@ if __name__ == "__main__":
     # we use constant block heights so the arguments to the cached function
     # get_block_space_for_feerate will stay the same
     first_block = 614000
-    last_block = 617600
+    last_block = 615000
     
     timestamps = block_heights_to_timestamps(
         first_height=first_block,
@@ -96,7 +86,7 @@ if __name__ == "__main__":
             feerate=feerate,
         )
         plot_figure(
-            title="Available block space under feerate",
+            title="Available block space for feerate",
             plot_data_list=[PlotData(timestamps, block_spaces, f"feerate={feerate}")],
         )
         plt.ylabel("block space")
