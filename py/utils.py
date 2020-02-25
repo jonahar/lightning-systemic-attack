@@ -97,10 +97,15 @@ def setup_logging(
 CACHES_DIR = os.path.join(os.path.expandvars("$LN"), "data", "caches")
 
 
-def get_db_key(*args, **kwargs) -> bytes:
-    return pickle.dumps(
-        (args, sorted(kwargs.items()))
-    )
+def get_db_str_key(*args, **kwargs) -> str:
+    """
+    this methods return a string representation of its arguments.
+    
+    Important: different arguments should have different string representation
+    """
+    args_str = [str(arg) for arg in args]
+    kwargs_str = [f"{k}={kwargs[k]}" for k in sorted(kwargs.keys())]
+    return ",".join(args_str + kwargs_str)
 
 
 def serialize_value(value: Any) -> bytes:
@@ -115,7 +120,13 @@ def get_leveldb_cache_fullpath(func_name: str) -> str:
     return os.path.join(CACHES_DIR, f"{func_name}_py_function_leveldb")
 
 
-def leveldb_cache(func):
+def leveldb_cache(
+    value_to_str: Callable[[Any], str],
+    str_to_value: Callable[[str], Any],
+    key_to_str: Callable[..., str] = None,
+    db_path: str = None,
+
+):
     """
     this is a decorator that caches result for the function 'func'.
     The cache is stored on disk, using LevelDB.
@@ -123,41 +134,36 @@ def leveldb_cache(func):
     The cache size is (currently) not configurable, and is unlimited
     """
     
-    try:
-        cache_fullpath = get_leveldb_cache_fullpath(func_name=func.__name__)
-        db = plyvel.DB(cache_fullpath, create_if_missing=True)
-    except plyvel.IOError:
-        print(
-            f"WARNING: leveldb_cache: IOERROR occurred when trying to open leveldb "
-            f"for function `{func.__name__}`. function will NOT be cached",
-            file=sys.stderr,
-        )
-        return func
+    if key_to_str is None:
+        key_to_str = get_db_str_key
     
-    @wraps(func)
-    def cached_func(*args, **kwargs):
-        db_key = get_db_key(*args, **kwargs)
-        value: bytes = db.get(db_key)
-        if value:
-            return deserialize_value(value)
+    def decorator(func):
+        try:
+            cache_fullpath = db_path if db_path else get_leveldb_cache_fullpath(func_name=func.__name__)
+            db = plyvel.DB(cache_fullpath, create_if_missing=True)
+        except plyvel.IOError:
+            print(
+                f"WARNING: leveldb_cache: IOERROR occurred when trying to open leveldb "
+                f"for function `{func.__name__}`. function will NOT be cached",
+                file=sys.stderr,
+            )
+            return func
         
-        value = func(*args, **kwargs)
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            db_key = key_to_str(*args, **kwargs).encode("utf-8")
+            value: bytes = db.get(db_key)
+            if value:
+                return str_to_value(value.decode("utf-8"))
+            
+            value = func(*args, **kwargs)
+            
+            db.put(db_key, value_to_str(value).encode("utf-8"))
+            return value
         
-        db.put(db_key, serialize_value(value))
-        return value
+        return wrapper
     
-    return cached_func
-
-
-def get_db_str_key(*args, **kwargs) -> str:
-    """
-    this methods return a string representation of its arguments.
-    
-    Important: different arguments should have different string representation
-    """
-    args_str = [str(arg) for arg in args]
-    kwargs_str = [f"{k}={kwargs[k]}" for k in sorted(kwargs.keys())]
-    return ",".join(args_str + kwargs_str)
+    return decorator
 
 
 def get_sqlite_cache_fullpath(func_name: str) -> str:
