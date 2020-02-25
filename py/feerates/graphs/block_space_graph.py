@@ -2,7 +2,7 @@ from typing import Dict, List
 
 import matplotlib.pyplot as plt
 
-from bitcoin_cli import get_tx_size, get_txs_in_block, set_bitcoin_cli
+from bitcoin_cli import get_tx_weight, get_txs_in_block, set_bitcoin_cli
 from datatypes import BlockHeight, Feerate
 from feerates import logger
 from feerates.graphs.estimated_feerates import get_top_p_minimal_feerate, parse_estimation_files
@@ -26,18 +26,17 @@ def get_block_space_for_feerate(height: BlockHeight, feerate: Feerate) -> float:
     
     
     """
-    # TODO use weight instead of size
     txids = get_txs_in_block(height=height, include_coinbase=False)
     
-    # find transactions that pay MORE than 'feerate' and sum their size
-    occupied_part_size = sum(map(
-        lambda txid: get_tx_size(txid),
+    # find transactions that pay MORE than 'feerate' and sum their weight
+    occupied_part_weight = sum(map(
+        lambda txid: get_tx_weight(txid),
         filter(lambda txid: feerates_oracle.get_tx_feerate(txid) > feerate, txids)
     ))
     
-    total_block_size = 1_000_000
+    total_block_weight = 4_000_000
     
-    return (1 - (occupied_part_size / total_block_size)) * 100
+    return (1 - (occupied_part_weight / total_block_weight)) * 100
 
 
 def get_block_space_data(block_heights: List[BlockHeight], feerate: float) -> List[float]:
