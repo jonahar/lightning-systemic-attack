@@ -1,9 +1,12 @@
 import argparse
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from bitcoin_cli import blockchain_height, get_tx_feerate, get_tx_weight, get_txs_in_block, set_bitcoin_cli
 from datatypes import BlockHeight
 from feerates import logger
+
+MAX_WORKERS = None  # will be set by the executor according to number of CPUs
 
 
 def populate_block(h: BlockHeight) -> None:
@@ -12,9 +15,11 @@ def populate_block(h: BlockHeight) -> None:
     
     logger.info(f"Dumping tx weights+feerates for block {h}")
     txids = get_txs_in_block(height=h)
-    for txid in txids:
-        get_tx_feerate(txid)
-        get_tx_weight(txid)
+    
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        for txid in txids:
+            executor.submit(get_tx_feerate, txid)
+            executor.submit(get_tx_weight, txid)
 
 
 def populate_blocks(first_block: BlockHeight, last_block: BlockHeight) -> None:
