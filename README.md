@@ -1,6 +1,6 @@
 # LN
 
-This repo contains code for running and manipulating bitcoin and lightning nodes.
+This repository contains code for running and manipulating bitcoin and lightning nodes.
 It was created to support a proposed attack on Bitcoin's Lightning Network.
 
 
