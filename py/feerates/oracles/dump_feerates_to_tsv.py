@@ -3,11 +3,9 @@ import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from bitcoin_cli import blockchain_height, get_block_by_height, set_bitcoin_cli
+from bitcoin_cli import blockchain_height, get_block_by_height, get_tx_feerate, set_bitcoin_cli
 from datatypes import Block, BlockHeight
 from feerates import logger
-from feerates.oracles.bitcoind_oracle import BitcoindTXFeeOracle
-from feerates.oracles.tx_fee_oracle import TXFeeOracle
 from paths import DATA
 
 MAX_WORKERS = None  # will be set by the executor according to number of CPUs
@@ -15,7 +13,7 @@ MAX_WORKERS = None  # will be set by the executor according to number of CPUs
 TSV_SEPARATOR = "\t"
 
 
-def __dump_block_feerates_to_file(h: BlockHeight, oracle: TXFeeOracle, filepath: str) -> bool:
+def __dump_block_feerates_to_file(h: BlockHeight, filepath: str) -> bool:
     """
     helper for dump_block_feerates. write feerates of txs in block h to a file in the given path.
     returns true only if ALL feerates were successfully written to the file.
@@ -31,7 +29,7 @@ def __dump_block_feerates_to_file(h: BlockHeight, oracle: TXFeeOracle, filepath:
     executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
     # submit all jobs to the pool
     txid_to_future = {
-        txid: executor.submit(TXFeeOracle.get_tx_feerate, oracle, txid)
+        txid: executor.submit(get_tx_feerate, txid)
         for txid in block["tx"]
     }
     
@@ -53,7 +51,7 @@ def __dump_block_feerates_to_file(h: BlockHeight, oracle: TXFeeOracle, filepath:
     return True
 
 
-def dump_block_feerates(h: BlockHeight, oracle: TXFeeOracle) -> None:
+def dump_block_feerates(h: BlockHeight) -> None:
     """
     computes the feerate of all transactions in block at height h and dump them
     to a text file in the DB_FOLDER directory
@@ -65,16 +63,16 @@ def dump_block_feerates(h: BlockHeight, oracle: TXFeeOracle) -> None:
     
     # use tmp suffix until we finish with that block (in case we crash before we dumped all txs)
     filepath_tmp = f"{filepath}.tmp"
-    success = __dump_block_feerates_to_file(h=h, oracle=oracle, filepath=filepath_tmp)
+    success = __dump_block_feerates_to_file(h=h, filepath=filepath_tmp)
     if success:
         os.rename(filepath_tmp, filepath)
     else:
-        logger.error(f"Oracle couldn't retrieve feerate for a transaction in block {h}")
+        logger.error(f"Failed to retrieve feerate for a transaction in block {h}")
 
 
-def dump_blocks_feerates(first_block: int, last_block: int, oracle: TXFeeOracle) -> None:
+def dump_blocks_feerates(first_block: int, last_block: int) -> None:
     for h in range(first_block, last_block + 1):
-        dump_block_feerates(h=h, oracle=oracle)
+        dump_block_feerates(h=h)
 
 
 def parse_args():
@@ -104,14 +102,10 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     
-    oracle = BitcoindTXFeeOracle(next_oracle=None)
-    
     set_bitcoin_cli(args.bitcoin_cli)
     
-    dump_blocks_feerates(first_block=args.first_block, last_block=args.last_block, oracle=oracle)
-    
     if args.last_block != 0:
-        dump_blocks_feerates(first_block=args.first_block, last_block=args.last_block, oracle=oracle)
+        dump_blocks_feerates(first_block=args.first_block, last_block=args.last_block)
     else:
         # we dump all blocks from first_block to the current height, indefinitely
         while True:
@@ -119,7 +113,7 @@ if __name__ == "__main__":
             logger.info(
                 f"Dumping all blocks from height {args.first_block} to current blockchain height ({curr_height})"
             )
-            dump_blocks_feerates(first_block=args.first_block, last_block=curr_height, oracle=oracle)
+            dump_blocks_feerates(first_block=args.first_block, last_block=curr_height)
             logger.info("sleeping for 5 minutes")
             time.sleep(60 * 5)
             # we may change first_block to curr_height, but we're leaving this
