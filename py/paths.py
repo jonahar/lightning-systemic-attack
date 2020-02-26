@@ -2,6 +2,7 @@ import os
 
 LN = os.path.expandvars("$LN")
 BIN = os.path.join(LN, "bin")
+DATA = os.path.join(LN, "data")
 
 CLIGHTNING_CONF_PATH = os.path.join(LN, "conf/clightning.conf")
 LND_CONF_PATH = os.path.join(LN, "conf/lnd.conf")

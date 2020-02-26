@@ -6,13 +6,13 @@ from concurrent.futures import ThreadPoolExecutor
 from bitcoin_cli import blockchain_height, get_block_by_height, get_tx_weight, set_bitcoin_cli
 from datatypes import Block, BlockHeight
 from feerates import logger
-from paths import LN
+from paths import DATA
 
 MAX_WORKERS = None  # will be set by the executor according to number of CPUs
 
 TSV_SEPARATOR = "\t"
 
-TX_WEIGHTS_FOLDER = os.path.join(LN, "data", "tx_weights")
+TX_WEIGHTS_FOLDER = os.path.join(DATA, "tx_weights_tsv_files")
 
 
 def __dump_tx_weights_in_block_to_file(h: BlockHeight, filepath: str) -> bool:

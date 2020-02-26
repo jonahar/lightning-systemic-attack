@@ -2,17 +2,14 @@ from typing import Dict, List
 
 import matplotlib.pyplot as plt
 
-from bitcoin_cli import get_tx_weight, get_txs_in_block, set_bitcoin_cli
+from bitcoin_cli import get_tx_feerate, get_tx_weight, get_txs_in_block, set_bitcoin_cli
 from datatypes import BlockHeight, Feerate
 from feerates import logger
 from feerates.graphs.estimated_feerates import get_top_p_minimal_feerate, parse_estimation_files
 from feerates.graphs.f_function import get_first_block_after_time_t
 from feerates.graphs.plot_f_function import block_heights_to_timestamps
 from feerates.graphs.plot_utils import PlotData, plot_figure
-from feerates.oracles.oracle_factory import get_multi_layer_oracle
 from utils import leveldb_cache, timeit
-
-feerates_oracle = get_multi_layer_oracle()
 
 
 @timeit(logger=logger, print_args=True)
@@ -31,7 +28,7 @@ def get_block_space_for_feerate(height: BlockHeight, feerate: Feerate) -> float:
     # find transactions that pay MORE than 'feerate' and sum their weight
     occupied_part_weight = sum(map(
         lambda txid: get_tx_weight(txid),
-        filter(lambda txid: feerates_oracle.get_tx_feerate(txid) > feerate, txids)
+        filter(lambda txid: get_tx_feerate(txid) > feerate, txids)
     ))
     
     total_block_weight = 4_000_000

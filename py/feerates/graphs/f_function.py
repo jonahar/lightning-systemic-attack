@@ -3,12 +3,10 @@ from math import ceil
 from typing import List
 
 from bitcoin_cli import (
-    blockchain_height, get_block_by_height, get_block_time, get_transaction,
+    blockchain_height, get_block_by_height, get_block_time, get_transaction, get_tx_feerate
 )
-from datatypes import Block, BlockHeight, Feerate, Timestamp, TXID
+from datatypes import Block, BlockHeight, Feerate, TXID, Timestamp
 from feerates import logger
-from feerates.oracles.oracle_factory import get_multi_layer_oracle
-from feerates.oracles.tx_fee_oracle import TXFeeOracle
 from utils import leveldb_cache, timeit
 
 """
@@ -18,8 +16,6 @@ This module is responsible for computing the F function. this is defined as
 Where M is the first block height that came after time t
 and G(b,p) is the set of the p top paying transactions in block height b
 """
-
-feerate_oracle: TXFeeOracle = get_multi_layer_oracle()
 
 
 def get_first_block_after_time_t(t: Timestamp) -> BlockHeight:
@@ -63,7 +59,7 @@ def get_sorted_feerates_in_block(b: BlockHeight) -> List[Feerate]:
     """
     block: Block = get_block_by_height(height=b)
     txids_in_block = remove_coinbase_txid(block["tx"])
-    return sorted(map(lambda txid: feerate_oracle.get_tx_feerate(txid), txids_in_block), reverse=True)
+    return sorted(map(lambda txid: get_tx_feerate(txid), txids_in_block), reverse=True)
 
 
 @lru_cache()

@@ -7,8 +7,8 @@ from bitcoin_cli import blockchain_height, get_block_by_height, set_bitcoin_cli
 from datatypes import Block, BlockHeight
 from feerates import logger
 from feerates.oracles.bitcoind_oracle import BitcoindTXFeeOracle
-from feerates.oracles.oracle_factory import DB_FOLDER
 from feerates.oracles.tx_fee_oracle import TXFeeOracle
+from paths import DATA
 
 MAX_WORKERS = None  # will be set by the executor according to number of CPUs
 
@@ -59,7 +59,7 @@ def dump_block_feerates(h: BlockHeight, oracle: TXFeeOracle) -> None:
     to a text file in the DB_FOLDER directory
     """
     logger.info(f"Dumping feerates for block {h}")
-    filepath = os.path.join(DB_FOLDER, f"block_{h}_feerates.tsv")
+    filepath = os.path.join(DATA, "feerates_tsv_files", f"block_{h}_feerates.tsv")
     if os.path.isfile(filepath):
         return  # this block was already dumped
     
