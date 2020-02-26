@@ -95,6 +95,11 @@ def get_transaction(txid: TXID) -> TX:
     return json.loads(decode_stdout(result))
 
 
+def coinbase_tx(txid: TXID) -> bool:
+    """return True if the given txid is a coinbase transaction"""
+    return "coinbase" in get_transaction(txid)["vin"][0]
+
+
 def get_tx_height(txid: TXID) -> int:
     """
     return the block height to which this tx entered
@@ -144,6 +149,8 @@ def get_tx_weight(txid: TXID) -> int:
 @lru_cache(maxsize=4096)
 @leveldb_cache(value_to_str=str, str_to_value=float)
 def get_tx_feerate(txid: TXID) -> Feerate:
+    if coinbase_tx(txid):
+        return 0
     tx_size = get_tx_size(txid)
     fee_sat = btc_to_sat(get_tx_fee(txid))
     return fee_sat / tx_size
