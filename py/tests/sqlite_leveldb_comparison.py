@@ -44,12 +44,12 @@ def test():
         
         if leveldb_total_time < sqlite_total_time:
             winner = "leveldb"
-            ratio = round(sqlite_total_time / leveldb_total_time, 2)
+            ratio = sqlite_total_time / leveldb_total_time
         else:
             winner = "sqlite"
-            ratio = round(leveldb_total_time / sqlite_total_time, 2)
+            ratio = leveldb_total_time / sqlite_total_time
         
-        print(f"{winner} is {ratio}x times faster")
+        print(f"{winner} is {round(ratio, 2)} times faster")
 
 
 if __name__ == "__main__":
