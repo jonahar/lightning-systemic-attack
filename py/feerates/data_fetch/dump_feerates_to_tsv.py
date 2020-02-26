@@ -36,9 +36,11 @@ def __dump_block_feerates_to_file(h: BlockHeight, filepath: str) -> bool:
     with open(filepath, mode="w") as f:
         # iterate all futures, extract the computed result and dump to the file
         for txid, future in txid_to_future.items():
-            feerate = future.result()
-            if feerate is None:
-                # we give up on the entire block if we fail to get the feerate of at least one transaction
+            try:
+                feerate = future.result()
+            except Exception:
+                # we give up on the entire block if we fail to get the feerate of
+                # at least one transaction
                 # cancel all remaining jobs
                 for f in txid_to_future.values():
                     f.cancel()
