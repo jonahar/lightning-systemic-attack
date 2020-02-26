@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import pickle
 import sqlite3
 import sys
 import time
@@ -108,18 +107,6 @@ def get_db_str_key(*args, **kwargs) -> str:
     return ",".join(args_str + kwargs_str)
 
 
-def serialize_value(value: Any) -> bytes:
-    return pickle.dumps(value)
-
-
-def deserialize_value(serialized_value: bytes) -> Any:
-    return pickle.loads(serialized_value)
-
-
-def get_leveldb_cache_fullpath(func_name: str) -> str:
-    return os.path.join(CACHES_DIR, f"{func_name}_py_function_leveldb")
-
-
 def leveldb_cache(
     value_to_str: Callable[[Any], str],
     str_to_value: Callable[[str], Any],
@@ -128,11 +115,49 @@ def leveldb_cache(
 
 ):
     """
-    this is a decorator that caches result for the function 'func'.
-    The cache is stored on disk, using LevelDB.
+    This decorator caches results of function calls in a LevelDB on disk.
+    The cache size is (currently) not configurable, and is unlimited.
     
-    The cache size is (currently) not configurable, and is unlimited
+    Each DB entry is a pair of input/output, representing function arguments and
+    the function result for these arguments. Both represented as strings.
+    
+    The decision to store only strings in the DB was made to allow other
+    applications (specifically, not python) to open the DB and to be able to easily
+    parse and understand it.
+    
+    Args:
+        value_to_str: a callable that takes results of the cached function and return
+                      their string representation
+        
+        str_to_value: a callable that takes string representation of some result of
+                      the cached function and return the value it represents
+        
+        key_to_str: a callable that takes any combination of arguments and returns
+                    a string representing this set of arguments. if None (default),
+                    a default conversion method will be used. In that case you should
+                    make sure that different arguments have different string representation,
+                    or they will be considered equal
+                    
+        db_path: full path to the db file. if None (default) use a default one
+    
+    
+    
+    Usage examples:
+    
+    @sqlite_cache(value_to_str=str, str_to_value=float)
+    def foo(arg1: str, arg2: float) -> float:
+        ...
+
+    import json
+    @sqlite_cache(value_to_str=json.dumps, str_to_value=json.loads)
+    def bar(arg1: str, arg2: str) -> List[str]:
+        ...
+        
+        
     """
+    
+    def get_leveldb_cache_fullpath(func_name: str) -> str:
+        return os.path.join(CACHES_DIR, f"{func_name}_py_function_leveldb")
     
     if key_to_str is None:
         key_to_str = get_db_str_key
@@ -167,10 +192,6 @@ def leveldb_cache(
     return decorator
 
 
-def get_sqlite_cache_fullpath(func_name: str) -> str:
-    return os.path.join(CACHES_DIR, f"{func_name}_py_function_cache.sqlite")
-
-
 def sqlite_cache(
     value_to_str: Callable[[Any], str],
     str_to_value: Callable[[str], Any],
@@ -178,45 +199,12 @@ def sqlite_cache(
     db_path: str = None,
 ):
     """
-    This decorator caches results of function calls in a sqlite DB on disk.
-    The cache size is (currently) not configurable, and is unlimited.
-    
-    Each DB entry is a pair of input/output, representing function arguments and
-    the function result for these arguments. Both represented as strings.
-    
-    The decision to store only strings in the DB was made to allow other
-    applications (specifically, not python) to open the DB and to be able to easily
-    parse and understand it.
-    
-    Args:
-        value_to_str: a callable that takes results of the cached function and return
-                      their string representation
-        
-        str_to_value: a callable that takes string representation of some result of
-                      the cached function and return the value it represents
-        
-        key_to_str: a callable that takes any combination of arguments and returns
-                    a string representing this set of arguments. if None (default),
-                    a default conversion method will be used. In that case you should
-                    make sure that different arguments have different string representation,
-                    or they will be considered equal
-                    
-        db_path: full path to the db file. if None (default) use a default one
-    
-    
-    
-    Usage examples:
-        
-    @sqlite_cache(value_to_str=str, str_to_value=float)
-    def foo(arg1: str, arg2: float) -> float:
-        ...
-
-    import json
-    @sqlite_cache(value_to_str=json.dumps, str_to_value=json.loads)
-    def bar(arg1: str, arg2: str) -> List[str]:
-        ...
-    
+    similar of leveldb_cache, only based on sqlite.
+    see documentation of leveldb_cache
     """
+    
+    def get_sqlite_cache_fullpath(func_name: str) -> str:
+        return os.path.join(CACHES_DIR, f"{func_name}_py_function_cache.sqlite")
     
     if key_to_str is None:
         key_to_str = get_db_str_key
