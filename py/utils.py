@@ -141,10 +141,11 @@ def leveldb_cache(
         try:
             cache_fullpath = db_path if db_path else get_leveldb_cache_fullpath(func_name=func.__name__)
             db = plyvel.DB(cache_fullpath, create_if_missing=True)
-        except plyvel.IOError:
+        except plyvel.IOError as e:
             print(
                 f"WARNING: leveldb_cache: IOERROR occurred when trying to open leveldb "
-                f"for function `{func.__name__}`. function will NOT be cached",
+                f"for function `{func.__name__}`. function will NOT be cached. "
+                f"Error: {type(e)}: {str(e)}",
                 file=sys.stderr,
             )
             return func
