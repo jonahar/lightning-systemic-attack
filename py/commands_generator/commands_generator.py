@@ -282,6 +282,42 @@ class CommandsGenerator:
             self.clients[idx].stop()
             self.__maybe_info(f"lightning node {idx} stopped")
     
+    def fill_blockchain(self, num_blocks) -> None:
+        """
+        generate code that fills the mempool and mine full blocks.
+        the memool size is kept at around 2 times the block max weight
+        """
+        self.__maybe_info(f"Filling the blockchain ({num_blocks} blocks)")
+        self.mine(num_blocks=100 + num_blocks)  # at least 100 to unlock coinbase txs
+        num_outputs = 10
+        # usually for these kind of transactions this is the ratio between the block's weight and size
+        block_weight_size_ratio = 2.7
+        full_block_expected_size = self.bitcoin_block_max_weight / block_weight_size_ratio
+        
+        for i in range(num_outputs):
+            self.__write_line(f"""MINER_ADDR_{i}=$({self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} getnewaddress)""")
+        
+        sendmany_arg = "{" + ",".join(f"""\\"$MINER_ADDR_{i}\\":0.1""" for i in range(num_outputs)) + "}"
+        
+        # we want to launch multiple sendmany requests at the same time, but we can't
+        # do too too many either (bitcoind will fail). we use 10 at a time and wait
+        # until all of them are finished. we run them in a sub-shell so they don't
+        # put too much junk in our console
+        
+        self.__write_line(f"""
+        for _ in $(seq 1 {num_blocks}); do
+            while [[ $({self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} getmempoolinfo | jq -r ".bytes") -lt {int(2 * full_block_expected_size)} ]]; do
+                (
+                    for _ in $(seq 1 10); do
+                        {self.__bitcoin_cli_cmd_prefix(BITCOIN_MINER_IDX)} sendmany "" "{sendmany_arg}" >/dev/null &
+                    done
+                    wait
+                )
+            done
+            {self.__get_mine_command(1)}
+        done
+        """)
+    
     def fund_nodes(self) -> None:
         """generate code to fund nodes"""
         self.__maybe_info("funding lightning nodes")
@@ -554,6 +590,7 @@ def main() -> None:
     cg.start_lightning_nodes()
     
     if args.establish_channels:
+        cg.fill_blockchain(40)  # 40 seems to be enough for the estimatesmartfee method to start working
         cg.fund_nodes()
         cg.wait_for_funds()
         cg.establish_channels()
