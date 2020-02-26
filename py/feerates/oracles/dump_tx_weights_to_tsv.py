@@ -6,11 +6,13 @@ from concurrent.futures import ThreadPoolExecutor
 from bitcoin_cli import blockchain_height, get_block_by_height, get_tx_weight, set_bitcoin_cli
 from datatypes import Block, BlockHeight
 from feerates import logger
-from feerates.oracles.oracle_factory import DB_FOLDER
+from paths import LN
 
 MAX_WORKERS = None  # will be set by the executor according to number of CPUs
 
 TSV_SEPARATOR = "\t"
+
+TX_WEIGHTS_FOLDER = os.path.join(LN, "data", "tx_weights")
 
 
 def __dump_tx_weights_in_block_to_file(h: BlockHeight, filepath: str) -> bool:
@@ -21,8 +23,6 @@ def __dump_tx_weights_in_block_to_file(h: BlockHeight, filepath: str) -> bool:
     try:
         block: Block = get_block_by_height(h)
     except Exception:
-        # TODO change this except. get_block_by_height should either declare
-        #  exactly what it raises, or return None if it fails
         logger.error(f"Failed to retrieve block {h} from bitcoind")
         return False
     
@@ -57,7 +57,7 @@ def dump_tx_weights_in_block(h: BlockHeight) -> None:
     to a text file in the DB_FOLDER directory
     """
     logger.info(f"Dumping weights for block {h}")
-    filepath = os.path.join(DB_FOLDER, f"block_{h}_tx_weights.tsv")
+    filepath = os.path.join(TX_WEIGHTS_FOLDER, f"block_{h}_tx_weights.tsv")
     if os.path.isfile(filepath):
         return  # this block was already dumped
     
