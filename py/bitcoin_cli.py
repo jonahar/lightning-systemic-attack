@@ -124,17 +124,16 @@ def get_tx_fee(txid: TXID) -> BTC:
     return get_tx_incoming_value(txid) - get_tx_outgoing_value(txid)
 
 
-# the lru_cache is farthest from the function declaration, so it is used first
-# we first check the in-memory cache, and then the disk cache
-
 @lru_cache(maxsize=4096)
-@leveldb_cache(value_to_str=str, str_to_value=int)
 def get_tx_size(txid: TXID) -> int:
     """
     return the tx size in bytes
     """
     return get_transaction(txid)["size"]
 
+
+# the lru_cache is farthest from the function declaration, so it is used first
+# we first check the in-memory cache, and then the disk cache
 
 @lru_cache(maxsize=4096)
 @leveldb_cache(value_to_str=str, str_to_value=int)
