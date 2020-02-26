@@ -107,6 +107,10 @@ def get_db_str_key(*args, **kwargs) -> str:
     return ",".join(args_str + kwargs_str)
 
 
+def get_leveldb_cache_fullpath(func_name: str) -> str:
+    return os.path.join(CACHES_DIR, f"{func_name}_py_function_leveldb")
+
+
 def leveldb_cache(
     value_to_str: Callable[[Any], str],
     str_to_value: Callable[[str], Any],
@@ -156,9 +160,6 @@ def leveldb_cache(
         
     """
     
-    def get_leveldb_cache_fullpath(func_name: str) -> str:
-        return os.path.join(CACHES_DIR, f"{func_name}_py_function_leveldb")
-    
     if key_to_str is None:
         key_to_str = get_db_str_key
     
@@ -192,6 +193,10 @@ def leveldb_cache(
     return decorator
 
 
+def get_sqlite_cache_fullpath(func_name: str) -> str:
+    return os.path.join(CACHES_DIR, f"{func_name}_py_function_cache.sqlite")
+
+
 def sqlite_cache(
     value_to_str: Callable[[Any], str],
     str_to_value: Callable[[str], Any],
@@ -202,9 +207,6 @@ def sqlite_cache(
     similar of leveldb_cache, only based on sqlite.
     see documentation of leveldb_cache
     """
-    
-    def get_sqlite_cache_fullpath(func_name: str) -> str:
-        return os.path.join(CACHES_DIR, f"{func_name}_py_function_cache.sqlite")
     
     if key_to_str is None:
         key_to_str = get_db_str_key
