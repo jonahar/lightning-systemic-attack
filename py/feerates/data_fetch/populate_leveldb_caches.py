@@ -19,10 +19,8 @@ def populate_block(h: BlockHeight) -> None:
     if this method returns, population is done successfully. if a problem occurred
     an exception will be raised
     """
-    # all we need to do to populate the db with tx weights in the given block is to
-    # query get_tx_weight for these weights
-    
-    logger.info(f"Dumping tx weights+feerates for block {h}")
+    # all we need to do to populate the feerates and weights DBs is to
+    # query get_tx_feerate and get_tx_weight
     txids = get_txs_in_block(height=h)
     
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
@@ -36,6 +34,7 @@ def populate_block(h: BlockHeight) -> None:
 def populate_blocks(first_block: BlockHeight, last_block: BlockHeight) -> None:
     for h in range(first_block, last_block + 1):
         try:
+            logger.info(f"Dumping tx weights+feerates for block {h}")
             populate_block(h)
         except Exception as e:
             logger.error(f"Exception occurred when trying to populate with txs in block {h}: {type(e)}:{str(e)}")
