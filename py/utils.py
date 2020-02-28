@@ -165,6 +165,8 @@ def leveldb_cache(
     
     def decorator(func):
         try:
+            # TODO if we fail to open because the db is locked, go around it and
+            #  open it, just don't write in case new input/output arrive
             cache_fullpath = db_path if db_path else get_leveldb_cache_fullpath(func_name=func.__name__)
             db = plyvel.DB(cache_fullpath, create_if_missing=True)
         except plyvel.IOError as e:
