@@ -5,10 +5,14 @@ from concurrent.futures import ThreadPoolExecutor
 from bitcoin_cli import blockchain_height, get_tx_feerate, get_tx_weight, get_txs_in_block, set_bitcoin_cli
 from datatypes import BlockHeight
 from feerates import logger
+from utils import leveldb_cache
 
 MAX_WORKERS = None
 
 
+# we use leveldb_cache for this function not because we need its return value,
+# but to avoid populating txs of some block twice.
+@leveldb_cache(value_to_str=str, str_to_value=lambda s: None)
 def populate_block(h: BlockHeight) -> None:
     """
     populate the tx feerates and tx weights caches with txs in block h.
