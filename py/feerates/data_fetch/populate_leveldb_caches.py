@@ -6,7 +6,7 @@ from bitcoin_cli import blockchain_height, get_tx_feerate, get_tx_weight, get_tx
 from datatypes import BlockHeight
 from feerates import logger
 
-MAX_WORKERS = None  # will be set by the executor according to number of CPUs
+MAX_WORKERS = None
 
 
 def populate_block(h: BlockHeight) -> None:
@@ -57,12 +57,18 @@ def parse_args():
         "bitcoin_cli", choices=["master", "user"], metavar="bitcoin_cli",
         help="the bitcoin-cli to use. must be one of `master` or `user`",
     )
+    parser.add_argument(
+        "-j", "--jobs", action="store", type=int, default=None,
+        help="number of jobs to use for querying bitcoind",
+    )
     
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
+    global MAX_WORKERS
+    MAX_WORKERS = args.jobs
     
     set_bitcoin_cli(args.bitcoin_cli)
     
