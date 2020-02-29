@@ -1,4 +1,6 @@
 .idea/*
-bitcoin-dirs
-lightning-dirs
 simulations
+bin
+data
+py/venv
+
