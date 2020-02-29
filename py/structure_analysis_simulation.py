@@ -65,7 +65,7 @@ cg.stop_lightning_node(2)
 cg.reveal_preimages(4)
 cg.stop_lightning_node(1)
 cg.start_lightning_node_silent(1)
-cg.clients[2].start()  # we shouldn't access clients directly
+cg.lightning_clients[2].start()  # we shouldn't access clients directly
 cg.reveal_preimages(5)
 cg.advance_blockchain(num_blocks=40, block_time_sec=60)
 cg.advance_blockchain(num_blocks=120, block_time_sec=1)
