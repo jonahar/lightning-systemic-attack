@@ -104,7 +104,7 @@ stat() {
                 lcli $i getinfo | jq -j -r ".blockheight"
             elif [[ $(lncli $i getinfo 2>/dev/null | jq -r ".block_height") -gt 0 ]]; then
                 lncli $i getinfo | jq -j -r ".block_height"
-            elif [[ $(eclclili $i getinfo 2>/dev/null | jq -r ".blockHeight") -gt 0 ]]; then
+            elif [[ $(ecli $i getinfo 2>/dev/null | jq -r ".blockHeight") -gt 0 ]]; then
                 ecli $i getinfo | jq -j -r ".blockHeight"
             fi
             echo
