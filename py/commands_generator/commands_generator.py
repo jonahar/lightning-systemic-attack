@@ -77,7 +77,7 @@ class CommandsGenerator:
         
         # each LightningCommandsGenerator should generate lightning node commands
         # according to the node's chosen implementation
-        self.clients: Dict[NodeIndex, LightningCommandsGenerator] = self.__init_clients()
+        self.lightning_clients: Dict[NodeIndex, LightningCommandsGenerator] = self.__init_lightning_clients()
     
     @staticmethod
     def __sanitize_topology_keys(topology: dict) -> Dict[NodeIndex, Any]:
@@ -144,7 +144,7 @@ class CommandsGenerator:
             alias=alias,
         )
     
-    def __init_clients(self) -> Dict[NodeIndex, LightningCommandsGenerator]:
+    def __init_lightning_clients(self) -> Dict[NodeIndex, LightningCommandsGenerator]:
         """
         build LightningCommandsGenerator for each node in the topology.
         the concrete implementation is determined by the node's config
@@ -272,14 +272,14 @@ class CommandsGenerator:
         """generate code to start all lightning nodes"""
         self.__maybe_info("starting all lightning nodes")
         for idx, info in self.topology.items():
-            self.clients[idx].start()
+            self.lightning_clients[idx].start()
             self.__maybe_info(f"lightning node {idx} started")
     
     def stop_lightning_nodes(self) -> None:
         """generate code to stop all lightning nodes"""
         self.__maybe_info("stopping all lightning nodes")
         for idx, info in self.topology.items():
-            self.clients[idx].stop()
+            self.lightning_clients[idx].stop()
             self.__maybe_info(f"lightning node {idx} stopped")
     
     def fill_blockchain(self, num_blocks) -> None:
@@ -325,7 +325,7 @@ class CommandsGenerator:
         self.mine(num_blocks=100 + len(self.topology))
         
         for idx in self.topology:
-            self.clients[idx].set_address(bash_var=f"ADDR_{idx}")
+            self.lightning_clients[idx].set_address(bash_var=f"ADDR_{idx}")
             
             # We give more funds to nodes that need to open many channels.
             # we fund these nodes with many small transactions instead of one big transaction,
@@ -341,15 +341,15 @@ class CommandsGenerator:
         for idx, info in self.topology.items():
             # we need to wait only for nodes that need to fund a channel
             if len(self.topology[idx]["peers"]) != 0:
-                self.clients[idx].wait_for_funds()
+                self.lightning_clients[idx].wait_for_funds()
     
     def establish_channels(self) -> None:
         """generate code to connect peers and establish all channels"""
         for node_idx, info in self.topology.items():
             for peer_idx in info["peers"]:
                 self.__maybe_info(f"establishing channel from {node_idx} to {peer_idx}")
-                self.clients[node_idx].establish_channel(
-                    peer=self.clients[peer_idx],
+                self.lightning_clients[node_idx].establish_channel(
+                    peer=self.lightning_clients[peer_idx],
                     peer_listen_port=self.resources_allocator.get_lightning_node_listen_port(peer_idx),
                     initial_balance_sat=INITIAL_CHANNEL_BALANCE_SAT,
                 )
@@ -369,8 +369,8 @@ class CommandsGenerator:
     
     def wait_to_route(self, sender_idx: NodeIndex, receiver_idx: NodeIndex, amount_msat: int):
         self.__maybe_info(f"waiting until there is a known route from {sender_idx} to {receiver_idx}")
-        self.clients[sender_idx].wait_to_route(
-            receiver=self.clients[receiver_idx],
+        self.lightning_clients[sender_idx].wait_to_route(
+            receiver=self.lightning_clients[receiver_idx],
             amount_msat=amount_msat,
         )
     
@@ -379,8 +379,8 @@ class CommandsGenerator:
             f"making {num_payments} payments "
             f"between {sender_idx} (sender) and {receiver_idx} (receiver) with amount {amount_msat}msat"
         )
-        self.clients[sender_idx].make_payments(
-            receiver=self.clients[receiver_idx],
+        self.lightning_clients[sender_idx].make_payments(
+            receiver=self.lightning_clients[receiver_idx],
             num_payments=num_payments,
             amount_msat=amount_msat,
         )
@@ -395,8 +395,8 @@ class CommandsGenerator:
             +
             (f" to node {peer_idx}" if peer_idx else "")
         )
-        self.clients[node_idx].reveal_preimages(
-            peer=self.clients[peer_idx] if peer_idx else None
+        self.lightning_clients[node_idx].reveal_preimages(
+            peer=self.lightning_clients[peer_idx] if peer_idx else None
         )
     
     def print_node_htlcs(self, node_idx: NodeIndex):
@@ -404,21 +404,21 @@ class CommandsGenerator:
         print the number of htlcs the given node has on each of its channels
         """
         self.__maybe_info(f"number of HTLCs node {node_idx} has on each channel:")
-        self.clients[node_idx].print_node_htlcs()
+        self.lightning_clients[node_idx].print_node_htlcs()
     
     def stop_lightning_node(self, node_idx: NodeIndex):
         self.__maybe_info(f"stopping lightning node {node_idx}")
-        self.clients[node_idx].stop()
+        self.lightning_clients[node_idx].stop()
     
     def stop_all_lightning_nodes(self) -> None:
         self.__maybe_info("stopping all lightning nodes")
-        for client in self.clients.values():
+        for client in self.lightning_clients.values():
             client.stop()
     
     def start_lightning_node_silent(self, node_idx: NodeIndex):
         self.__maybe_info(f"starting lightning node {node_idx} in silent mode")
         # silent mode is only supported for the c-lightning impl
-        self.clients[node_idx] = ClightningCommandsGenerator(
+        self.lightning_clients[node_idx] = ClightningCommandsGenerator(
             idx=node_idx,
             file=self.file,
             datadir=self.resources_allocator.get_lightning_node_datadir(node_idx),
@@ -426,15 +426,15 @@ class CommandsGenerator:
             bitcoin_rpc_port=self.resources_allocator.get_bitcoin_node_rpc_port(node_idx),
             silent=True,
         )
-        self.clients[node_idx].start()
+        self.lightning_clients[node_idx].start()
     
     def close_all_node_channels(self, node_idx: NodeIndex):
         self.__maybe_info(f"closing all channels of node {node_idx}")
-        self.clients[node_idx].close_all_channels()
+        self.lightning_clients[node_idx].close_all_channels()
     
     def sweep_funds(self, node_idx: NodeIndex):
         self.__maybe_info(f"sweeping funds of node {node_idx}")
-        self.clients[node_idx].sweep_funds()
+        self.lightning_clients[node_idx].sweep_funds()
     
     def __set_blockchain_height(self):
         """set a bash variable BLOCKCHAIN_HEIGHT with the current height"""
@@ -490,7 +490,7 @@ class CommandsGenerator:
         
         # dump nodes balances
         for idx in self.topology.keys():
-            self.clients[idx].dump_balance(filepath="nodes_balance")
+            self.lightning_clients[idx].dump_balance(filepath="nodes_balance")
         
         self.__write_line(f"cd - > /dev/null")  # go back to where we were
     
