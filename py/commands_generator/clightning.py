@@ -112,6 +112,20 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         num_payments: int,
         amount_msat: int,
     ) -> None:
+        self._write_line("""
+        show-progress-bar(){
+            PERCENT=$1
+            TERMINAL_WIDTH=$(tput cols)
+            TOTAL_SLOTS=$((TERMINAL_WIDTH - 10))
+            NUM_FULL_SLOTS=$(((TOTAL_SLOTS * PERCENT) / 100))
+            NUM_EMPTY_SLOTS=$((TOTAL_SLOTS - NUM_FULL_SLOTS))
+            printf "\\r["
+            printf "%0.s=" $(seq 1 $NUM_FULL_SLOTS)
+            printf "%0.s " $(seq 1 $NUM_EMPTY_SLOTS)
+            printf "] ${PERCENT}%% "
+        }
+        """)
+        
         self.__set_riskfactor()
         receiver.set_id(bash_var="RECEIVER_ID")
         self._write_line(f"for i in $(seq 1 {num_payments}); do")
@@ -125,6 +139,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         self._write_line(
             f"""{self.__lightning_cli_command_prefix()} sendpay "$ROUTE" "$PAYMENT_HASH" > /dev/null"""
         )
+        self._write_line(f"show-progress-bar $(((i*100)/{num_payments}))")
         self._write_line(f"done")
     
     def print_node_htlcs(self) -> None:
