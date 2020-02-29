@@ -141,6 +141,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         )
         self._write_line(f"show-progress-bar $(((i*100)/{num_payments}))")
         self._write_line(f"done")
+        self._write_line(f"echo")  # to start a new line after the progress bar
     
     def print_node_htlcs(self) -> None:
         self._write_line(
