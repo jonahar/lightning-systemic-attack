@@ -19,11 +19,9 @@ def get_block_space_for_feerate(height: BlockHeight, feerate: Feerate) -> float:
     return the portion of the block (percentage: a number between 0 and 100) that
     may be filled with a transaction with feerate 'feerate'.
     that is the amount of the block that contains transactions with feerate less
-    than 'feerate', or an empty part of the block (in case the block is less than 1MB)
-    
-    
+    than 'feerate', or an empty part of the block (in case the block is less than 4M weight units)
     """
-    txids = get_txs_in_block(height=height, include_coinbase=False)
+    txids = get_txs_in_block(height=height)
     
     # find transactions that pay MORE than 'feerate' and sum their weight
     occupied_part_weight = sum(map(
@@ -43,7 +41,7 @@ def get_block_space_data(block_heights: List[BlockHeight], feerate: float) -> Li
     ]
 
 
-if __name__ == "__main__":
+def main():
     set_bitcoin_cli("user")
     
     # we only want this data to know the timestamps where to evaluate our function
@@ -76,6 +74,10 @@ if __name__ == "__main__":
         get_top_p_minimal_feerate(samples=data[2][0].feerates, p=p)
         for p in p_values
     ]
+    # feerates_to_eval may be a little different in different runs due to numerical issues
+    # (e.g. in one run we'll have feerate of 20.075, and in another run 20.076)
+    # we round it to benefit the cache of get_block_space_for_feerate
+    feerates_to_eval = [round(f, 1) for f in feerates_to_eval]
     
     for feerate in feerates_to_eval:
         block_spaces: List[float] = get_block_space_data(
@@ -90,3 +92,7 @@ if __name__ == "__main__":
         plt.legend(loc="best")
     
     plt.show()
+
+
+if __name__ == "__main__":
+    main()
