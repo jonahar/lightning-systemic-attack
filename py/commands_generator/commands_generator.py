@@ -440,8 +440,8 @@ class CommandsGenerator:
         
         """
         self.__maybe_info(f"dumping simulation data")
-        self.__write_line(f"mkdir -p '{dir}'")
-        self.__write_line(f"cd '{dir}'")
+        self.__write_line(f"mkdir -p '{dir_path}'")
+        self.__write_line(f"cd '{dir_path}'")
         
         self.bitcoin_clients[BITCOIN_MINER_IDX].dump_blockchain(dir_path=dir_path)
         
