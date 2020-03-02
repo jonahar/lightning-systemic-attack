@@ -1,0 +1,33 @@
+{
+    "1": {
+        "evil": false,
+        "peers": [
+            "4",
+            "5",
+            "6"
+        ],
+        "client": "c-lightning"
+    },
+    "3": {
+        "evil": true,
+        "peers": []
+    },
+    "4": {
+        "client": "c-lightning",
+        "peers": [
+            "3"
+        ]
+    },
+    "5": {
+        "client": "lnd",
+        "peers": [
+            "3"
+        ]
+    },
+    "6": {
+        "client": "eclair",
+        "peers": [
+            "3"
+        ]
+    }
+}

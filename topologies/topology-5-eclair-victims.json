@@ -1,0 +1,47 @@
+{
+    "1": {
+        "peers": [
+            "4",
+            "5",
+            "6",
+            "7",
+            "8"
+        ],
+        "client": "c-lightning"
+    },
+    "3": {
+        "peers": [],
+        "evil": true,
+        "client": "c-lightning"
+    },
+    "4": {
+        "peers": [
+            "3"
+        ],
+        "client": "eclair"
+    },
+    "5": {
+        "peers": [
+            "3"
+        ],
+        "client": "eclair"
+    },
+    "6": {
+        "peers": [
+            "3"
+        ],
+        "client": "eclair"
+    },
+    "7": {
+        "peers": [
+            "3"
+        ],
+        "client": "eclair"
+    },
+    "8": {
+        "peers": [
+            "3"
+        ],
+        "client": "eclair"
+    }
+}
