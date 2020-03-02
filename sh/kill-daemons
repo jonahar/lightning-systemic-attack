@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
 
 pkill --signal SIGKILL lightningd
+
 pkill --signal SIGKILL lnd
-# eclair nodes store their pid in files
-find /tmp/lightning-simulations -name "node_pid" -exec pkill --signal SIGKILL --pidfile "{}" ";" > /dev/null 2>&1
+
+# eclair nodes store their root pid in a file. we get each pid and kill it with all its descendants
+kill_descendants() {
+    pid=$1
+    kill -s SIGKILL $(pstree -p $pid | grep -o '([0-9]\+)' | grep -o '[0-9]\+')
+}
+for pid_file in $(find /tmp/lightning-simulations -name "node_pid" 2>/dev/null); do
+    pid=$(cat $pid_file)
+    kill_descendants $pid >/dev/null 2>&1
+done
+
 pkill --signal SIGKILL bitcoind
+
 sleep 1
