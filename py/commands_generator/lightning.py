@@ -154,9 +154,19 @@ class LightningCommandsGenerator(ABC):
         """
         pass
     
+    @abstractmethod
     def sweep_funds(self) -> None:
         """
         generate code that sweeps the entire available balance of that node.
         The coins are sent to a new address of that node.
+        """
+        pass
+    
+    @abstractmethod
+    def dump_channels_info(self, filepath: str) -> None:
+        """
+        dump all channels information this node has into a file with the given name.
+        It is up to the specific LightningCommandsGenerator implementation to decide
+        what information exactly is written
         """
         pass

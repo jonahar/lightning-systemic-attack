@@ -177,3 +177,11 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
     
     def sweep_funds(self) -> None:
         raise NotImplementedError()
+    
+    def dump_channels_info(self, filepath: str) -> None:
+        self._write_line(
+            f"{self.__eclair_cli_command_prefix()} channels >> {filepath}"
+        )
+        self._write_line(
+            f"{self.__eclair_cli_command_prefix()} peers >> {filepath}"
+        )

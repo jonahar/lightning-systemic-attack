@@ -178,3 +178,11 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         addr_var = f"ADDR_{self.idx}"
         self.set_address(bash_var=addr_var)
         self._write_line(f"{self.__lightning_cli_command_prefix()} withdraw ${{{addr_var}}} all")
+    
+    def dump_channels_info(self, filepath: str) -> None:
+        self._write_line(
+            f"{self.__lightning_cli_command_prefix()} listchannels >> {filepath}"
+        )
+        self._write_line(
+            f"{self.__lightning_cli_command_prefix()} listpeers >> {filepath}"
+        )

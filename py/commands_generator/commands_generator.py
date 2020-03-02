@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 from typing import Any, Dict, TextIO
 
@@ -386,6 +387,15 @@ class CommandsGenerator:
         self.__maybe_info(f"number of HTLCs node {node_idx} has on each channel:")
         self.lightning_clients[node_idx].print_node_htlcs()
     
+    def dump_channels_info(self, dir_path: str):
+        """
+        dump channels information of all lightning nodes into files in the given
+        directory. file name format is 'node_<NODE_IDX>_channels'
+        """
+        self.__maybe_info("dumping channels information of all lightning nodes")
+        for node_idx, client in self.lightning_clients.items():
+            client.dump_channels_info(filepath=os.path.join(dir_path, f"node_{node_idx}_channels"))
+    
     def stop_lightning_node(self, node_idx: NodeIndex):
         self.__maybe_info(f"stopping lightning node {node_idx}")
         self.lightning_clients[node_idx].stop()
@@ -550,6 +560,8 @@ def main() -> None:
         cg.wait_to_route(sender_idx, receiver_idx, amount_msat)
         cg.make_payments(*args.make_payments)
         cg.print_node_htlcs(node_idx=receiver_idx)
+        if args.dump_data:
+            cg.dump_channels_info(args.dump_data)
     
     if args.steal_attack:
         sender_idx, receiver_idx, num_blocks = args.steal_attack

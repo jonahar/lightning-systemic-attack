@@ -213,3 +213,6 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         self.__write_lncli_command(
             f"sendcoins --addr ${{{addr_var}}} --sweepall"
         )
+    
+    def dump_channels_info(self, filepath: str) -> None:
+        raise NotImplementedError()
