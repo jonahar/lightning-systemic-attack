@@ -96,6 +96,13 @@ class BitcoinCommandsGenerator(ABC):
         """
         pass
     
+    @abstractmethod
+    def set_node_balance(self, bash_var: str) -> None:
+        """
+        set the given bash var with the balance of this node in satoshis
+        """
+        pass
+    
     def fill_blockchain(self, num_blocks) -> None:
         """
         generate code that fills the mempool and mine 'num_blocks' full blocks.

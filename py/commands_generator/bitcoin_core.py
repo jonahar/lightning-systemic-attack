@@ -125,6 +125,14 @@ class BitcoinCoreCommandsGenerator(BitcoinCommandsGenerator):
         done
         """)
     
+    def set_node_balance(self, bash_var: str) -> None:
+        self._write_line(
+            f"""AMOUNT_SAT_FLOAT=$(bc <<< "$({self.__bitcoin_cli_cmd_prefix()} getbalance) * 100000000")"""
+        )
+        self._write_line(
+            f"""printf -v {bash_var} %.0f "$AMOUNT_SAT_FLOAT" """
+        )
+    
     def fill_blockchain(self, num_blocks) -> None:
         self.mine(num_blocks=100 + num_blocks)  # at least 100 to unlock coinbase txs
         
