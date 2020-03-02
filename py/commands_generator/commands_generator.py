@@ -76,10 +76,10 @@ class CommandsGenerator:
         self.verbose = verbose
         self.resources_allocator = ResourcesAllocator(simulation=simulation_number)
         
-        # each LightningCommandsGenerator should generate lightning node commands
+        self.bitcoin_clients: Dict[NodeIndex, BitcoinCommandsGenerator] = self.__init_bitcoin_clients()
+        # each LightningCommandsGenerator generates lightning commands
         # according to the node's chosen implementation
         self.lightning_clients: Dict[NodeIndex, LightningCommandsGenerator] = self.__init_lightning_clients()
-        self.bitcoin_clients: Dict[NodeIndex, BitcoinCommandsGenerator] = self.__init_bitcoin_clients()
     
     @staticmethod
     def __sanitize_topology_keys(topology: dict) -> Dict[NodeIndex, Any]:
@@ -143,6 +143,7 @@ class CommandsGenerator:
             bitcoin_rpc_port=self.resources_allocator.get_bitcoin_node_rpc_port(node_idx),
             zmqpubrawblock_port=self.resources_allocator.get_bitcoin_node_zmqpubrawblock_port(node_idx),
             zmqpubrawtx_port=self.resources_allocator.get_bitcoin_node_zmqpubrawtx_port(node_idx),
+            bitcoin_commands_generator=self.bitcoin_clients[node_idx],
             alias=alias,
         )
     

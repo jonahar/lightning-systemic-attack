@@ -138,7 +138,8 @@ class LightningCommandsGenerator(ABC):
     def dump_balance(self, filepath: str) -> None:
         """
         generate code to dump this node's balance to the given file.
-        data MUST be appended to the file
+        data MUST be appended to the file as a single line in the following format:
+        'node <NODE_IDX> balance: <BALANCE IN SAT>'
         """
         pass
     

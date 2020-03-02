@@ -1,5 +1,6 @@
 from typing import TextIO
 
+from commands_generator.bitcoin import BitcoinCommandsGenerator
 from commands_generator.lightning import LightningCommandsGenerator
 from datatypes import NodeIndex
 from paths import ECLAIR_CLI, ECLAIR_NODE_JAR
@@ -17,6 +18,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         bitcoin_rpc_port: int,
         zmqpubrawblock_port: int,
         zmqpubrawtx_port: int,
+        bitcoin_commands_generator: BitcoinCommandsGenerator,
         alias: str = None,
     ) -> None:
         super().__init__(index, file)
@@ -26,6 +28,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         self.bitcoin_rpc_port = bitcoin_rpc_port
         self.zmqpubrawblock_port = zmqpubrawblock_port
         self.zmqpubrawtx_port = zmqpubrawtx_port
+        self.bitcoin_commands_generator = bitcoin_commands_generator
         self.alias = alias
     
     def __get_node_pid_file(self) -> str:
@@ -165,9 +168,9 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         raise NotImplementedError()
     
     def dump_balance(self, filepath: str) -> None:
-        self._write_line(
-            f"""echo "node {self.idx} balance: UNKNOWN (dump_balance not implemented)" >> {filepath}"""
-        )
+        balance_bash_var = f"NODE_{self.idx}_BALANCE"
+        self.bitcoin_commands_generator.set_node_balance(bash_var=balance_bash_var)
+        self._write_line(f"""echo "node {self.idx} balance: ${balance_bash_var}" >> {filepath}""")
     
     def reveal_preimages(self, peer: LightningCommandsGenerator = None) -> None:
         raise TypeError(f"Unsupported operation for {type(self).__name__}")
