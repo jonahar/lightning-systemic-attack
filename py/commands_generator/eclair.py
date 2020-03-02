@@ -92,26 +92,19 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
     
     def set_id(self, bash_var: str) -> None:
         self._write_line(f"""{bash_var}=$({self.__eclair_cli_command_prefix()} getinfo | jq -r ".nodeId")""")
-    
-    def __bitcoin_cli_cmd_prefix(self) -> str:
-        # TODO this method SHOULD NOT BE HERE. put it in a dedicated module for
-        #  bitcoind and use it from there
-        from paths import BITCOIN_CONF_PATH, BITCOIN_CLI_BINARY
-        return (
-            f"{BITCOIN_CLI_BINARY} "
-            f" -conf={BITCOIN_CONF_PATH} "
-            f" -rpcport={self.bitcoin_rpc_port} "
-        )
-    
+
     def wait_for_funds(self) -> None:
-        # eclair doesn't provide such method. we have to talk to its bitcoind
-        # bitcoind shows balance as float, so we use bc to compare it to 0
-        self._write_line(f"""
+        # eclair doesn't provide a method to get our balance. we have to use the
+        # the bitcoin daemon
+        balance_bash_var = f"NODE_{self.idx}_BALANCE"
+        self.bitcoin_commands_generator.set_node_balance(bash_var=balance_bash_var)
+    
         # bc outputs 1 if the equality holds
-        while [[ $(echo "$({self.__bitcoin_cli_cmd_prefix()} -getinfo | jq -r '.balance') == 0" |bc -l) == 1 ]]; do
-            sleep 1
-        done
-        """)
+        # bitcoind shows balance as float, so we use bc to compare it to 0
+        self._write_line(f"""while [[ $(echo "${balance_bash_var} == 0" |bc -l) == 1 ]]; do""")
+        self._write_line("sleep 1")
+        self.bitcoin_commands_generator.set_node_balance(bash_var=balance_bash_var)
+        self._write_line("done")
     
     def establish_channel(
         self,
