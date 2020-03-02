@@ -118,7 +118,7 @@ class BitcoinCoreCommandsGenerator(BitcoinCommandsGenerator):
         for i in $(seq 1 $BLOCKCHAIN_HEIGHT); do
             BLOCK_HASH=$({self.__bitcoin_cli_cmd_prefix()} getblockhash $i)
             {self.__bitcoin_cli_cmd_prefix()} getblock $BLOCK_HASH > {dir_path}/block_$i.json
-            TXS_IN_BLOCK=$(jq -r ".tx[]" < block_$i.json)
+            TXS_IN_BLOCK=$(jq -r ".tx[]" < {dir_path}/block_$i.json)
             for TX in $TXS_IN_BLOCK; do
                 {self.__bitcoin_cli_cmd_prefix()} getrawtransaction $TX true > {dir_path}/tx_$TX.json
             done
