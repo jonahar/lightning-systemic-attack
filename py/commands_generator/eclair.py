@@ -98,7 +98,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         # the bitcoin daemon
         balance_bash_var = f"NODE_{self.idx}_BALANCE"
         self.bitcoin_commands_generator.set_node_balance(bash_var=balance_bash_var)
-    
+
         # bc outputs 1 if the equality holds
         # bitcoind shows balance as float, so we use bc to compare it to 0
         self._write_line(f"""while [[ $(echo "${balance_bash_var} == 0" |bc -l) == 1 ]]; do""")
@@ -169,7 +169,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         raise TypeError(f"Unsupported operation for {type(self).__name__}")
     
     def sweep_funds(self) -> None:
-        raise NotImplementedError()
+        self.bitcoin_commands_generator.sweep_funds()
     
     def dump_channels_info(self, filepath: str) -> None:
         self._write_line(

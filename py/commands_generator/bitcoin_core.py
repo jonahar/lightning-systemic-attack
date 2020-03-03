@@ -124,7 +124,7 @@ class BitcoinCoreCommandsGenerator(BitcoinCommandsGenerator):
             done
         done
         """)
-    
+
     def set_node_balance(self, bash_var: str) -> None:
         self._write_line(
             f"""AMOUNT_SAT_FLOAT=$(bc <<< "$({self.__bitcoin_cli_cmd_prefix()} getbalance) * 100000000")"""
@@ -132,14 +132,25 @@ class BitcoinCoreCommandsGenerator(BitcoinCommandsGenerator):
         self._write_line(
             f"""printf -v {bash_var} %.0f "$AMOUNT_SAT_FLOAT" """
         )
-    
+
+    def sweep_funds(self) -> None:
+        self._write_line(f"BALANCE=$({self.__bitcoin_cli_cmd_prefix()} getbalance)")
+        self._write_line(
+            f'{self.__bitcoin_cli_cmd_prefix()} sendtoaddress '
+            f'  $({self.__bitcoin_cli_cmd_prefix()} getnewaddress) '
+            f'  $BALANCE '
+            f'  "" '
+            f'  "" '
+            f'  true '
+        )
+
     def fill_blockchain(self, num_blocks) -> None:
         self.mine(num_blocks=100 + num_blocks)  # at least 100 to unlock coinbase txs
-        
+    
         # we try to keep the mempool at the size of 2 full blocks.
         # full blocks are measured in weight units (blockmaxweight), but bitcoind
         # reports mempool size in bytes, so we need to estimate the size of a full block
-        
+    
         num_outputs = 10
         # usually for the kind of transaction we are building, this is the ratio between
         # the block's weight and size

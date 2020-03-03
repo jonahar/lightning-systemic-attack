@@ -95,14 +95,21 @@ class BitcoinCommandsGenerator(ABC):
         That includes jsons of every block and every transaction in the blockchain
         """
         pass
-    
+
     @abstractmethod
     def set_node_balance(self, bash_var: str) -> None:
         """
         set the given bash var with the balance of this node in satoshis
         """
         pass
-    
+
+    @abstractmethod
+    def sweep_funds(self) -> None:
+        """
+        sweep all funds of this bitcoin node, back to itself.
+        """
+        pass
+
     def fill_blockchain(self, num_blocks) -> None:
         """
         generate code that fills the mempool and mine 'num_blocks' full blocks.
