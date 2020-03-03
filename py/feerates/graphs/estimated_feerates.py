@@ -14,7 +14,7 @@ BYTE_IN_KBYTE = 1000
 
 estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)")
 
-estimation_files_dir = os.path.join(LN, "data/fee-statistics")
+estimation_files_dir = os.path.join(LN, "data/fee-estimations")
 
 
 def parse_estimation_files() -> Dict[int, List[PlotData]]:

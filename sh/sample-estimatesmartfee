@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 BITCOIN_CLI="/cs/labs/avivz/jonahar/bitcoin-datadir/bitcoin-cli-master"
-SAMPLES_DIR="$LN/data/fee-statistics"
+SAMPLES_DIR="$LN/data/fee-estimations"
 mkdir -p $SAMPLES_DIR
 cd $SAMPLES_DIR
 
