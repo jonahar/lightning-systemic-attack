@@ -8,7 +8,7 @@ from feerates import logger
 from feerates.graphs.estimated_feerates import get_top_p_minimal_feerate, parse_estimation_files
 from feerates.graphs.f_function import get_first_block_after_time_t
 from feerates.graphs.plot_f_function import block_heights_to_timestamps
-from feerates.graphs.plot_utils import PlotData, plot_figure
+from feerates.graphs.plot_utils import PlotData
 from utils import leveldb_cache, timeit
 
 
@@ -55,41 +55,50 @@ def main():
     
     # we use constant block heights so the arguments to the cached function
     # get_block_space_for_feerate will stay the same
-    first_block = 614000
-    last_block = 615000
+    first_block = 615000
+    last_block = 616000
+    
+    block_heights = list(range(first_block, last_block))
     
     timestamps = block_heights_to_timestamps(
         first_height=first_block,
         last_height=last_block,
     )
-    block_heights = list(range(first_block, last_block))
-    
     assert len(timestamps) == len(block_heights)
+    
+    num_blocks = 2
+    assert data[num_blocks][0].label == "estimatesmartfee(mode=CONSERVATIVE)"
+    
+    # we only consider feerates inside the above timestamp range
+    minimal_timestamp = timestamps[0]
+    maximal_timestamp = timestamps[-1]
+    feerate_estimations = [
+        f
+        for t, f in zip(data[num_blocks][0].timestamps, data[num_blocks][0].feerates)
+        if minimal_timestamp <= t <= maximal_timestamp
+    ]
     
     p_values = [0.2, 0.5, 0.8]
     
-    assert data[2][0].label == "estimatesmartfee(mode=CONSERVATIVE)"
-    
-    feerates_to_eval = [
-        get_top_p_minimal_feerate(samples=data[2][0].feerates, p=p)
+    feerates_to_eval = {
+        p: get_top_p_minimal_feerate(samples=feerate_estimations, p=p)
         for p in p_values
-    ]
+    }
     # feerates_to_eval may be a little different in different runs due to numerical issues
     # (e.g. in one run we'll have feerate of 20.075, and in another run 20.076)
     # we round it to benefit the cache of get_block_space_for_feerate
-    feerates_to_eval = [round(f, 1) for f in feerates_to_eval]
+    feerates_to_eval = {p: round(f, 1) for p, f in feerates_to_eval.items()}
     
-    for feerate in feerates_to_eval:
+    for p, feerate in feerates_to_eval.items():
         block_spaces: List[float] = get_block_space_data(
             block_heights=block_heights,
             feerate=feerate,
         )
-        plot_figure(
-            title="Available block space for feerate",
-            plot_data_list=[PlotData(timestamps, block_spaces, f"feerate={feerate}")],
-        )
-        plt.ylabel("block space")
-        plt.legend(loc="best")
+        plt.figure()
+        plt.plot(block_heights, block_spaces)
+        plt.title(f"Available block space for feerate {feerate} (n={num_blocks},p={p})")
+        plt.ylabel("percentage of block")
+        plt.xlabel("height")
     
     plt.show()
 
