@@ -55,7 +55,7 @@ def main():
     
     # we use constant block heights so the arguments to the cached function
     # get_block_space_for_feerate will stay the same
-    first_block = 615000
+    first_block = 614000
     last_block = 616000
     
     block_heights = list(range(first_block, last_block))
@@ -89,17 +89,23 @@ def main():
     # we round it to benefit the cache of get_block_space_for_feerate
     feerates_to_eval = {p: round(f, 1) for p, f in feerates_to_eval.items()}
     
+    percentages = list(range(0, 100 + 1))
+    
     for p, feerate in feerates_to_eval.items():
         block_spaces: List[float] = get_block_space_data(
             block_heights=block_heights,
             feerate=feerate,
         )
-        plt.figure()
-        plt.plot(block_heights, block_spaces)
-        plt.title(f"Available block space for feerate {feerate} (n={num_blocks},p={p})")
-        plt.ylabel("percentage of block")
-        plt.xlabel("height")
+        # how many blocks have less than X% available
+        blocks_count = [
+            len([1 for space in block_spaces if space <= percentage]) for percentage in percentages
+        ]
+        plt.plot(blocks_count, percentages, label=f"feerate={feerate} (n={num_blocks},p={p})")
     
+    plt.title(f"Number of blocks with available space")
+    plt.ylabel("available block space")
+    plt.xlabel("number of blocks")
+    plt.legend(loc="best")
     plt.show()
 
 
