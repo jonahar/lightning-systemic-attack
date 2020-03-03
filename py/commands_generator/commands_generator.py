@@ -418,15 +418,25 @@ class CommandsGenerator:
             silent=True,
         )
         self.lightning_clients[node_idx].start()
-    
+
     def close_all_node_channels(self, node_idx: NodeIndex):
         self.__maybe_info(f"closing all channels of node {node_idx}")
         self.lightning_clients[node_idx].close_all_channels()
-    
+
     def sweep_funds(self, node_idx: NodeIndex):
         self.__maybe_info(f"sweeping funds of node {node_idx}")
         self.lightning_clients[node_idx].sweep_funds()
-    
+
+    def sweep_funds_all_lightning_nodes(self):
+        """
+        sweep funds for every lightning node.
+        This could be useful to see exactly what outputs belong to the same
+        entity, when analyzing a simulation's blockchain
+        """
+        self.__maybe_info("sweeping funds for every lightning node")
+        for node_idx in self.lightning_clients.keys():
+            self.sweep_funds(node_idx=node_idx)
+
     def advance_blockchain(self, num_blocks: int, block_time_sec: int):
         """
         generate code to advance the blockchain by 'num_blocks' blocks.
@@ -570,6 +580,8 @@ def main() -> None:
         cg.reveal_preimages(node_idx=receiver_idx)
         cg.close_all_node_channels(receiver_idx)
         cg.advance_blockchain(num_blocks=num_blocks, block_time_sec=args.block_time)
+        cg.sweep_funds_all_lightning_nodes()
+        cg.mine(10)
     
     if args.dump_data:
         # before dumping we advance the blockchain by 100 blocks in case some
