@@ -19,6 +19,9 @@ estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(
 MIN_TIMESTAMP = 1580224726
 MAX_TIMESTAMP = 1582829418
 
+# only show graphs for these values of num_blocks. set to None to include all
+num_blocks_to_include = [2]
+
 
 def parse_estimation_files() -> Dict[int, List[PlotData]]:
     """
@@ -71,17 +74,18 @@ if __name__ == "__main__":
     
     p_values = [0.2, 0.5, 0.8]
     for num_blocks, plot_data_list in data.items():
-        for plot_data in plot_data_list:
-            fig = plot_figure(title=f"estimated feerates", plot_data_list=[plot_data])
-            plt.figure(fig.number)
-            for p in p_values:
-                generalized_median = get_top_p_minimal_feerate(plot_data.feerates, p=p)
-                plt.hlines(
-                    y=generalized_median,
-                    xmin=plot_data.timestamps[0],
-                    xmax=plot_data.timestamps[-1],
-                    label=f"top {p} estimates",
-                )
-            plt.legend(loc="best")
+        if num_blocks_to_include is None or num_blocks in num_blocks_to_include:
+            for plot_data in plot_data_list:
+                fig = plot_figure(title=f"estimated feerates", plot_data_list=[plot_data])
+                plt.figure(fig.number)
+                for p in p_values:
+                    generalized_median = get_top_p_minimal_feerate(plot_data.feerates, p=p)
+                    plt.hlines(
+                        y=generalized_median,
+                        xmin=plot_data.timestamps[0],
+                        xmax=plot_data.timestamps[-1],
+                        label=f"top {p} estimates ({generalized_median})",
+                    )
+                plt.legend(loc="best")
     
     plt.show()
