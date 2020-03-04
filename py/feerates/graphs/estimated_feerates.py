@@ -8,13 +8,11 @@ import matplotlib.pyplot as plt
 from datatypes import Feerate, btc_to_sat
 from feerates import logger
 from feerates.graphs.plot_utils import PlotData, plot_figure
-from paths import LN
+from paths import FEE_ESTIMATIONS_DIR
 
 BYTE_IN_KBYTE = 1000
 
 estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)")
-
-estimation_files_dir = os.path.join(LN, "data/fee-estimations")
 
 
 def parse_estimation_files() -> Dict[int, List[PlotData]]:
@@ -25,7 +23,7 @@ def parse_estimation_files() -> Dict[int, List[PlotData]]:
     to a list of 'graphs' (represented by PLOT_DATA)
     """
     data = defaultdict(list)
-    for entry in os.listdir(estimation_files_dir):
+    for entry in os.listdir(FEE_ESTIMATIONS_DIR):
         match = estimation_sample_file_regex.match(entry)
         if not match:
             continue  # not an estimation file
@@ -33,7 +31,7 @@ def parse_estimation_files() -> Dict[int, List[PlotData]]:
         mode: str = match.group(2)
         timestamps = []
         feerates = []
-        with open(os.path.join(estimation_files_dir, entry)) as f:
+        with open(os.path.join(FEE_ESTIMATIONS_DIR, entry)) as f:
             for line in f.readlines():
                 try:
                     line_strip = line.strip()  # remove newline if exists

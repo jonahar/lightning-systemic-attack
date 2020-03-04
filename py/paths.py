@@ -3,6 +3,7 @@ import os
 LN = os.path.expandvars("$LN")
 BIN = os.path.join(LN, "bin")
 DATA = os.path.join(LN, "data")
+FEE_ESTIMATIONS_DIR = os.path.join(LN, "data", "fee-estimations")
 
 CLIGHTNING_CONF_PATH = os.path.join(LN, "conf/clightning.conf")
 LND_CONF_PATH = os.path.join(LN, "conf/lnd.conf")
