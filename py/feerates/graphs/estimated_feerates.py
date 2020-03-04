@@ -69,7 +69,7 @@ def get_top_p_minimal_feerate(samples: Iterable[float], p: float) -> float:
     return sorted_samples[-int(len(sorted_samples) * p):][0]
 
 
-if __name__ == "__main__":
+def main():
     data = parse_estimation_files()
     
     p_values = [0.2, 0.5, 0.8]
@@ -89,3 +89,7 @@ if __name__ == "__main__":
                 plt.legend(loc="best")
     
     plt.show()
+
+
+if __name__ == "__main__":
+    main()
