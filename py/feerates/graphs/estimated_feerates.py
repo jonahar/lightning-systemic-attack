@@ -45,7 +45,7 @@ def parse_estimation_files() -> Dict[int, List[PlotData]]:
                     logger.error(f"ignoring line in file `{entry}` with unexpected format: `{line_strip}`")
         
         data[blocks].append(
-            PlotData(timestamps=timestamps, feerates=feerates, label=f"estimatesmartfee(mode={mode})")
+            PlotData(timestamps=timestamps, feerates=feerates, label=f"estimatesmartfee(n={blocks},mode={mode})")
         )
     
     return data
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     p_values = [0.2, 0.5, 0.8]
     for num_blocks, plot_data_list in data.items():
         for plot_data in plot_data_list:
-            fig = plot_figure(title=f"estimated feerates(n={num_blocks})", plot_data_list=[plot_data])
+            fig = plot_figure(title=f"estimated feerates", plot_data_list=[plot_data])
             plt.figure(fig.number)
             for p in p_values:
                 generalized_median = get_top_p_minimal_feerate(plot_data.feerates, p=p)
