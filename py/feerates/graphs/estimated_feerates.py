@@ -14,6 +14,11 @@ BYTE_IN_KBYTE = 1000
 
 estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)")
 
+# only estimation in this time window will be included by the parse_estimation_files
+# method. set both to None to include all estimations
+MIN_TIMESTAMP = 1580224726
+MAX_TIMESTAMP = 1582829418
+
 
 def parse_estimation_files() -> Dict[int, List[PlotData]]:
     """
@@ -34,15 +39,16 @@ def parse_estimation_files() -> Dict[int, List[PlotData]]:
         with open(os.path.join(FEE_ESTIMATIONS_DIR, entry)) as f:
             for line in f.readlines():
                 try:
-                    line_strip = line.strip()  # remove newline if exists
-                    timestamp_str, feerate_str = line_strip.split(",")
-                    timestamps.append(int(timestamp_str))
+                    timestamp_str, feerate_str = line.strip().split(",")
                     # feerate returned by `estimatesmartfee` is in BTC/kB
                     feerate_btc_kb = float(feerate_str)
                     feerate: Feerate = btc_to_sat(feerate_btc_kb) / BYTE_IN_KBYTE
-                    feerates.append(feerate)
+                    timestamp = int(timestamp_str)
+                    if MIN_TIMESTAMP is None or MAX_TIMESTAMP is None or MIN_TIMESTAMP <= timestamp <= MAX_TIMESTAMP:
+                        timestamps.append(timestamp)
+                        feerates.append(feerate)
                 except ValueError:
-                    logger.error(f"ignoring line in file `{entry}` with unexpected format: `{line_strip}`")
+                    logger.error(f"ignoring line in file `{entry}` with unexpected format: `{line}`")
         
         data[blocks].append(
             PlotData(timestamps=timestamps, feerates=feerates, label=f"estimatesmartfee(n={blocks},mode={mode})")
