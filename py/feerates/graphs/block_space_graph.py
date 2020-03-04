@@ -7,7 +7,6 @@ from datatypes import BlockHeight, Feerate
 from feerates import logger
 from feerates.graphs.estimated_feerates import get_top_p_minimal_feerate, parse_estimation_files
 from feerates.graphs.f_function import get_first_block_after_time_t
-from feerates.graphs.plot_f_function import block_heights_to_timestamps
 from feerates.graphs.plot_utils import PlotData
 from utils import leveldb_cache, timeit
 
@@ -43,54 +42,49 @@ def get_block_space_data(block_heights: List[BlockHeight], feerate: float) -> Li
 
 def main():
     set_bitcoin_cli("user")
-    
+
     # we only want this data to know the timestamps where to evaluate our function
     data: Dict[int, List[PlotData]] = parse_estimation_files()
-    
-    t_min = min(data[2][0].timestamps)
-    t_max = max(data[2][0].timestamps)
-    
-    first_block = get_first_block_after_time_t(t_min)
-    last_block = get_first_block_after_time_t(t_max)
-    
-    # we use constant block heights so the arguments to the cached function
-    # get_block_space_for_feerate will stay the same
-    first_block = 614000
-    last_block = 616000
-    
-    block_heights = list(range(first_block, last_block))
-    
-    timestamps = block_heights_to_timestamps(
-        first_height=first_block,
-        last_height=last_block,
-    )
-    assert len(timestamps) == len(block_heights)
-    
+
     num_blocks = 2
     assert data[num_blocks][0].label == "estimatesmartfee(mode=CONSERVATIVE)"
-    
-    # we only consider feerates inside the above timestamp range
-    minimal_timestamp = timestamps[0]
-    maximal_timestamp = timestamps[-1]
-    feerate_estimations = [
-        f
-        for t, f in zip(data[num_blocks][0].timestamps, data[num_blocks][0].feerates)
-        if minimal_timestamp <= t <= maximal_timestamp
-    ]
-    
+    timestamps = data[num_blocks][0].timestamps
+    feerates = data[num_blocks][0].feerates
+
+    t_min = min(timestamps)
+    t_max = max(timestamps)
+
+    first_block = get_first_block_after_time_t(t_min)
+    last_block = get_first_block_after_time_t(t_max)
+
+    block_heights = list(range(first_block, last_block))
+
     p_values = [0.2, 0.5, 0.8]
-    
+
     feerates_to_eval = {
-        p: get_top_p_minimal_feerate(samples=feerate_estimations, p=p)
+        p: get_top_p_minimal_feerate(samples=feerates, p=p)
         for p in p_values
     }
     # feerates_to_eval may be a little different in different runs due to numerical issues
     # (e.g. in one run we'll have feerate of 20.075, and in another run 20.076)
     # we round it to benefit the cache of get_block_space_for_feerate
     feerates_to_eval = {p: round(f, 1) for p, f in feerates_to_eval.items()}
-    
+
     percentages = list(range(0, 100 + 1))
-    
+
+    for p, feerate in feerates_to_eval.items():
+        plt.figure()
+        plt.title(f"Available block space under feerate (feerate={feerate})")
+        block_spaces: List[float] = get_block_space_data(
+            block_heights=block_heights,
+            feerate=feerate,
+        )
+        plt.plot(block_heights, block_spaces)
+
+    # -----------
+
+    plt.figure()
+    plt.title(f"Number of blocks with available space")
     for p, feerate in feerates_to_eval.items():
         block_spaces: List[float] = get_block_space_data(
             block_heights=block_heights,
@@ -98,14 +92,15 @@ def main():
         )
         # how many blocks have less than X% available
         blocks_count = [
-            len([1 for space in block_spaces if space <= percentage]) for percentage in percentages
+            len([1 for space in block_spaces if space <= percentage])
+            for percentage in percentages
         ]
-        plt.plot(blocks_count, percentages, label=f"feerate={feerate} (n={num_blocks},p={p})")
+        plt.plot(blocks_count, percentages, label=f"feerate={feerate}")
     
-    plt.title(f"Number of blocks with available space")
     plt.ylabel("available block space")
     plt.xlabel("number of blocks")
     plt.legend(loc="best")
+
     plt.show()
 
 
