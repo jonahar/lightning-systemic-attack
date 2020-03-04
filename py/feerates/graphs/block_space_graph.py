@@ -84,7 +84,7 @@ def main():
     # -----------
 
     plt.figure()
-    plt.title(f"Number of blocks with available space")
+    plt.title(f"Number of blocks with availability p (blocks {first_block}-{last_block})")
     for p, feerate in feerates_to_eval.items():
         block_spaces: List[float] = get_block_space_data(
             block_heights=block_heights,
@@ -96,8 +96,8 @@ def main():
             for percentage in percentages
         ]
         plt.plot(blocks_count, percentages, label=f"feerate={feerate}")
-    
-    plt.ylabel("available block space")
+
+    plt.ylabel("available block space (percentage)")
     plt.xlabel("number of blocks")
     plt.legend(loc="best")
 
