@@ -86,7 +86,7 @@ def main():
                     y=generalized_median,
                     xmin=plot_data.timestamps[0],
                     xmax=plot_data.timestamps[-1],
-                    label=f"top {p} estimates ({generalized_median})",
+                    label=f"top {p} estimates ({round(generalized_median, 1)})",
                 )
             plt.legend(loc="best")
     
