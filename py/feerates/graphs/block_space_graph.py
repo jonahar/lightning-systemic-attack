@@ -47,7 +47,7 @@ def main():
     data: Dict[int, List[PlotData]] = parse_estimation_files()
 
     num_blocks = 2
-    assert data[num_blocks][0].label == "estimatesmartfee(mode=CONSERVATIVE)"
+    assert data[num_blocks][0].label == "estimatesmartfee(n=2,mode=CONSERVATIVE)"
     timestamps = data[num_blocks][0].timestamps
     feerates = data[num_blocks][0].feerates
 
