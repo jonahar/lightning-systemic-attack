@@ -215,4 +215,9 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         )
     
     def dump_channels_info(self, filepath: str) -> None:
-        raise NotImplementedError()
+        self._write_line(
+            f"{self.__lncli_cmd_prefix()} listpeers >> {filepath}"
+        )
+        self._write_line(
+            f"{self.__lncli_cmd_prefix()} listchannels >> {filepath}"
+        )
