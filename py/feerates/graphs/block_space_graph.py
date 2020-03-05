@@ -109,7 +109,7 @@ def plot_block_height_vs_htlc_space(
     different graph for every feerate, all on the same plot
     """
     plt.figure()
-    plt.title(f"Number of blocks that have room for X HTLC-success txs")
+    plt.title(f"Number of blocks that have room for X HTLC-success txs (blocks {block_heights[0]}-{block_heights[-1]})")
     for feerate in feerates:
         block_spaces: List[float] = get_block_space_data(
             block_heights=block_heights,
