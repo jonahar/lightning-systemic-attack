@@ -135,6 +135,7 @@ class CommandsGenerator:
     def __init_eclair_client(self, node_idx: NodeIndex) -> EclairCommandsGenerator:
         info = self.topology[node_idx]
         alias = info.get("alias", str(node_idx))
+        max_accepted_htlcs = info.get("max_accepted_htlcs", 483)
         return EclairCommandsGenerator(
             index=node_idx,
             file=self.file,
@@ -146,6 +147,7 @@ class CommandsGenerator:
             zmqpubrawtx_port=self.resources_allocator.get_bitcoin_node_zmqpubrawtx_port(node_idx),
             bitcoin_commands_generator=self.bitcoin_clients[node_idx],
             alias=alias,
+            max_accepted_htlcs=max_accepted_htlcs,
         )
     
     def __init_lightning_clients(self) -> Dict[NodeIndex, LightningCommandsGenerator]:
