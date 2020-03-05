@@ -1,6 +1,8 @@
-from typing import Dict, List
+from math import floor
+from typing import Dict, Iterable, List
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from bitcoin_cli import get_tx_feerate, get_tx_weight, get_txs_in_block, set_bitcoin_cli
 from datatypes import BlockHeight, Feerate
@@ -9,6 +11,8 @@ from feerates.graphs.estimated_feerates import get_top_p_minimal_feerate, parse_
 from feerates.graphs.f_function import get_first_block_after_time_t
 from feerates.graphs.plot_utils import PlotData
 from utils import leveldb_cache, timeit
+
+BLOCK_MAX_WEIGHT = 4_000_000
 
 
 @timeit(logger=logger, print_args=True)
@@ -28,9 +32,7 @@ def get_block_space_for_feerate(height: BlockHeight, feerate: Feerate) -> float:
         filter(lambda txid: get_tx_feerate(txid) > feerate, txids)
     ))
     
-    total_block_weight = 4_000_000
-    
-    return (1 - (occupied_part_weight / total_block_weight)) * 100
+    return (1 - (occupied_part_weight / BLOCK_MAX_WEIGHT)) * 100
 
 
 def get_block_space_data(block_heights: List[BlockHeight], feerate: float) -> List[float]:
@@ -40,39 +42,15 @@ def get_block_space_data(block_heights: List[BlockHeight], feerate: float) -> Li
     ]
 
 
-def main():
-    set_bitcoin_cli("user")
-
-    # we only want this data to know the timestamps where to evaluate our function
-    data: Dict[int, List[PlotData]] = parse_estimation_files()
-
-    num_blocks = 2
-    assert data[num_blocks][0].label == "estimatesmartfee(n=2,mode=CONSERVATIVE)"
-    timestamps = data[num_blocks][0].timestamps
-    feerates = data[num_blocks][0].feerates
-
-    t_min = min(timestamps)
-    t_max = max(timestamps)
-
-    first_block = get_first_block_after_time_t(t_min)
-    last_block = get_first_block_after_time_t(t_max)
-
-    block_heights = list(range(first_block, last_block))
-
-    p_values = [0.2, 0.5, 0.8]
-
-    feerates_to_eval = {
-        p: get_top_p_minimal_feerate(samples=feerates, p=p)
-        for p in p_values
-    }
-    # feerates_to_eval may be a little different in different runs due to numerical issues
-    # (e.g. in one run we'll have feerate of 20.075, and in another run 20.076)
-    # we round it to benefit the cache of get_block_space_for_feerate
-    feerates_to_eval = {p: round(f, 1) for p, f in feerates_to_eval.items()}
-
-    percentages = list(range(0, 100 + 1))
-
-    for p, feerate in feerates_to_eval.items():
+def plot_available_block_space_vs_height(
+    block_heights: List[BlockHeight],
+    feerates: Iterable[Feerate],
+):
+    """
+    how much of the block is available (percentage) for a given feerate.
+    different plot for every feerate.
+    """
+    for feerate in feerates:
         plt.figure()
         plt.title(f"Available block space under feerate (feerate={feerate})")
         block_spaces: List[float] = get_block_space_data(
@@ -84,11 +62,19 @@ def main():
         plt.xlabel("height")
         plt.legend(loc="best")
 
-    # -----------
 
+def plot_available_block_space_vs_block_count(
+    block_heights: List[BlockHeight],
+    feerates: Iterable[Feerate],
+):
+    """
+    how many blocks are there that have at most X percent available space.
+    different graph for every feerate, all on the same plot
+    """
     plt.figure()
-    plt.title(f"Number of blocks with availability p (blocks {first_block}-{last_block})")
-    for p, feerate in feerates_to_eval.items():
+    plt.title(f"Number of blocks with availability p (blocks {block_heights[0]}-{block_heights[-1]})")
+    percentages = list(range(0, 100 + 1))
+    for feerate in feerates:
         block_spaces: List[float] = get_block_space_data(
             block_heights=block_heights,
             feerate=feerate,
@@ -99,12 +85,92 @@ def main():
             for percentage in percentages
         ]
         plt.plot(blocks_count, percentages, label=f"feerate={feerate}")
-
+    
     plt.grid()
     plt.ylabel("available block space (percentage)")
     plt.xlabel("number of blocks")
     plt.legend(loc="best")
 
+
+def htlcs_success_that_fit_in(weight_units: int) -> int:
+    """
+    return the number of HTLC-success txs that fit in the given weight units
+    """
+    HTLC_SUCCESS_WEIGHT = 700  # BOLT claim it to be 703. I've seen 696
+    return floor(weight_units / HTLC_SUCCESS_WEIGHT)
+
+
+def plot_block_height_vs_htlc_space(
+    block_heights: List[BlockHeight],
+    feerates: Iterable[Feerate],
+):
+    """
+    how many block are there that can contain X HTLC-success txs that pays such feerate.
+    different graph for every feerate, all on the same plot
+    """
+    plt.figure()
+    plt.title(f"Number of blocks that have room for X HTLC-success txs")
+    for feerate in feerates:
+        block_spaces: List[float] = get_block_space_data(
+            block_heights=block_heights,
+            feerate=feerate,
+        )
+        htlcs_capacity = [
+            htlcs_success_that_fit_in(weight_units=int((block_space * BLOCK_MAX_WEIGHT) / 100))
+            for block_space in block_spaces
+        ]
+        htlcs_count = np.arange(0, max(htlcs_capacity) + 1)
+        
+        # we intentionally use max+2, so the last bin includes the elements
+        # which are between max and max+1
+        htlcs_capacity_hist, bins = np.histogram(htlcs_capacity, bins=np.arange(max(htlcs_capacity) + 2))
+        htlcs_capacity_hist_cumsum = np.cumsum(htlcs_capacity_hist)
+        assert len(htlcs_count) == len(htlcs_capacity_hist_cumsum)
+        
+        plt.plot(htlcs_count, htlcs_capacity_hist_cumsum, label=f"feerate={feerate}")
+    
+    plt.grid()
+    plt.xlabel("#HTLCs")
+    plt.ylabel("#blocks")
+    plt.legend(loc="best")
+
+
+def main():
+    set_bitcoin_cli("user")
+    
+    # we only want this data to know the timestamps where to evaluate our function
+    data: Dict[int, List[PlotData]] = parse_estimation_files()
+    
+    num_blocks = 2
+    assert data[num_blocks][0].label == "estimatesmartfee(n=2,mode=CONSERVATIVE)"
+    timestamps = data[num_blocks][0].timestamps
+    feerates = data[num_blocks][0].feerates
+    
+    t_min = min(timestamps)
+    t_max = max(timestamps)
+    
+    first_block = get_first_block_after_time_t(t_min)
+    last_block = get_first_block_after_time_t(t_max)
+    
+    block_heights = list(range(first_block, last_block))
+    
+    p_values = [0.2, 0.5, 0.8]
+    
+    feerates_to_eval = [
+        get_top_p_minimal_feerate(samples=feerates, p=p)
+        for p in p_values
+    ]
+    # feerates_to_eval may be a little different in different runs due to numerical issues
+    # (e.g. in one run we'll have feerate of 20.075, and in another run 20.076)
+    # we round it to benefit the cache of get_block_space_for_feerate
+    feerates_to_eval = [round(f, 1) for f in feerates_to_eval]
+    
+    plot_available_block_space_vs_height(block_heights=block_heights, feerates=feerates_to_eval)
+    
+    plot_available_block_space_vs_block_count(block_heights=block_heights, feerates=feerates_to_eval)
+    
+    plot_block_height_vs_htlc_space(block_heights=block_heights, feerates=feerates_to_eval)
+    
     plt.show()
 
 
