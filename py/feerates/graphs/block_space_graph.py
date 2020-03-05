@@ -100,6 +100,7 @@ def main():
         ]
         plt.plot(blocks_count, percentages, label=f"feerate={feerate}")
 
+    plt.grid()
     plt.ylabel("available block space (percentage)")
     plt.xlabel("number of blocks")
     plt.legend(loc="best")
