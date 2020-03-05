@@ -122,9 +122,9 @@ def plot_block_height_vs_htlc_space(
         htlcs_count = np.arange(0, max(htlcs_capacity) + 1)
         
         # we intentionally use max+2, so the last bin includes the elements
-        # which are between max and max+1
+        # which are between max and max+1 (this includes max)
         htlcs_capacity_hist, bins = np.histogram(htlcs_capacity, bins=np.arange(max(htlcs_capacity) + 2))
-        htlcs_capacity_hist_cumsum = np.cumsum(htlcs_capacity_hist)
+        htlcs_capacity_hist_cumsum = np.cumsum(htlcs_capacity_hist[::-1])[::-1]
         assert len(htlcs_count) == len(htlcs_capacity_hist_cumsum)
         
         plt.plot(htlcs_count, htlcs_capacity_hist_cumsum, label=f"feerate={feerate}")
