@@ -80,6 +80,9 @@ def main():
             feerate=feerate,
         )
         plt.plot(block_heights, block_spaces)
+        plt.ylabel("available block space (percentage)")
+        plt.xlabel("height")
+        plt.legend(loc="best")
 
     # -----------
 
