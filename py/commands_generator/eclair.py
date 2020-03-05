@@ -20,6 +20,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         zmqpubrawtx_port: int,
         bitcoin_commands_generator: BitcoinCommandsGenerator,
         alias: str = None,
+        max_accepted_htlcs: int = 483,
     ) -> None:
         super().__init__(index, file)
         self.lightning_dir = lightning_dir
@@ -30,6 +31,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         self.zmqpubrawtx_port = zmqpubrawtx_port
         self.bitcoin_commands_generator = bitcoin_commands_generator
         self.alias = alias
+        self.max_accepted_htlcs = max_accepted_htlcs
     
     def __get_node_pid_file(self) -> str:
         """return the filepath in which the process id of this node is/should be stored"""
@@ -55,6 +57,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         eclair.chain=regtest
         eclair.node-alias="{self.alias}"
         eclair.server.port={self.listen_port}
+        eclair.max-accepted-htlcs={self.max_accepted_htlcs}
         ''' > {self.lightning_dir}/eclair.conf
         """)
         
