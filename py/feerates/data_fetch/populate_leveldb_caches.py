@@ -88,7 +88,8 @@ def main():
             populate_blocks(first_block=first_block, last_block=curr_height)
             logger.info("sleeping for 5 minutes")
             time.sleep(60 * 5)
-            first_block = curr_height + 1
+            # populating some of the blocks could fail. for that, we don't update
+            # first_block and we'll start all over again and re-try failed blocks
 
 
 if __name__ == "__main__":
