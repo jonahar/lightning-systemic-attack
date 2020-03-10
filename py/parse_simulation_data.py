@@ -171,8 +171,8 @@ def print_nsequence(txids: Iterable[TXID], graph: DiGraph):
             print(f"input {i}: sequence={sequence_str}")
 
 
-def main():
-    simulation_name = "simulation-name"
+def main(simulation_name):
+    print(f"analyzing {simulation_name}")
     datadir = os.path.join(LN, "simulations", simulation_name)
     outfile = os.path.join(LN, "simulations", f"{simulation_name}.out")
     dotfile = os.path.join(LN, f"{simulation_name}.dot")
@@ -188,7 +188,10 @@ def main():
         replaceable = is_replaceable_by_fee(txid=commitment_txid, graph=txs_graph)
         num_htlcs_stolen = len(get_htlcs_claimed_by_timeout(commitment_txid=commitment_txid, graph=txs_graph))
         print(
-            f"commitment: {short_txid:<5} num-outputs: {num_outputs:<4} replaceable: {str(replaceable):<5} htlcs-stolen:{num_htlcs_stolen}"
+            f"commitment: {short_txid:<5} "
+            f"num-outputs: {num_outputs:<4} "
+            f"replaceable: {str(replaceable):<5} "
+            f"htlcs-stolen: {num_htlcs_stolen}"
         )
     
     # this graph includes only interesting txs (no coinbase and other junk)
@@ -207,4 +210,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(simulation_name="simulation-name")
