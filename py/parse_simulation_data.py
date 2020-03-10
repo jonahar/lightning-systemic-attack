@@ -151,12 +151,20 @@ def find_commitments(simulation_outfile: str, graph: DiGraph) -> List[TXID]:
                 f"Failed to find commitments. "
                 f"txid {commitment_txid[-4:]} expected to have exactly 1 input, but has {num_inputs}"
             )
-    
+
     return commitments
+
+
+def is_replaceable_by_fee(txid, graph: DiGraph) -> bool:
+    for input_dict in graph.nodes[txid]["tx"]["vin"]:
+        if input_dict['sequence'] < (0xffffffff - 1):
+            return True
+    return False
 
 
 def print_nsequence(txids: Iterable[TXID], graph: DiGraph):
     for txid in txids:
+        print(f"txid {txid_to_short_txid(txid)}:")
         for i, input_dict in enumerate(graph.nodes[txid]["tx"]["vin"]):
             sequence: int = input_dict['sequence']
             sequence_str = format(sequence, 'x')
@@ -170,17 +178,27 @@ def main():
     dotfile = os.path.join(LN, f"{simulation_name}.dot")
     jpgfile = os.path.join(LN, f"{simulation_name}.jpg")
     
-    full_txs_graph = build_txs_graph(datadir)
+    txs_graph = build_txs_graph(datadir)
     
-    commitments = find_commitments(simulation_outfile=outfile, graph=full_txs_graph)
+    commitments = find_commitments(simulation_outfile=outfile, graph=txs_graph)
     
-    txs_graph = get_downstream(
-        graph=full_txs_graph,
+    for commitment_txid in commitments:
+        short_txid = txid_to_short_txid(commitment_txid)
+        num_outputs = len(txs_graph.nodes[commitment_txid]["tx"]["vout"])
+        replaceable = is_replaceable_by_fee(txid=commitment_txid, graph=txs_graph)
+        num_htlcs_stolen = len(get_htlcs_claimed_by_timeout(commitment_txid=commitment_txid, graph=txs_graph))
+        print(
+            f"commitment: {short_txid:<5} num-outputs: {num_outputs:<4} replaceable: {str(replaceable):<5} htlcs-stolen:{num_htlcs_stolen}"
+        )
+    
+    # this graph includes only interesting txs (no coinbase and other junk)
+    restricted_txs_graph = get_downstream(
+        graph=txs_graph,
         sources=extract_bitcoin_funding_txids(simulation_outfile=outfile),
     )
     
     export_txs_graph_to_dot(
-        graph=txs_graph,
+        graph=restricted_txs_graph,
         dotfile=dotfile,
         txid_to_label=txid_to_short_txid,
     )
