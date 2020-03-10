@@ -16,8 +16,8 @@ estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(
 
 # only estimation in this time window will be included by the parse_estimation_files
 # method. set both to None to include all estimations
-MIN_TIMESTAMP = 1580224726
-MAX_TIMESTAMP = 1582829418
+MIN_TIMESTAMP = 1580275000
+MAX_TIMESTAMP = 1582673100
 
 # only show graphs for these values of num_blocks. set to None to include all
 num_blocks_to_include = [2]
