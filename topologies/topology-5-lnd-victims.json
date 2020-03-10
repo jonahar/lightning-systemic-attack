@@ -18,35 +18,30 @@
         "peers": [
             "3"
         ],
-        "client": "eclair",
-        "max_accepted_htlcs": 483
+        "client": "lnd"
     },
     "5": {
         "peers": [
             "3"
         ],
-        "client": "eclair",
-        "max_accepted_htlcs": 483
+        "client": "lnd"
     },
     "6": {
         "peers": [
             "3"
         ],
-        "client": "eclair",
-        "max_accepted_htlcs": 483
+        "client": "lnd"
     },
     "7": {
         "peers": [
             "3"
         ],
-        "client": "eclair",
-        "max_accepted_htlcs": 483
+        "client": "lnd"
     },
     "8": {
         "peers": [
             "3"
         ],
-        "client": "eclair",
-        "max_accepted_htlcs": 483
+        "client": "lnd"
     }
 }

@@ -18,35 +18,30 @@
         "peers": [
             "3"
         ],
-        "client": "eclair",
-        "max_accepted_htlcs": 300
+        "client": "c-lightning"
     },
     "5": {
         "peers": [
             "3"
         ],
-        "client": "eclair",
-        "max_accepted_htlcs": 300
+        "client": "c-lightning"
     },
     "6": {
         "peers": [
             "3"
         ],
-        "client": "eclair",
-        "max_accepted_htlcs": 300
+        "client": "c-lightning"
     },
     "7": {
         "peers": [
             "3"
         ],
-        "client": "eclair",
-        "max_accepted_htlcs": 300
+        "client": "c-lightning"
     },
     "8": {
         "peers": [
             "3"
         ],
-        "client": "eclair",
-        "max_accepted_htlcs": 300
+        "client": "c-lightning"
     }
 }
