@@ -63,7 +63,7 @@ def plot_available_block_space_vs_height(
         plt.legend(loc="best")
 
 
-def plot_available_block_space_vs_block_count(
+def plot_available_block_space_upper_bound_vs_block_count(
     block_heights: List[BlockHeight],
     feerates: Iterable[Feerate],
 ):
@@ -72,7 +72,7 @@ def plot_available_block_space_vs_block_count(
     different graph for every feerate, all on the same plot
     """
     plt.figure()
-    plt.title(f"Number of blocks with availability p (blocks {block_heights[0]}-{block_heights[-1]})")
+    plt.title(f"Number of blocks with at most p available space (blocks {block_heights[0]}-{block_heights[-1]})")
     percentages = list(range(0, 100 + 1))
     for feerate in feerates:
         block_spaces: List[float] = get_block_space_data(
@@ -87,7 +87,36 @@ def plot_available_block_space_vs_block_count(
         plt.plot(blocks_count, percentages, label=f"feerate={feerate}")
     
     plt.grid()
-    plt.ylabel("available block space (percentage)")
+    plt.ylabel("block space (percentage)")
+    plt.xlabel("number of blocks")
+    plt.legend(loc="best")
+
+
+def plot_available_block_space_lower_bound_vs_block_count(
+    block_heights: List[BlockHeight],
+    feerates: Iterable[Feerate],
+):
+    """
+    how many blocks are there that have at least X percent available space.
+    different graph for every feerate, all on the same plot
+    """
+    plt.figure()
+    plt.title(f"Number of blocks with at least p available space (blocks {block_heights[0]}-{block_heights[-1]})")
+    percentages = list(range(0, 100 + 1))
+    for feerate in feerates:
+        block_spaces: List[float] = get_block_space_data(
+            block_heights=block_heights,
+            feerate=feerate,
+        )
+        # how many blocks have more than X% available
+        blocks_count = [
+            len([1 for space in block_spaces if space >= percentage])
+            for percentage in percentages
+        ]
+        plt.plot(blocks_count, percentages, label=f"feerate={feerate}")
+    
+    plt.grid()
+    plt.ylabel("block space (percentage)")
     plt.xlabel("number of blocks")
     plt.legend(loc="best")
 
@@ -155,7 +184,7 @@ def main():
     block_heights = list(range(first_block, last_block))
     
     p_values = [0.2, 0.5, 0.8]
-    
+
     feerates_to_eval = [
         get_top_p_minimal_feerate(samples=feerates, p=p)
         for p in p_values
@@ -164,13 +193,12 @@ def main():
     # (e.g. in one run we'll have feerate of 20.075, and in another run 20.076)
     # we round it to benefit the cache of get_block_space_for_feerate
     feerates_to_eval = [round(f, 1) for f in feerates_to_eval]
-    
+
     plot_available_block_space_vs_height(block_heights=block_heights, feerates=feerates_to_eval)
-    
-    plot_available_block_space_vs_block_count(block_heights=block_heights, feerates=feerates_to_eval)
-    
+    plot_available_block_space_lower_bound_vs_block_count(block_heights=block_heights, feerates=feerates_to_eval)
+    plot_available_block_space_upper_bound_vs_block_count(block_heights=block_heights, feerates=feerates_to_eval)
     plot_block_height_vs_htlc_space(block_heights=block_heights, feerates=feerates_to_eval)
-    
+
     plt.show()
 
 
