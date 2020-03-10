@@ -1,7 +1,7 @@
 import itertools
 import os
 import re
-from typing import Callable, List, Set
+from typing import Any, Callable, Iterable, List, Set
 
 from networkx.classes.digraph import DiGraph
 
@@ -10,17 +10,11 @@ from paths import LN
 from txs_graph import build_txs_graph, get_downstream
 
 
-def get_htlcs_claimed_by_timeout(graph: DiGraph, funding_txid: TXID) -> List[TXID]:
+def get_htlcs_claimed_by_timeout(graph: DiGraph, commitment_txid: TXID) -> List[TXID]:
     """
     return a list of txids that claimed an HTLC output from the given
     commitment transaction, using timeout-claim (as opposed to success-claim)
     """
-    
-    funding_children = graph.out_edges(funding_txid)
-    if len(funding_children) != 1:
-        raise ValueError(f"funding transaction expected to have 1 child, but has {len(funding_children)}")
-    
-    commitment_txid = next(iter(funding_children))[1]
     
     # from the bolt:
     # " HTLC-Timeout and HTLC-Success Transactions... are almost identical,
@@ -90,7 +84,7 @@ def export_txs_graph_to_dot(
         f.write("}\n")
 
 
-def extract_funding_txids(simulation_outfile: str) -> Set[TXID]:
+def extract_bitcoin_funding_txids(simulation_outfile: str) -> Set[TXID]:
     """
     return the set of txs that funded the different nodes.
     These are the txs in which the miner node sent the initial balance for each
@@ -107,7 +101,7 @@ def extract_funding_txids(simulation_outfile: str) -> Set[TXID]:
         
         if line is None:
             raise ValueError("Couldn't find funding rows in the given file. is file in bad format?")
-        
+
         line = f.readline().strip()
         while txid_regex.fullmatch(line):
             txids.add(line)
@@ -116,31 +110,83 @@ def extract_funding_txids(simulation_outfile: str) -> Set[TXID]:
     return txids
 
 
-# ------------------------------
+def get_all_direct_children(txid, graph: DiGraph) -> Set[TXID]:
+    return {txid for _, txid in graph.out_edges(txid)}
 
 
-simulation_name = "simulation-name"
-datadir = os.path.join(LN, "simulations", simulation_name)
-outfile = os.path.join(LN, "simulations", f"{simulation_name}.out")
-dotfile = os.path.join(LN, f"{simulation_name}.dot")
-jpgfile = os.path.join(LN, f"{simulation_name}.jpg")
+def flatten(s: Iterable[Iterable[Any]]) -> List[Any]:
+    return list(itertools.chain.from_iterable(s))
 
-full_txs_graph = build_txs_graph(datadir)
 
-# print("How many HTLCs were claimed using timeout from each channel:")
-# for funding_txid in funding_txids:
-#     htlcs_stolen = db.get_htlcs_claimed_by_timeout(funding_txid=funding_txid)
-#     print(len(htlcs_stolen))
+def find_commitments(simulation_outfile: str, graph: DiGraph) -> List[TXID]:
+    bitcoin_fundings = extract_bitcoin_funding_txids(simulation_outfile=simulation_outfile)
+    
+    ln_channel_fundings = flatten(
+        get_all_direct_children(txid, graph=graph)
+        for txid in bitcoin_fundings
+    )
+    
+    LN_CHANNEL_BALANCE = 0.1
+    
+    commitments = flatten(
+        list(filter(
+            # only keep those with the expected balance
+            lambda child_txid: graph.edges[(channel_funding_txid, child_txid)]["value"] == LN_CHANNEL_BALANCE,
+            get_all_direct_children(txid=channel_funding_txid, graph=graph)
+        ))
+        for channel_funding_txid in ln_channel_fundings
+    )
+    
+    # verifications
+    if len(ln_channel_fundings) != len(commitments):
+        raise ValueError(
+            "Failed to find commitments."
+            "number of commitment txs found doesn't correspond to number of funding txs found"
+        )
+    
+    for commitment_txid in commitments:
+        num_inputs = len(graph.nodes[commitment_txid]["tx"]["vin"])
+        if len(graph.nodes[commitment_txid]["tx"]["vin"]) != 1:
+            raise ValueError(
+                f"Failed to find commitments. "
+                f"txid {commitment_txid[-4:]} expected to have exactly 1 input, but has {num_inputs}"
+            )
+    
+    return commitments
 
-txs_graph = get_downstream(
-    graph=full_txs_graph,
-    sources=extract_funding_txids(simulation_outfile=outfile),
-)
 
-export_txs_graph_to_dot(
-    graph=txs_graph,
-    dotfile=dotfile,
-    txid_to_label=txid_to_short_txid,
-)
-# convert dot to jpg
-os.system(f"cd {LN}; dot2jpg {dotfile} {jpgfile}")
+def print_nsequence(txids: Iterable[TXID], graph: DiGraph):
+    for txid in txids:
+        for i, input_dict in enumerate(graph.nodes[txid]["tx"]["vin"]):
+            sequence: int = input_dict['sequence']
+            sequence_str = format(sequence, 'x')
+            print(f"input {i}: sequence={sequence_str}")
+
+
+def main():
+    simulation_name = "simulation-name"
+    datadir = os.path.join(LN, "simulations", simulation_name)
+    outfile = os.path.join(LN, "simulations", f"{simulation_name}.out")
+    dotfile = os.path.join(LN, f"{simulation_name}.dot")
+    jpgfile = os.path.join(LN, f"{simulation_name}.jpg")
+    
+    full_txs_graph = build_txs_graph(datadir)
+    
+    commitments = find_commitments(simulation_outfile=outfile, graph=full_txs_graph)
+    
+    txs_graph = get_downstream(
+        graph=full_txs_graph,
+        sources=extract_bitcoin_funding_txids(simulation_outfile=outfile),
+    )
+    
+    export_txs_graph_to_dot(
+        graph=txs_graph,
+        dotfile=dotfile,
+        txid_to_label=txid_to_short_txid,
+    )
+    # convert dot to jpg
+    os.system(f"cd {LN}; dot2jpg {dotfile} {jpgfile}")
+
+
+if __name__ == "__main__":
+    main()
