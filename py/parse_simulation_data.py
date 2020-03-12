@@ -151,42 +151,65 @@ def get_htlcs_claimed_by_timeout(graph: TxsGraph, commitment_txid: TXID) -> List
     ]
 
 
+def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) -> None:
+    txid_col_len = 12
+    height_col_len = 8
+    num_outputs_col_len = 13
+    replaceable_col_len = 13
+    nsequence_col_len = 11
+    htlcs_stolen_col_len = 11
+    
+    print(
+        "txid".ljust(txid_col_len) +
+        "height".ljust(height_col_len) +
+        "num_outputs".ljust(num_outputs_col_len) +
+        "replaceable".ljust(replaceable_col_len) +
+        "nsequence".ljust(nsequence_col_len) +
+        "htlcs_stolen".ljust(htlcs_stolen_col_len)
+    )
+    
+    for commitment_txid in commitment_txids:
+        short_txid = commitment_txid[-10:]
+        height = txs_graph.nodes[commitment_txid]["height"]
+        num_outputs = len(txs_graph.nodes[commitment_txid]["tx"]["vout"])
+        replaceable = str(txs_graph.is_replaceable_by_fee(txid=commitment_txid))
+        nsequence = txs_graph.get_minimal_nsequence(commitment_txid)
+        htlcs_stolen = len(get_htlcs_claimed_by_timeout(graph=txs_graph, commitment_txid=commitment_txid))
+        print(
+            f"{short_txid:<{txid_col_len}}"
+            f"{height:<{height_col_len}}"
+            f"{num_outputs:<{num_outputs_col_len}}"
+            f"{replaceable:<{replaceable_col_len}}"
+            f"{nsequence:<{nsequence_col_len}x}"
+            f"{htlcs_stolen:<{htlcs_stolen_col_len}}"
+        )
+
+
 def main(simulation_name):
-    print(f"analyzing {simulation_name}")
+    print(simulation_name)
     datadir = os.path.join(LN, "simulations", simulation_name)
     outfile = os.path.join(LN, "simulations", f"{simulation_name}.out")
-    dotfile = os.path.join(LN, f"{simulation_name}.dot")
-    jpgfile = os.path.join(LN, f"{simulation_name}.jpg")
-
+    
     txs_graph = TxsGraph.from_datadir(datadir)
     
     commitments = find_commitments(simulation_outfile=outfile, graph=txs_graph)
+    sorted_commitments = sorted(commitments, key=lambda txid: txs_graph.nodes[txid]["height"])
     
-    for commitment_txid in commitments:
-        short_txid = txid_to_short_txid(commitment_txid)
-        num_outputs = len(txs_graph.nodes[commitment_txid]["tx"]["vout"])
-        replaceable = txs_graph.is_replaceable_by_fee(txid=commitment_txid)
-        nsequence = txs_graph.get_minimal_nsequence(commitment_txid)
-        num_htlcs_stolen = len(get_htlcs_claimed_by_timeout(graph=txs_graph, commitment_txid=commitment_txid))
-        print(
-            f"commitment: {short_txid:<5} "
-            f"num-outputs: {num_outputs:<4} "
-            f"replaceable: {str(replaceable):<5} "
-            f"nsequence: {nsequence:x}  "
-            f"htlcs-stolen: {num_htlcs_stolen}"
-        )
+    print_commitments_info(sorted_commitments, txs_graph=txs_graph)
     
     # this graph includes only interesting txs (no coinbase and other junk)
     restricted_txs_graph = txs_graph.get_downstream(
         sources=extract_bitcoin_funding_txids(simulation_outfile=outfile),
     )
     
+    dotfile = os.path.join(LN, f"{simulation_name}.dot")
     export_txs_graph_to_dot(
         graph=restricted_txs_graph,
         dotfile=dotfile,
         txid_to_label=txid_to_short_txid,
     )
     # convert dot to jpg
+    jpgfile = os.path.join(LN, f"{simulation_name}.jpg")
     os.system(f"cd {LN}; dot2jpg {dotfile} {jpgfile}")
 
 
