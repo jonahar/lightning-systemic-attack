@@ -584,7 +584,6 @@ def main() -> None:
         cg.reveal_preimages(node_idx=receiver_idx)
         cg.close_all_node_channels(receiver_idx)
         cg.advance_blockchain(num_blocks=num_blocks, block_time_sec=args.block_time)
-        cg.sweep_funds_all_lightning_nodes()
         cg.mine(10)
     
     if args.dump_data:
