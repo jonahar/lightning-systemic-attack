@@ -524,7 +524,9 @@ def parse_args():
     )
     parser.add_argument(
         "--simulation-number", type=int, default=CommandsGenerator.DEFAULT_SIMULATION,
-        help="set bitcoin's block maximum weight",
+        help="simulation number (int between 1 and 6). the simulation number affects the resources "
+             "allocated to the different nodes. commands that were generated with different simulation "
+             "numbers are able to run in parallel",
     )
     parser.add_argument(
         "--outfile", action="store", metavar="OUTFILE",
