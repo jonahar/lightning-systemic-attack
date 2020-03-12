@@ -142,8 +142,6 @@ def get_htlcs_claimed_by_timeout(txs_graph: TxsGraph, commitment_txid: TXID) -> 
     #   except the HTLC-timeout transaction is timelocked "
     #
     # i.e. if the child_tx has a non-zero locktime, it is an HTLC-timeout
-    # TODO: what about claiming of local/remote outputs? are they locked? check it
-    
     return [
         child_tx
         for _, child_tx in txs_graph.out_edges(commitment_txid)
