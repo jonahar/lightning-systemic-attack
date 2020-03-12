@@ -2,3 +2,8 @@
 bin
 data
 py/venv
+simulations/*.out
+simulations/*/
+*.jpg
+*.dot
+**/__pycache__/
