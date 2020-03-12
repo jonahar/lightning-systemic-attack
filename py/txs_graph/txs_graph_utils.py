@@ -1,11 +1,14 @@
 import json
 import os
-from typing import Any, Dict, Iterable
+from typing import Dict
 
-from networkx.algorithms.traversal.breadth_first_search import bfs_edges
 from networkx.classes.digraph import DiGraph
 
 from datatypes import BTC, Block, BlockHash, TX, TXID
+
+"""
+A collection of helper functions to build a complete TxsGraph
+"""
 
 
 def load_blocks(datadir: str) -> Dict[BlockHash, Block]:
@@ -97,18 +100,3 @@ def build_txs_graph(datadir: str) -> DiGraph:
             graph.add_edge(src_txid, dest_txid, value=value)
     
     return graph
-
-
-def get_downstream(graph: DiGraph, sources: Iterable[Any]) -> DiGraph:
-    """
-    return the downstream of sources in the given graph.
-    sources must be an iterable of existing node ids in the graph
-    """
-    sources = list(sources)  # sources may be iterable only once (e.g. map), so we copy
-    nodes_to_include = set(sources)
-    
-    # for each source, compute the set of its ancestors using bfs
-    nodes_to_include.update(
-        *({u for v, u in bfs_edges(graph, source=src)} for src in sources)
-    )
-    return graph.subgraph(nodes=nodes_to_include)

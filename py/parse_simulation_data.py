@@ -7,27 +7,7 @@ from networkx.classes.digraph import DiGraph
 
 from datatypes import BTC, TXID, btc_to_sat
 from paths import LN
-from txs_graph import build_txs_graph, get_downstream
-
-
-def get_htlcs_claimed_by_timeout(graph: DiGraph, commitment_txid: TXID) -> List[TXID]:
-    """
-    return a list of txids that claimed an HTLC output from the given
-    commitment transaction, using timeout-claim (as opposed to success-claim)
-    """
-    
-    # from the bolt:
-    # " HTLC-Timeout and HTLC-Success Transactions... are almost identical,
-    #   except the HTLC-timeout transaction is timelocked "
-    #
-    # i.e. if the child_tx has a non-zero locktime, it is an HTLC-timeout
-    # TODO: what about claiming of local/remote outputs? are they locked? check it
-    
-    return [
-        child_tx
-        for _, child_tx in graph.out_edges(commitment_txid)
-        if graph.nodes[child_tx]["tx"]["locktime"] > 0
-    ]
+from txs_graph.txs_graph import TxsGraph
 
 
 # ---------- txid-to-label functions ----------
@@ -110,19 +90,15 @@ def extract_bitcoin_funding_txids(simulation_outfile: str) -> Set[TXID]:
     return txids
 
 
-def get_all_direct_children(txid, graph: DiGraph) -> Set[TXID]:
-    return {txid for _, txid in graph.out_edges(txid)}
-
-
 def flatten(s: Iterable[Iterable[Any]]) -> List[Any]:
     return list(itertools.chain.from_iterable(s))
 
 
-def find_commitments(simulation_outfile: str, graph: DiGraph) -> List[TXID]:
+def find_commitments(simulation_outfile: str, graph: TxsGraph) -> List[TXID]:
     bitcoin_fundings = extract_bitcoin_funding_txids(simulation_outfile=simulation_outfile)
     
     ln_channel_fundings = flatten(
-        get_all_direct_children(txid, graph=graph)
+        graph.get_all_direct_children(txid)
         for txid in bitcoin_fundings
     )
     
@@ -132,7 +108,7 @@ def find_commitments(simulation_outfile: str, graph: DiGraph) -> List[TXID]:
         list(filter(
             # only keep those with the expected balance
             lambda child_txid: graph.edges[(channel_funding_txid, child_txid)]["value"] == LN_CHANNEL_BALANCE,
-            get_all_direct_children(txid=channel_funding_txid, graph=graph)
+            graph.get_all_direct_children(txid=channel_funding_txid)
         ))
         for channel_funding_txid in ln_channel_fundings
     )
@@ -151,24 +127,28 @@ def find_commitments(simulation_outfile: str, graph: DiGraph) -> List[TXID]:
                 f"Failed to find commitments. "
                 f"txid {commitment_txid[-4:]} expected to have exactly 1 input, but has {num_inputs}"
             )
-
+    
     return commitments
 
 
-def is_replaceable_by_fee(txid, graph: DiGraph) -> bool:
-    for input_dict in graph.nodes[txid]["tx"]["vin"]:
-        if input_dict['sequence'] < (0xffffffff - 1):
-            return True
-    return False
-
-
-def print_nsequence(txids: Iterable[TXID], graph: DiGraph):
-    for txid in txids:
-        print(f"txid {txid_to_short_txid(txid)}:")
-        for i, input_dict in enumerate(graph.nodes[txid]["tx"]["vin"]):
-            sequence: int = input_dict['sequence']
-            sequence_str = format(sequence, 'x')
-            print(f"input {i}: sequence={sequence_str}")
+def get_htlcs_claimed_by_timeout(graph: TxsGraph, commitment_txid: TXID) -> List[TXID]:
+    """
+    return a list of txids that claimed an HTLC output from the given
+    commitment transaction, using timeout-claim (as opposed to success-claim)
+    """
+    
+    # from the bolt:
+    # " HTLC-Timeout and HTLC-Success Transactions... are almost identical,
+    #   except the HTLC-timeout transaction is timelocked "
+    #
+    # i.e. if the child_tx has a non-zero locktime, it is an HTLC-timeout
+    # TODO: what about claiming of local/remote outputs? are they locked? check it
+    
+    return [
+        child_tx
+        for _, child_tx in graph.out_edges(commitment_txid)
+        if graph.nodes[child_tx]["tx"]["locktime"] > 0
+    ]
 
 
 def main(simulation_name):
@@ -177,26 +157,27 @@ def main(simulation_name):
     outfile = os.path.join(LN, "simulations", f"{simulation_name}.out")
     dotfile = os.path.join(LN, f"{simulation_name}.dot")
     jpgfile = os.path.join(LN, f"{simulation_name}.jpg")
-    
-    txs_graph = build_txs_graph(datadir)
+
+    txs_graph = TxsGraph.from_datadir(datadir)
     
     commitments = find_commitments(simulation_outfile=outfile, graph=txs_graph)
     
     for commitment_txid in commitments:
         short_txid = txid_to_short_txid(commitment_txid)
         num_outputs = len(txs_graph.nodes[commitment_txid]["tx"]["vout"])
-        replaceable = is_replaceable_by_fee(txid=commitment_txid, graph=txs_graph)
-        num_htlcs_stolen = len(get_htlcs_claimed_by_timeout(commitment_txid=commitment_txid, graph=txs_graph))
+        replaceable = txs_graph.is_replaceable_by_fee(txid=commitment_txid)
+        nsequence = txs_graph.get_minimal_nsequence(commitment_txid)
+        num_htlcs_stolen = len(get_htlcs_claimed_by_timeout(graph=txs_graph, commitment_txid=commitment_txid))
         print(
             f"commitment: {short_txid:<5} "
             f"num-outputs: {num_outputs:<4} "
             f"replaceable: {str(replaceable):<5} "
+            f"nsequence: {nsequence:x}  "
             f"htlcs-stolen: {num_htlcs_stolen}"
         )
     
     # this graph includes only interesting txs (no coinbase and other junk)
-    restricted_txs_graph = get_downstream(
-        graph=txs_graph,
+    restricted_txs_graph = txs_graph.get_downstream(
         sources=extract_bitcoin_funding_txids(simulation_outfile=outfile),
     )
     
