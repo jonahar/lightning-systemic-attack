@@ -152,7 +152,8 @@ def get_htlcs_claimed_by_timeout(graph: TxsGraph, commitment_txid: TXID) -> List
 
 
 def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) -> None:
-    txid_col_len = 12
+    txid_label_len = 6
+    txid_col_len = txid_label_len + 2
     height_col_len = 8
     num_outputs_col_len = 13
     replaceable_col_len = 13
@@ -169,7 +170,7 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
     )
     
     for commitment_txid in commitment_txids:
-        short_txid = commitment_txid[-10:]
+        short_txid = commitment_txid[-txid_label_len:]
         height = txs_graph.nodes[commitment_txid]["height"]
         num_outputs = len(txs_graph.nodes[commitment_txid]["tx"]["vout"])
         replaceable = str(txs_graph.is_replaceable_by_fee(txid=commitment_txid))
@@ -209,8 +210,8 @@ def main(simulation_name):
         txid_to_label=txid_to_short_txid,
     )
     # convert dot to jpg
-    jpgfile = os.path.join(LN, f"{simulation_name}.jpg")
-    os.system(f"cd {LN}; dot2jpg {dotfile} {jpgfile}")
+    # jpgfile = os.path.join(LN, f"{simulation_name}.jpg")
+    # os.system(f"cd {LN}; dot2jpg {dotfile} {jpgfile}")
 
 
 if __name__ == "__main__":
