@@ -3,7 +3,8 @@ from typing import Any, Iterable, List
 from networkx.algorithms.traversal.breadth_first_search import bfs_edges
 from networkx.classes.digraph import DiGraph
 
-from datatypes import TXID
+from datatypes import BlockHeight, TXID
+from txs_graph.htlc_script import get_htlc_expiration_height, is_htlc_script
 from txs_graph.txs_graph_utils import find_tx_fee, load_blocks, load_txs
 
 
@@ -84,5 +85,31 @@ class TxsGraph(DiGraph):
                 downstream.add_node(v, **self.nodes[v])
                 downstream.add_node(u, **self.nodes[u])
                 downstream.add_edge(v, u, **self.edges[(v, u)])
-        
+
         return downstream
+    
+    def is_htlc_claim_tx(self, txid: TXID) -> bool:
+        vin = self.nodes[txid]["tx"]["vin"]
+        if len(vin) != 1:
+            # an htlc-claim tx should have a single input, which is the commitment
+            return False
+        
+        script_hex = vin[0]["txinwitness"][-1]
+        return is_htlc_script(script_hex)
+    
+    def get_minimal_htlc_expiration_height(self, commitment_txid: TXID) -> BlockHeight:
+        """
+        return the minimal expiration height of an htlc in the given commitment tx.
+        if no htlcs were found, return 0
+        """
+        res = 0xffffff  # the maximal value for a 3-byte int (cltv_expiry is 3-bytes)
+        for _, txid in self.out_edges(commitment_txid):
+            if self.is_htlc_claim_tx(txid):
+                vin = self.nodes[txid]["tx"]["vin"]
+                script_hex = vin[0]["txinwitness"][-1]
+                exp_time = get_htlc_expiration_height(script_hex)
+                res = min(res, exp_time)
+        
+        if res == 0xffffff:
+            res = 0
+        return res

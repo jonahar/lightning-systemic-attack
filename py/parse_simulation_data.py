@@ -131,7 +131,7 @@ def find_commitments(simulation_outfile: str, graph: TxsGraph) -> List[TXID]:
     return commitments
 
 
-def get_htlcs_claimed_by_timeout(graph: TxsGraph, commitment_txid: TXID) -> List[TXID]:
+def get_htlcs_claimed_by_timeout(txs_graph: TxsGraph, commitment_txid: TXID) -> List[TXID]:
     """
     return a list of txids that claimed an HTLC output from the given
     commitment transaction, using timeout-claim (as opposed to success-claim)
@@ -146,8 +146,8 @@ def get_htlcs_claimed_by_timeout(graph: TxsGraph, commitment_txid: TXID) -> List
     
     return [
         child_tx
-        for _, child_tx in graph.out_edges(commitment_txid)
-        if graph.nodes[child_tx]["tx"]["locktime"] > 0
+        for _, child_tx in txs_graph.out_edges(commitment_txid)
+        if txs_graph.is_htlc_claim_tx(child_tx) and txs_graph.nodes[child_tx]["tx"]["locktime"] > 0
     ]
 
 
@@ -155,6 +155,7 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
     txid_label_len = 6
     txid_col_len = txid_label_len + 2
     height_col_len = 8
+    min_exp_height_col_len = 15
     num_outputs_col_len = 13
     replaceable_col_len = 13
     nsequence_col_len = 11
@@ -163,6 +164,7 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
     print(
         "txid".ljust(txid_col_len) +
         "height".ljust(height_col_len) +
+        "min_exp_height".ljust(min_exp_height_col_len) +
         "num_outputs".ljust(num_outputs_col_len) +
         "replaceable".ljust(replaceable_col_len) +
         "nsequence".ljust(nsequence_col_len) +
@@ -172,13 +174,15 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
     for commitment_txid in commitment_txids:
         short_txid = commitment_txid[-txid_label_len:]
         height = txs_graph.nodes[commitment_txid]["height"]
+        min_exp_height = txs_graph.get_minimal_htlc_expiration_height(commitment_txid)
         num_outputs = len(txs_graph.nodes[commitment_txid]["tx"]["vout"])
         replaceable = str(txs_graph.is_replaceable_by_fee(txid=commitment_txid))
         nsequence = txs_graph.get_minimal_nsequence(commitment_txid)
-        htlcs_stolen = len(get_htlcs_claimed_by_timeout(graph=txs_graph, commitment_txid=commitment_txid))
+        htlcs_stolen = len(get_htlcs_claimed_by_timeout(txs_graph=txs_graph, commitment_txid=commitment_txid))
         print(
             f"{short_txid:<{txid_col_len}}"
             f"{height:<{height_col_len}}"
+            f"{min_exp_height:<{min_exp_height_col_len}}"
             f"{num_outputs:<{num_outputs_col_len}}"
             f"{replaceable:<{replaceable_col_len}}"
             f"{nsequence:<{nsequence_col_len}x}"
@@ -195,8 +199,8 @@ def main(simulation_name):
     
     commitments = find_commitments(simulation_outfile=outfile, graph=txs_graph)
     sorted_commitments = sorted(commitments, key=lambda txid: txs_graph.nodes[txid]["height"])
-    
-    print_commitments_info(sorted_commitments, txs_graph=txs_graph)
+
+    print_commitments_info(commitment_txids=sorted_commitments, txs_graph=txs_graph)
     
     # this graph includes only interesting txs (no coinbase and other junk)
     restricted_txs_graph = txs_graph.get_downstream(
