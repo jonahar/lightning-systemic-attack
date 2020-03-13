@@ -12,6 +12,7 @@ from typing import Any, Callable
 import plyvel
 
 from datatypes import Json
+from paths import CACHES_DIR
 
 
 def print_json(o: Json):
@@ -91,9 +92,6 @@ def setup_logging(
         logger.addHandler(fh)
     
     return logger
-
-
-CACHES_DIR = os.path.join(os.path.expandvars("$LN"), "data", "caches")
 
 
 def get_db_str_key(*args, **kwargs) -> str:
