@@ -78,15 +78,12 @@ def extract_bitcoin_funding_txids(simulation_outfile: str) -> Set[TXID]:
         line = f.readline().strip()
         while line is not None and line != FUNDING_INFO_LINE:
             line = f.readline().strip()
-        
         if line is None:
             raise ValueError("Couldn't find funding rows in the given file. is file in bad format?")
-
         line = f.readline().strip()
         while txid_regex.fullmatch(line):
             txids.add(line)
             line = f.readline().strip()
-    
     return txids
 
 
@@ -134,18 +131,32 @@ def find_commitments(simulation_outfile: str, graph: TxsGraph) -> List[TXID]:
 def get_htlcs_claimed_by_timeout(txs_graph: TxsGraph, commitment_txid: TXID) -> List[TXID]:
     """
     return a list of txids that claimed an HTLC output from the given
-    commitment transaction, using timeout-claim (as opposed to success-claim)
+    commitment transaction, using timeout-tx (as opposed to success-tx)
     """
-    
     # from the bolt:
     # " HTLC-Timeout and HTLC-Success Transactions... are almost identical,
-    #   except the HTLC-timeout transaction is timelocked "
+    #   except the HTLC-timeout transaction is timelocked
+    #   ...
+    #   locktime: 0 for HTLC-success, cltv_expiry for HTLC-timeout
+    #   "
     #
     # i.e. if the child_tx has a non-zero locktime, it is an HTLC-timeout
     return [
         child_tx
         for _, child_tx in txs_graph.out_edges(commitment_txid)
         if txs_graph.is_htlc_claim_tx(child_tx) and txs_graph.nodes[child_tx]["tx"]["locktime"] > 0
+    ]
+
+
+def get_htlcs_claimed_by_success(txs_graph: TxsGraph, commitment_txid: TXID) -> List[TXID]:
+    """
+    return a list of txids that claimed an HTLC output from the given
+    commitment transaction, using success-tx (as opposed to timeout-tx)
+    """
+    return [
+        child_tx
+        for _, child_tx in txs_graph.out_edges(commitment_txid)
+        if txs_graph.is_htlc_claim_tx(child_tx) and txs_graph.nodes[child_tx]["tx"]["locktime"] == 0
     ]
 
 
@@ -188,6 +199,21 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
         )
 
 
+def export_to_jpg(graph: DiGraph, graph_name: str) -> None:
+    """
+    export the graph to a jpg file, named  <graph_name>.jpg
+    """
+    dotfile = os.path.join(LN, f"{graph_name}.dot")
+    export_txs_graph_to_dot(
+        graph=graph,
+        dotfile=dotfile,
+        txid_to_label=txid_to_short_txid,
+    )
+    # convert dot to jpg
+    jpgfile = os.path.join(LN, f"{graph_name}.jpg")
+    os.system(f"cd {LN}; dot2jpg {dotfile} {jpgfile}")
+
+
 def main(simulation_name):
     print(simulation_name)
     datadir = os.path.join(LN, "simulations", simulation_name)
@@ -197,23 +223,14 @@ def main(simulation_name):
     
     commitments = find_commitments(simulation_outfile=outfile, graph=txs_graph)
     sorted_commitments = sorted(commitments, key=lambda txid: txs_graph.nodes[txid]["height"])
-
+    
     print_commitments_info(commitment_txids=sorted_commitments, txs_graph=txs_graph)
     
     # this graph includes only interesting txs (no coinbase and other junk)
     restricted_txs_graph = txs_graph.get_downstream(
         sources=extract_bitcoin_funding_txids(simulation_outfile=outfile),
     )
-    
-    dotfile = os.path.join(LN, f"{simulation_name}.dot")
-    export_txs_graph_to_dot(
-        graph=restricted_txs_graph,
-        dotfile=dotfile,
-        txid_to_label=txid_to_short_txid,
-    )
-    # convert dot to jpg
-    # jpgfile = os.path.join(LN, f"{simulation_name}.jpg")
-    # os.system(f"cd {LN}; dot2jpg {dotfile} {jpgfile}")
+    # export_to_jpg(graph=restricted_txs_graph, graph_name=simulation_name)
 
 
 if __name__ == "__main__":
