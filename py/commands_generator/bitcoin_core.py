@@ -96,21 +96,35 @@ class BitcoinCoreCommandsGenerator(BitcoinCommandsGenerator):
         """)
     
     def __set_blockchain_height(self):
+        """
+        set the current blockchain height in a variable named BLOCKCHAIN_HEIGHT
+        """
         self._write_line(
             f"""BLOCKCHAIN_HEIGHT=$({self.__bitcoin_cli_cmd_prefix()} -getinfo | jq ".blocks")"""
         )
-    
-    def advance_blockchain(self, num_blocks: int, block_time_sec: int):
+
+    def __dump_mempool(self, mempool_dump_dir: str) -> None:
         self.__set_blockchain_height()
-        self._write_line(f"DEST_HEIGHT=$((BLOCKCHAIN_HEIGHT + {num_blocks}))")
-        
+        self._write_line(f"""txids=$({self.__bitcoin_cli_cmd_prefix()} getrawmempool | jq -r ".[]") """)
         self._write_line(f"""
-        while [[ $({self.__bitcoin_cli_cmd_prefix()} -getinfo | jq ".blocks") -lt $DEST_HEIGHT ]]; do
-            sleep {block_time_sec}
-            {self.__get_mine_command(num_blocks=1)}
+        for txid in $txids; do
+            {self.__bitcoin_cli_cmd_prefix()} getrawtransaction $txid true \\
+                    > {mempool_dump_dir}/height_${{BLOCKCHAIN_HEIGHT}}_${{txid}}.json
         done
         """)
+
+    def advance_blockchain(self, num_blocks: int, block_time_sec: int, mempool_dump_dir: str = None) -> None:
+        self.__set_blockchain_height()
+        self._write_line(f"DEST_HEIGHT=$((BLOCKCHAIN_HEIGHT + {num_blocks}))")
     
+        self._write_line(
+            f"""while [[ $({self.__bitcoin_cli_cmd_prefix()} -getinfo | jq ".blocks") -lt $DEST_HEIGHT ]]; do""")
+        self._write_line(f"sleep {block_time_sec}")
+        if mempool_dump_dir:
+            self.__dump_mempool(mempool_dump_dir)
+        self.mine(1)
+        self._write_line("done")
+
     def dump_blockchain(self, dir_path: str) -> None:
         self.__set_blockchain_height()
         # dump blocks + transactions
@@ -146,11 +160,11 @@ class BitcoinCoreCommandsGenerator(BitcoinCommandsGenerator):
 
     def fill_blockchain(self, num_blocks) -> None:
         self.mine(num_blocks=100 + num_blocks)  # at least 100 to unlock coinbase txs
-    
+
         # we try to keep the mempool at the size of 2 full blocks.
         # full blocks are measured in weight units (blockmaxweight), but bitcoind
         # reports mempool size in bytes, so we need to estimate the size of a full block
-    
+
         num_outputs = 10
         # usually for the kind of transaction we are building, this is the ratio between
         # the block's weight and size

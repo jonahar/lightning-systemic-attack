@@ -78,13 +78,16 @@ class BitcoinCommandsGenerator(ABC):
         pass
     
     @abstractmethod
-    def advance_blockchain(self, num_blocks: int, block_time_sec: int):
+    def advance_blockchain(self, num_blocks: int, block_time_sec: int, mempool_dump_dir: str = None) -> None:
         """
         generate code to advance the blockchain by 'num_blocks' blocks.
         blocks are mined at a rate corresponding to block_time_sec until the
         blockchain reaches height CURRENT_HEIGHT+num_blocks.
         Note, this may be different than mining 'num_blocks' blocks, in case
-        someone else is also mining
+        someone else is also mining.
+        
+        if mempool_dump_dir is not None, it is a path to a directory to which the
+        mempool is dumped before any block mining
         """
         pass
     
