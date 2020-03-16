@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-SCRIPT_NAME=$(basename -s ".sh" $0)
+SCRIPT_NAME="steal-attack-5-eclair-victims-blockmaxweight=100000"
+TOPOLOGY="$LN/topologies/topology-5-eclair-victims.json"
 DATA_DIR="$LN/simulations/$SCRIPT_NAME"
 OUTPUT_FILE="$LN/simulations/$SCRIPT_NAME.out"
-TOPOLOGY="$LN/topologies/topology-5-eclair-victims.json"
 SIMULATION=2
 COMMANDS_FILE=$LN/generated_commands_$SIMULATION
 cd $LN/py
