@@ -1,13 +1,25 @@
 #!/usr/bin/env bash
 
-# the functions in this file only works for nodes running in simulation number SIMULATION_NUM
-SIMULATION_NUM=1
+SIMULATION_NUM_REGEX="^[1-6]$" # regex for the number 1 to 6
+if [[ ! -z $1 ]]; then
+    if [[ $1 =~ ^[1-6]$ ]]; then
+        SIMULATION_NUM=$1
+    else
+        echo "Invalid SIMULATION_NUM: $1"
+        return # we use return and not exit, because this script will probably be sourced
+    fi
+else
+    SIMULATION_NUM=1
+fi
 
-LIGHTNING_DIRS="/tmp/lightning-simulations/${SIMULATION_NUM}/lightning-datadirs"
+export SIMULATION_NUM
+echo "SIMULATION_NUM set to ${SIMULATION_NUM}"
+
+export LIGHTNING_DIRS="/tmp/lightning-simulations/${SIMULATION_NUM}/lightning-datadirs"
 
 # These are defined according to the ResourcesAllocator
-LIGHTNING_RPC_CODE=1
-BITCOIN_RPC_CODE=4
+export LIGHTNING_RPC_CODE=1
+export BITCOIN_RPC_CODE=4
 
 # from the ResourcesAllocator doc:
 # Each port is 5 digits: XYZZZ
@@ -20,12 +32,14 @@ lightning_rpc_port() {
     PADDED_IDX=$(printf "%03d" $IDX)
     echo "${SIMULATION_NUM}${LIGHTNING_RPC_CODE}${PADDED_IDX}"
 }
+export -f lightning_rpc_port
 
 bitcoin_rpc_port() {
     IDX=$1
     PADDED_IDX=$(printf "%03d" $IDX)
     echo "${SIMULATION_NUM}${BITCOIN_RPC_CODE}${PADDED_IDX}"
 }
+export -f bitcoin_rpc_port
 
 # alias for lightning-cli (c-lightning)
 lcli() {
