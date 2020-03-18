@@ -592,7 +592,6 @@ def main() -> None:
             block_time_sec=args.block_time,
             mempool_dump_dir=f"{args.dump_data}/mempool" if args.dump_data else None,
         )
-        cg.mine(10)
     
     if args.dump_data:
         # before dumping we advance the blockchain by 100 blocks in case some
