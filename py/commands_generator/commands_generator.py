@@ -439,7 +439,7 @@ class CommandsGenerator:
         for node_idx in self.lightning_clients.keys():
             self.sweep_funds(node_idx=node_idx)
 
-    def advance_blockchain(self, num_blocks: int, block_time_sec: int, mempool_dump_dir: str = None):
+    def advance_blockchain(self, num_blocks: int, block_time_sec: int, dir_path: str = None):
         """
         generate code to advance the blockchain by 'num_blocks' blocks.
         blocks are mined at a rate corresponding to block_time_sec until the
@@ -451,12 +451,12 @@ class CommandsGenerator:
             f"mining: advancing blockchain by {num_blocks} blocks "
             f"with block_time={block_time_sec}sec"
         )
-        if mempool_dump_dir:
-            self.__write_line(f"mkdir -p '{mempool_dump_dir}'")
+        if dir_path:
+            self.__write_line(f"mkdir -p '{dir_path}'")
         self.bitcoin_clients[BITCOIN_MINER_IDX].advance_blockchain(
             num_blocks=num_blocks,
             block_time_sec=block_time_sec,
-            mempool_dump_dir=mempool_dump_dir,
+            dir_path=dir_path,
         )
     
     def dump_simulation_data(self, dir_path: str):
@@ -590,7 +590,7 @@ def main() -> None:
         cg.advance_blockchain(
             num_blocks=num_blocks,
             block_time_sec=args.block_time,
-            mempool_dump_dir=f"{args.dump_data}/mempool" if args.dump_data else None,
+            dir_path=args.dump_data if args.dump_data else None,
         )
     
     if args.dump_data:
