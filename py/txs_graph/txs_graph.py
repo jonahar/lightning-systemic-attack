@@ -16,6 +16,9 @@ class TxsGraph(DiGraph):
         read all block and transaction files in the given datadir and construct
         a full transaction graph.
         
+        Args:
+            datadir: path to a data dir, that contains block and tx json files
+        
         Each node represents a transaction. the node's id is the txid and it has
         the following attributes:
             - "tx" - the full tx json, as returned by bitcoind
@@ -24,7 +27,8 @@ class TxsGraph(DiGraph):
         
         Each edge has the following attributes:
             - "value" the value in BTC of the output represented by this edge
-            
+            - "index" the index of the spent output in the source transaction
+
         """
         blocks = load_blocks(datadir)
         txs = load_txs(datadir)
@@ -50,7 +54,7 @@ class TxsGraph(DiGraph):
                 src_txid = entry["txid"]
                 index = entry["vout"]
                 value = txs[src_txid]["vout"][index]["value"]
-                graph.add_edge(src_txid, dest_txid, value=value)
+                graph.add_edge(src_txid, dest_txid, value=value, index=index)
         
         return graph
     
