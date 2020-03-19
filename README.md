@@ -52,6 +52,6 @@ The latest bitcoin/lightning versions that were tested and work with our code:
 | Implementation| Version  |
 |---------------|----------|
 | bitcoin-core  | 0.19.0.1 |
-| c-lightning   | 0.8.0    |
-| lnd           | 0.8.2    |
+| c-lightning   | 0.8.1    |
+| lnd           | 0.9.2    |
 | eclair        | 0.3.3    |
