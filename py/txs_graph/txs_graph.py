@@ -21,13 +21,14 @@ class TxsGraph(DiGraph):
         
         Each node represents a transaction. the node's id is the txid and it has
         the following attributes:
-            - "tx" - the full tx json, as returned by bitcoind
-            - "fee" - the tx fee
-            - "height" - the block height in which the tx was included
+            - "tx":     the full tx json, as returned by bitcoind
+            - "fee":    the tx fee
+            - "height": the block height in which the tx was included, or None if
+                        the tx was not included in any block (e.g. mempool tx)
         
         Each edge has the following attributes:
-            - "value" the value in BTC of the output represented by this edge
-            - "index" the index of the spent output in the source transaction
+            - "value": the value in BTC of the output represented by this edge
+            - "index": the index of the spent output in the source transaction
 
         """
         blocks = load_blocks(datadir)
@@ -44,7 +45,12 @@ class TxsGraph(DiGraph):
         
         # add all transactions
         for txid in txs.keys():
-            graph.add_node(txid, tx=txs[txid], fee=txid_to_fee[txid], height=txid_to_height[txid])
+            graph.add_node(
+                txid,
+                tx=txs[txid],
+                fee=txid_to_fee[txid],
+                height=txid_to_height.get(txid, None),
+            )
         
         # add edges between transactions
         for dest_txid, dest_tx in txs.items():
