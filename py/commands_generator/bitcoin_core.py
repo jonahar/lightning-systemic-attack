@@ -107,15 +107,17 @@ class BitcoinCoreCommandsGenerator(BitcoinCommandsGenerator):
         self._write_line(f"""txids=$({self.__bitcoin_cli_cmd_prefix()} getrawmempool | jq -r ".[]") """)
         self._write_line(f"""
         for txid in $txids; do
-            {self.__bitcoin_cli_cmd_prefix()} getrawtransaction $txid true \\
-                    > {dir_path}/tx_${{txid}}.json
+            TX=$({self.__bitcoin_cli_cmd_prefix()} getrawtransaction $txid true)
+            if [[ ! -z "$TX" ]]; then
+                echo $TX > {dir_path}/tx_${{txid}}.json
+            fi
         done
         """)
 
     def advance_blockchain(self, num_blocks: int, block_time_sec: int, dir_path: str = None) -> None:
         self.__set_blockchain_height()
         self._write_line(f"DEST_HEIGHT=$((BLOCKCHAIN_HEIGHT + {num_blocks}))")
-    
+
         self._write_line(
             f"""while [[ $({self.__bitcoin_cli_cmd_prefix()} -getinfo | jq ".blocks") -lt $DEST_HEIGHT ]]; do""")
         self._write_line(f"sleep {block_time_sec}")

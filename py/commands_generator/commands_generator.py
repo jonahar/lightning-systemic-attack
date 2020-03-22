@@ -445,7 +445,9 @@ class CommandsGenerator:
         blocks are mined at a rate corresponding to block_time_sec until the
         blockchain reaches height CURRENT_HEIGHT+num_blocks.
         Note, this may be different than mining 'num_blocks' blocks, in case
-        someone else is also mining
+        someone else is also mining.
+        
+        if dir_path is given, dump mempool txs to that dir
         """
         self.__maybe_info(
             f"mining: advancing blockchain by {num_blocks} blocks "
