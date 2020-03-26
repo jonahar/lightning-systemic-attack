@@ -420,15 +420,15 @@ class CommandsGenerator:
             silent=True,
         )
         self.lightning_clients[node_idx].start()
-
+    
     def close_all_node_channels(self, node_idx: NodeIndex):
         self.__maybe_info(f"closing all channels of node {node_idx}")
         self.lightning_clients[node_idx].close_all_channels()
-
+    
     def sweep_funds(self, node_idx: NodeIndex):
         self.__maybe_info(f"sweeping funds of node {node_idx}")
         self.lightning_clients[node_idx].sweep_funds()
-
+    
     def sweep_funds_all_lightning_nodes(self):
         """
         sweep funds for every lightning node.
@@ -438,7 +438,7 @@ class CommandsGenerator:
         self.__maybe_info("sweeping funds for every lightning node")
         for node_idx in self.lightning_clients.keys():
             self.sweep_funds(node_idx=node_idx)
-
+    
     def advance_blockchain(self, num_blocks: int, block_time_sec: int, dir_path: str = None):
         """
         generate code to advance the blockchain by 'num_blocks' blocks.
@@ -477,8 +477,6 @@ class CommandsGenerator:
         # dump nodes balances
         for idx in self.topology.keys():
             self.lightning_clients[idx].dump_balance(filepath=f"{dir_path}/nodes_balance")
-        
-        self.__write_line(f"cd - > /dev/null")  # go back to where we were
     
     def mine(self, num_blocks):
         """generate code to mine num_blocks blocks. blocks are mined by the miner node"""
