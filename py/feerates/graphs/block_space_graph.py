@@ -1,5 +1,5 @@
 from math import floor
-from typing import Dict, Iterable, List
+from typing import Dict, List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,7 +44,7 @@ def get_block_space_data(block_heights: List[BlockHeight], feerate: float) -> Li
 
 def plot_available_block_space_vs_height(
     block_heights: List[BlockHeight],
-    feerates: Iterable[Feerate],
+    feerates: List[Feerate],
 ):
     """
     how much of the block is available (percentage) for a given feerate.
@@ -65,7 +65,7 @@ def plot_available_block_space_vs_height(
 
 def plot_available_block_space_upper_bound_vs_block_count(
     block_heights: List[BlockHeight],
-    feerates: Iterable[Feerate],
+    feerates: List[Feerate],
 ):
     """
     how many blocks are there that have at most X percent available space.
@@ -94,7 +94,7 @@ def plot_available_block_space_upper_bound_vs_block_count(
 
 def plot_available_block_space_lower_bound_vs_block_count(
     block_heights: List[BlockHeight],
-    feerates: Iterable[Feerate],
+    feerates: List[Feerate],
 ):
     """
     how many blocks are there that have at least X percent available space.
@@ -131,7 +131,7 @@ def htlcs_success_that_fit_in(weight_units: int) -> int:
 
 def plot_block_height_vs_htlc_space(
     block_heights: List[BlockHeight],
-    feerates: Iterable[Feerate],
+    feerates: List[Feerate],
 ):
     """
     how many block are there that can contain X HTLC-success txs that pays such feerate.
@@ -184,7 +184,7 @@ def main():
     block_heights = list(range(first_block, last_block))
     
     p_values = [0.2, 0.5, 0.8]
-
+    
     feerates_to_eval = [
         get_top_p_minimal_feerate(samples=feerates, p=p)
         for p in p_values
@@ -193,12 +193,12 @@ def main():
     # (e.g. in one run we'll have feerate of 20.075, and in another run 20.076)
     # we round it to benefit the cache of get_block_space_for_feerate
     feerates_to_eval = [round(f, 1) for f in feerates_to_eval]
-
+    
     plot_available_block_space_vs_height(block_heights=block_heights, feerates=feerates_to_eval)
     plot_available_block_space_lower_bound_vs_block_count(block_heights=block_heights, feerates=feerates_to_eval)
     plot_available_block_space_upper_bound_vs_block_count(block_heights=block_heights, feerates=feerates_to_eval)
     plot_block_height_vs_htlc_space(block_heights=block_heights, feerates=feerates_to_eval)
-
+    
     plt.show()
 
 
