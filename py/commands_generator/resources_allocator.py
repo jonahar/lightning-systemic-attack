@@ -20,14 +20,19 @@ class ResourcesAllocator:
     A ResourcesAllocator is responsible for allocating resources such as ports/directories to
     different nodes, in different simulations, for different purposes.
     
-    It should take care of allocating unique resources so processes will not have
+    It takes care of allocating unique resources so processes will not have
     intra-simulation or inter-simulation collisions.
     
     Ports allocation:
-    Each port is 5 digits: XYZZZ
-    X: simulation number. 1-6
-    Y: service type (see ServiceType). 0-9
-    ZZZ: an id of some node in simulation X. 0-999
+        Each port is 5 digits: XYZZZ
+        X: simulation number. 1-6
+        Y: service type (see ServiceType). 0-9
+        ZZZ: an id of some node in simulation X. 0-999 (zero padded if needed)
+    
+    Data-dirs allocation:
+        a root dir for the entire simulation is allocated in the system temp dir, and
+        inside it all datadirs for specific bitcoin/lightning nodes
+    
     """
     
     def __init__(self, simulation: int) -> None:
