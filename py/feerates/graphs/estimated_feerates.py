@@ -14,10 +14,16 @@ BYTE_IN_KBYTE = 1000
 
 estimation_sample_file_regex = re.compile("estimatesmartfee_blocks=(\\d+)_mode=(\\w+)")
 
-# only estimation in this time window will be included by the parse_estimation_files
-# method. set both to None to include all estimations
-MIN_TIMESTAMP = 1580275000
-MAX_TIMESTAMP = 1582673100
+# only estimations in the time window [MIN_TIMESTAMP, MAX_TIMESTAMP] will be included
+# by the parse_estimation_files method. set both to None to include all estimations
+
+# this range gives us blocks 615000-618999
+# MIN_TIMESTAMP = 1580275000
+# MAX_TIMESTAMP = 1582673100
+
+# this range gives us blocks 620136-624048
+MIN_TIMESTAMP = 1583317269
+MAX_TIMESTAMP = 1585819506
 
 # only show graphs for these values of num_blocks. set to None to include all
 num_blocks_to_include = [2]
@@ -39,7 +45,7 @@ def parse_estimation_files() -> Dict[int, List[PlotData]]:
         mode: str = match.group(2)
         if num_blocks_to_include is not None and num_blocks not in num_blocks_to_include:
             continue
-
+        
         timestamps = []
         feerates = []
         with open(os.path.join(FEE_ESTIMATIONS_DIR, entry)) as f:
@@ -55,7 +61,7 @@ def parse_estimation_files() -> Dict[int, List[PlotData]]:
                         feerates.append(feerate)
                 except ValueError:
                     logger.error(f"ignoring line in file `{entry}` with unexpected format: `{line}`")
-
+        
         data[num_blocks].append(
             PlotData(timestamps=timestamps, feerates=feerates, label=f"estimatesmartfee(n={num_blocks},mode={mode})")
         )
