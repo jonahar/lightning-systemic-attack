@@ -65,7 +65,7 @@ class TxsGraph(DiGraph):
         return graph
     
     def get_all_direct_children(self, txid: TXID) -> List[TXID]:
-        return [txid for _, txid in self.out_edges(txid)]
+        return [child_txid for _, child_txid in self.out_edges(txid)]
     
     def get_minimal_nsequence(self, txid: TXID) -> int:
         """
