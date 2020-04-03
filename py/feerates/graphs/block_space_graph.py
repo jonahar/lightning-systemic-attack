@@ -125,11 +125,11 @@ def htlcs_success_that_fit_in(weight_units: int) -> int:
     """
     return the number of HTLC-success txs that fit in the given weight units
     """
-    HTLC_SUCCESS_WEIGHT = 700  # BOLT claim it to be 703. I've seen 696
+    HTLC_SUCCESS_WEIGHT = 703  # expected weight of htlc-success according to BOLT
     return floor(weight_units / HTLC_SUCCESS_WEIGHT)
 
 
-def plot_block_height_vs_htlc_space(
+def plot_block_height_vs_htlc_success_space(
     block_heights: List[BlockHeight],
     feerates: List[Feerate],
 ):
@@ -194,10 +194,12 @@ def main():
     # we round it to benefit the cache of get_block_space_for_feerate
     feerates_to_eval = [round(f, 1) for f in feerates_to_eval]
     
-    plot_available_block_space_vs_height(block_heights=block_heights, feerates=feerates_to_eval)
+    # this graph is very noisy
+    # plot_available_block_space_vs_height(block_heights=block_heights, feerates=feerates_to_eval)
+    
     plot_available_block_space_lower_bound_vs_block_count(block_heights=block_heights, feerates=feerates_to_eval)
     plot_available_block_space_upper_bound_vs_block_count(block_heights=block_heights, feerates=feerates_to_eval)
-    plot_block_height_vs_htlc_space(block_heights=block_heights, feerates=feerates_to_eval)
+    plot_block_height_vs_htlc_success_space(block_heights=block_heights, feerates=feerates_to_eval)
     
     plt.show()
 
