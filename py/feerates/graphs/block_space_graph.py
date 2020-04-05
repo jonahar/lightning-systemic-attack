@@ -121,6 +121,35 @@ def plot_available_block_space_lower_bound_vs_block_count(
     plt.legend(loc="best")
 
 
+def plot_percent_of_blocks_vs_available_space(
+    block_heights: List[BlockHeight],
+    feerates: List[Feerate],
+):
+    """
+    what percentage of blocks have at least X percent available space.
+    different graph for every feerate, all on the same plot
+    """
+    plt.figure()
+    plt.title(f"Percentage of blocks with at least X% available space (blocks {block_heights[0]}-{block_heights[-1]})")
+    percentages = np.arange(0, 100 + 1)
+    for feerate in feerates:
+        block_spaces: List[float] = get_block_space_data(
+            block_heights=block_heights,
+            feerate=feerate,
+        )
+        # how many blocks have at least X% available space
+        percentage_of_blocks = [
+            (len([1 for space in block_spaces if space >= percentage]) / len(block_heights)) * 100
+            for percentage in percentages
+        ]
+        plt.plot(percentages, percentage_of_blocks, label=f"feerate={feerate}")
+    
+    plt.grid()
+    plt.ylabel("percentage of blocks")
+    plt.xlabel("available block space (percentage)")
+    plt.legend(loc="best")
+
+
 def htlcs_success_that_fit_in(weight_units: int) -> int:
     """
     return the number of HTLC-success txs that fit in the given weight units
@@ -129,12 +158,12 @@ def htlcs_success_that_fit_in(weight_units: int) -> int:
     return floor(weight_units / HTLC_SUCCESS_WEIGHT)
 
 
-def plot_block_height_vs_htlc_success_space(
+def plot_htlc_success_space_vs_percent_of_blocks(
     block_heights: List[BlockHeight],
     feerates: List[Feerate],
 ):
     """
-    how many block are there that can contain X HTLC-success txs that pays such feerate.
+    how many block are there (percent) that can contain X HTLC-success txs that pays such feerate.
     different graph for every feerate, all on the same plot
     """
     plt.figure()
@@ -156,11 +185,15 @@ def plot_block_height_vs_htlc_success_space(
         htlcs_capacity_hist_cumsum = np.cumsum(htlcs_capacity_hist[::-1])[::-1]
         assert len(htlcs_count) == len(htlcs_capacity_hist_cumsum)
         
-        plt.plot(htlcs_count, htlcs_capacity_hist_cumsum, label=f"feerate={feerate}")
+        # htlcs_capacity_hist_cumsum[n] = number of blocks that have room for n HTLCs
+        
+        # normalize, so the data is in percentages
+        htlcs_capacity_hist_cumsum_normalized = (htlcs_capacity_hist_cumsum / len(block_heights)) * 100
+        plt.plot(htlcs_count, htlcs_capacity_hist_cumsum_normalized, label=f"feerate={feerate}")
     
     plt.grid()
-    plt.xlabel("#HTLCs")
-    plt.ylabel("#blocks")
+    plt.xlabel("#HTLC-success transactions")
+    plt.ylabel("percentage of blocks")
     plt.legend(loc="best")
 
 
@@ -197,9 +230,10 @@ def main():
     # this graph is very noisy
     # plot_available_block_space_vs_height(block_heights=block_heights, feerates=feerates_to_eval)
     
-    plot_available_block_space_lower_bound_vs_block_count(block_heights=block_heights, feerates=feerates_to_eval)
-    plot_available_block_space_upper_bound_vs_block_count(block_heights=block_heights, feerates=feerates_to_eval)
-    plot_block_height_vs_htlc_success_space(block_heights=block_heights, feerates=feerates_to_eval)
+    # plot_available_block_space_lower_bound_vs_block_count(block_heights=block_heights, feerates=feerates_to_eval)
+    # plot_available_block_space_upper_bound_vs_block_count(block_heights=block_heights, feerates=feerates_to_eval)
+    plot_htlc_success_space_vs_percent_of_blocks(block_heights=block_heights, feerates=feerates_to_eval)
+    plot_percent_of_blocks_vs_available_space(block_heights=block_heights, feerates=feerates_to_eval)
     
     plt.show()
 
