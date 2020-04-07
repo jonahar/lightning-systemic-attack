@@ -92,7 +92,7 @@ class CommandsGenerator:
             sanitized_topology = {}
             for k, v in topology.items():
                 sanitized_topology[int(k)] = v
-                v["peers"] = [int(p) for p in v["peers"]]
+                v["peers"] = list(map(int, v["peers"]))
             return sanitized_topology
         
         except ValueError:
