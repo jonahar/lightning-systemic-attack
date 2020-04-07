@@ -578,8 +578,13 @@ def main() -> None:
         cg.wait_for_funds()
         cg.establish_channels()
         cg.wait_for_funding_transactions()
-        # mine 10 blocks so the channels reach NORMAL_STATE
-        cg.mine(num_blocks=10)
+        # mine enough blocks so the channels reach NORMAL_STATE
+        cg.advance_blockchain(num_blocks=30, block_time_sec=5)
+        
+        # to force channels announcements we stop all lightning nodes and start them over
+        cg.stop_all_lightning_nodes()
+        cg.start_lightning_nodes()
+        cg.advance_blockchain(num_blocks=30, block_time_sec=5)
     
     if args.make_payments:
         sender_idx, receiver_idx, num_payments, amount_msat = args.make_payments
