@@ -350,12 +350,20 @@ class CommandsGenerator:
         num_channels = sum(map(lambda entry: len(entry["peers"]), self.topology.values()))
         self.bitcoin_clients[BITCOIN_MINER_IDX].wait_for_txs_in_mempool(num_txs=num_channels)
     
-    def wait_to_route(self, sender_idx: NodeIndex, receiver_idx: NodeIndex, amount_msat: int):
-        self.__maybe_info(f"waiting until there is a known route from {sender_idx} to {receiver_idx}")
-        self.lightning_clients[sender_idx].wait_to_route(
-            receiver=self.lightning_clients[receiver_idx],
-            amount_msat=amount_msat,
-        )
+    def wait_to_all_routes(self, sender_idx: NodeIndex, receiver_idx: NodeIndex, amount_msat: int):
+        """
+        wait until there is a known route from sender to receiver through each
+        of the sender's peers
+        """
+        for peer_idx in self.topology[sender_idx]["peers"]:
+            self.__maybe_info(
+                f"waiting until there is a known route from {sender_idx} to {receiver_idx} via {peer_idx}"
+            )
+            self.lightning_clients[sender_idx].wait_to_route_via(
+                src=self.lightning_clients[peer_idx],
+                dest=self.lightning_clients[receiver_idx],
+                amount_msat=amount_msat,
+            )
     
     def make_payments(self, sender_idx: NodeIndex, receiver_idx: NodeIndex, num_payments: int, amount_msat: int):
         self.__maybe_info(
@@ -575,7 +583,7 @@ def main() -> None:
     
     if args.make_payments:
         sender_idx, receiver_idx, num_payments, amount_msat = args.make_payments
-        cg.wait_to_route(sender_idx, receiver_idx, amount_msat)
+        cg.wait_to_all_routes(sender_idx, receiver_idx, amount_msat)
         cg.make_payments(*args.make_payments)
         cg.print_node_htlcs(node_idx=receiver_idx)
         if args.dump_data:
