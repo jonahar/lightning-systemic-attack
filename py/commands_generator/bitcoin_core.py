@@ -90,7 +90,7 @@ class BitcoinCoreCommandsGenerator(BitcoinCommandsGenerator):
         generate code that waits until the mempool contains at least 'num_txs' transactions
         """
         self._write_line(f"""
-        while [[ $({self.__bitcoin_cli_cmd_prefix()} getmempoolinfo | jq -r ".size") != "{num_txs}" ]]; do
+        while [[ $({self.__bitcoin_cli_cmd_prefix()} getmempoolinfo | jq -r ".size") -lt "{num_txs}" ]]; do
             sleep 1;
         done
         """)
