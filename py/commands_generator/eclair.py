@@ -95,13 +95,13 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
     
     def set_id(self, bash_var: str) -> None:
         self._write_line(f"""{bash_var}=$({self.__eclair_cli_command_prefix()} getinfo | jq -r ".nodeId")""")
-
+    
     def wait_for_funds(self) -> None:
         # eclair doesn't provide a method to get our balance. we have to use the
         # the bitcoin daemon
         balance_bash_var = f"NODE_{self.idx}_BALANCE"
         self.bitcoin_commands_generator.set_node_balance(bash_var=balance_bash_var)
-
+        
         # bc outputs 1 if the equality holds
         # bitcoind shows balance as float, so we use bc to compare it to 0
         self._write_line(f"""while [[ $(echo "${balance_bash_var} == 0" |bc -l) == 1 ]]; do""")
@@ -140,6 +140,14 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
             sleep 1
         done
         """)
+    
+    def wait_to_route_via(
+        self,
+        src: LightningCommandsGenerator,
+        dest: LightningCommandsGenerator,
+        amount_msat: int,
+    ) -> None:
+        raise NotImplementedError()
     
     def create_invoice(self, payment_req_bash_var, amount_msat: int) -> None:
         self.__write_eclair_cli_command(

@@ -100,6 +100,21 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
     done
         """)
     
+    def wait_to_route_via(
+        self,
+        src: LightningCommandsGenerator,
+        dest: LightningCommandsGenerator,
+        amount_msat: int,
+    ) -> None:
+        self.__set_riskfactor()
+        src.set_id("SRC")
+        dest.set_id("DEST")
+        self._write_line(f"""
+        while [[ "$({self.__lightning_cli_command_prefix()} getroute $DEST {amount_msat} $RISKFACTOR null $SRC | jq -r ".route")" == "null" ]]; do
+            sleep 1;
+        done
+        """)
+    
     def create_invoice(self, payment_req_bash_var, amount_msat: int) -> None:
         self._write_line(f"""LABEL="invoice-label-$(date +%s.%N)" """)
         self._write_line(

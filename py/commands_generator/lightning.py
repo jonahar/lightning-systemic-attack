@@ -96,6 +96,24 @@ class LightningCommandsGenerator(ABC):
         pass
     
     @abstractmethod
+    def wait_to_route_via(
+        self,
+        src: "LightningCommandsGenerator",
+        dest: "LightningCommandsGenerator",
+        amount_msat: int,
+    ) -> None:
+        """
+        generate code that waits until this node recognizes a path from src to dest.
+        
+        Args:
+            src: a LightningCommandsGenerator of the source node
+            dest: a LightningCommandsGenerator of the destination node
+            amount_msat: the amount we expect the route to have (lightning find routes
+                         for specific amounts)
+        """
+        pass
+    
+    @abstractmethod
     def create_invoice(self, payment_req_bash_var, amount_msat: int) -> None:
         """
         generate code that creates a new invoice by this node with the given amount.
@@ -114,7 +132,7 @@ class LightningCommandsGenerator(ABC):
         generate code that makes payments from this node to another
         
         Args:
-            receiver: a LightningCommandsGenerator of the nodes receiving the payments
+            receiver: a LightningCommandsGenerator of the node receiving the payments
             num_payments: number of payments to make
             amount_msat: the amount in millisatoshi for each of the payments
         """

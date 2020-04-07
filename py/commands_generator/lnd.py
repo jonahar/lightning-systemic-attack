@@ -170,6 +170,14 @@ class LndCommandsGenerator(LightningCommandsGenerator):
     done
     """)
     
+    def wait_to_route_via(
+        self,
+        src: LightningCommandsGenerator,
+        dest: LightningCommandsGenerator,
+        amount_msat: int,
+    ) -> None:
+        raise NotImplementedError()
+    
     def create_invoice(self, payment_req_bash_var, amount_msat: int) -> None:
         amount_sat = msat_to_sat(msat=amount_msat)
         self._write_line(
