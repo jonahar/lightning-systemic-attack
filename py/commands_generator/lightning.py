@@ -188,3 +188,12 @@ class LightningCommandsGenerator(ABC):
         what information exactly is written
         """
         pass
+    
+    @abstractmethod
+    def wait_for_known_channels(self, num_channels: int) -> None:
+        """
+        wait until this node knows at least num_channels channels in the network,
+        whether this node is a side in the channel or not.
+        this includes directed channels (so one channel may be counted twice)
+        """
+        pass

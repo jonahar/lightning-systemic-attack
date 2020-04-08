@@ -229,3 +229,6 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         self._write_line(
             f"{self.__lncli_cmd_prefix()} listchannels >> {filepath}"
         )
+    
+    def wait_for_known_channels(self, num_channels: int) -> None:
+        raise NotImplementedError()

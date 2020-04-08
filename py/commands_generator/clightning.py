@@ -202,3 +202,15 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         self._write_line(
             f"{self.__lightning_cli_command_prefix()} listpeers >> {filepath}"
         )
+    
+    def wait_for_known_channels(self, num_channels: int) -> None:
+        """
+        wait until this node knows at least num_channels channels in the network,
+        whether this node is a side in the channel or not.
+        this includes directed channels (so one channel may be counted twice)
+        """
+        self._write_line(f"""
+        while [[ $({self.__lightning_cli_command_prefix()} listchannels | jq ".channels[] | .source" | wc -l ) -lt {num_channels} ]]; do
+            sleep 1
+        done
+        """)

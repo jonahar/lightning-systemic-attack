@@ -189,3 +189,6 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         self._write_line(
             f"{self.__eclair_cli_command_prefix()} peers >> {filepath}"
         )
+    
+    def wait_for_known_channels(self, num_channels: int) -> None:
+        raise NotImplementedError()

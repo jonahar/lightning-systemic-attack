@@ -365,6 +365,18 @@ class CommandsGenerator:
                 amount_msat=amount_msat,
             )
     
+    def wait_for_all_channel_announcements(self, sender_idx: NodeIndex):
+        """
+        wait until sender_idx knows all the channels in the network.
+        these are channels from sender to each of his peers, and channels from each
+        peer to another node (the receiver).
+        
+        the expected number of directed channels is num_peers * 2 * 2
+        """
+        expected_num_channels = len(self.topology[sender_idx]["peers"]) * 2 * 2
+        self.__maybe_info(f"waiting until {expected_num_channels} channels are known to node {sender_idx}")
+        self.lightning_clients[sender_idx].wait_for_known_channels(num_channels=expected_num_channels)
+    
     def make_payments(self, sender_idx: NodeIndex, receiver_idx: NodeIndex, num_payments: int, amount_msat: int):
         self.__maybe_info(
             f"making {num_payments} payments "
@@ -579,16 +591,16 @@ def main() -> None:
         cg.establish_channels()
         cg.wait_for_funding_transactions()
         # mine enough blocks so the channels reach NORMAL_STATE
-        cg.advance_blockchain(num_blocks=30, block_time_sec=5)
+        cg.advance_blockchain(num_blocks=20, block_time_sec=10)
         
         # to force channels announcements we stop all lightning nodes and start them over
         cg.stop_all_lightning_nodes()
         cg.start_lightning_nodes()
-        cg.advance_blockchain(num_blocks=30, block_time_sec=5)
     
     if args.make_payments:
         sender_idx, receiver_idx, num_payments, amount_msat = args.make_payments
-        cg.wait_to_all_routes(sender_idx, receiver_idx, amount_msat)
+        cg.wait_for_all_channel_announcements(sender_idx)
+        cg.advance_blockchain(num_blocks=30, block_time_sec=20)
         cg.make_payments(*args.make_payments)
         cg.print_node_htlcs(node_idx=receiver_idx)
         if args.dump_data:
