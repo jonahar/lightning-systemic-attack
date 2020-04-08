@@ -3,7 +3,7 @@ SCRIPT_NAME="steal-attack-10-lnd-victims-blockmaxweight=200000"
 TOPOLOGY="$LN/topologies/topology-10-lnd-victims.json"
 DATA_DIR="$LN/simulations/$SCRIPT_NAME"
 OUTPUT_FILE="$LN/simulations/$SCRIPT_NAME.out"
-SIMULATION=6
+SIMULATION=1
 COMMANDS_FILE=$LN/generated_commands_$SIMULATION
 cd $LN/py
 python3 -m commands_generator.commands_generator \
