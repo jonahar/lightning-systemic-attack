@@ -15,6 +15,10 @@ class ServiceType(Enum):
     BITCOIN_ZMQPUBRAWTX = "6"
 
 
+MIN_SIMULATION_NUM = 1
+MAX_SIMULATION_NUM = 5
+
+
 class ResourcesAllocator:
     """
     A ResourcesAllocator is responsible for allocating resources such as ports/directories to
@@ -25,7 +29,7 @@ class ResourcesAllocator:
     
     Ports allocation:
         Each port is 5 digits: XYZZZ
-        X: simulation number. 1-6
+        X: simulation number. 1-5
         Y: service type (see ServiceType). 0-9
         ZZZ: an id of some node in simulation X. 0-999 (zero padded if needed)
     
@@ -36,8 +40,10 @@ class ResourcesAllocator:
     """
     
     def __init__(self, simulation: int) -> None:
-        if not 1 <= simulation <= 6:
-            raise ValueError(f"simulation number must be between 1 and 6")
+        if not MIN_SIMULATION_NUM <= simulation <= MAX_SIMULATION_NUM:
+            raise ValueError(
+                f"simulation number must be between {MIN_SIMULATION_NUM} and {MAX_SIMULATION_NUM}"
+            )
         self.simulation: str = str(simulation)
     
     # Ports
