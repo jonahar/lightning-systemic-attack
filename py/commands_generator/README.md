@@ -1,4 +1,4 @@
-##Commands Generator
+## Commands Generator
 
 The `commands_generator` package is responsible for generating lightning simulations code,
 mainly for executing our proposed attack.
