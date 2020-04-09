@@ -11,7 +11,6 @@ from commands_generator.lightning import LightningCommandsGenerator
 from commands_generator.lnd import LndCommandsGenerator
 from commands_generator.resources_allocator import ResourcesAllocator
 from datatypes import NodeIndex
-from paths import BITCOIN_CONF_PATH
 
 INITIAL_CHANNEL_BALANCE_SAT = 10000000  # 0.1 BTC
 BITCOIN_MINER_IDX = 0
@@ -216,22 +215,6 @@ class CommandsGenerator:
     
     def wait(self, seconds: int):
         self.__write_line(f"sleep {seconds}")
-    
-    def __start_bitcoin_node(self, idx: NodeIndex):
-        datadir = self.resources_allocator.get_bitcoin_node_datadir(idx)
-        
-        self.__write_line(f"mkdir -p {datadir}")
-        self.__write_line(
-            f"bitcoind"
-            f"  -conf={BITCOIN_CONF_PATH}"
-            f"  -port={self.resources_allocator.get_bitcoin_node_listen_port(idx)}"
-            f"  -rpcport={self.resources_allocator.get_bitcoin_node_rpc_port(idx)}"
-            f"  -datadir={datadir}"
-            f"  -daemon"
-            f"  -blockmaxweight={self.bitcoin_block_max_weight}"
-            f"  -zmqpubrawblock=tcp://127.0.0.1:{self.resources_allocator.get_bitcoin_node_zmqpubrawblock_port(idx)}"
-            f"  -zmqpubrawtx=tcp://127.0.0.1:{self.resources_allocator.get_bitcoin_node_zmqpubrawtx_port(idx)}"
-        )
     
     def start_bitcoin_nodes(self):
         """
