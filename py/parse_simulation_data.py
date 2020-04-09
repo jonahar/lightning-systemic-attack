@@ -1,6 +1,7 @@
 import itertools
 import os
 import re
+import sys
 from collections import defaultdict
 from typing import Any, Callable, Dict, Iterable, List, Set
 
@@ -61,6 +62,21 @@ def export_txs_graph_to_dot(
         f.write(" -> ".join(map(str, sorted(height_to_txids.keys()))))
         f.write(";\n")
         f.write("}\n")
+
+
+def export_to_jpg(graph: TxsGraph, graph_name: str) -> None:
+    """
+    export the graph to a jpg file, named  <graph_name>.jpg
+    """
+    dotfile = os.path.join(LN, f"{graph_name}.dot")
+    export_txs_graph_to_dot(
+        graph=graph,
+        dotfile=dotfile,
+        txid_to_label=txid_to_short_txid,
+    )
+    # convert dot to jpg
+    jpgfile = os.path.join(LN, f"{graph_name}.jpg")
+    os.system(f"cd {LN}; dot2jpg {dotfile} {jpgfile}")
 
 
 def extract_bitcoin_funding_txids(simulation_outfile: str) -> Set[TXID]:
@@ -127,25 +143,17 @@ def find_commitments(simulation_outfile: str, graph: TxsGraph) -> List[TXID]:
     return commitments
 
 
-def get_htlcs_claimed_by_timeout(
+def get_htlc_claims(
     txs_graph: TxsGraph,
     commitment_txid: TXID,
     include_unconfirmed: bool = False,
 ) -> List[TXID]:
     """
     return a list of txids that spend an HTLC output from the given
-    commitment transaction, using the timeout-path of the HTLC script
+    commitment transaction.
     if include_unconfirmed is True, the result includes transactions that were published
     but not included in a block
     """
-    # from the bolt:
-    # " HTLC-Timeout and HTLC-Success Transactions... are almost identical,
-    #   except the HTLC-timeout transaction is timelocked
-    #   ...
-    #   locktime: 0 for HTLC-success, cltv_expiry for HTLC-timeout
-    #   "
-    #
-    # i.e. if the child_tx has a non-zero locktime, it is an HTLC-timeout
     return [
         child_tx
         for _, child_tx in txs_graph.out_edges(commitment_txid)
@@ -155,14 +163,39 @@ def get_htlcs_claimed_by_timeout(
             and
             # it really spends an HTLC output
             txs_graph.is_htlc_claim_tx(child_tx)
-            and
-            # is using the "timeout" path of the htlc script
-            txs_graph.nodes[child_tx]["tx"]["locktime"] > 0
         )
     ]
 
 
-def get_htlcs_claimed_by_success(
+def get_timeout_htlc_claims(
+    txs_graph: TxsGraph,
+    commitment_txid: TXID,
+    include_unconfirmed: bool = False,
+) -> List[TXID]:
+    """
+    return a list of txids that spend an HTLC output from the given
+    commitment transaction, using the timeout-path of the HTLC script
+    
+    include_unconfirmed has the same effect as defined in get_htlc_claims
+    """
+    # from the bolt:
+    # " HTLC-Timeout and HTLC-Success Transactions... are almost identical,
+    #   except the HTLC-timeout transaction is timelocked
+    #   ...
+    #   locktime: 0 for HTLC-success, cltv_expiry for HTLC-timeout
+    #   "
+    #
+    # i.e. if the child_tx has a non-zero locktime, it is an HTLC-timeout
+    
+    return list(
+        filter(
+            lambda txid: txs_graph.nodes[txid]["tx"]["locktime"] > 0,
+            get_htlc_claims(txs_graph, commitment_txid, include_unconfirmed),
+        )
+    )
+
+
+def get_success_htlc_claims(
     txs_graph: TxsGraph,
     commitment_txid: TXID,
     include_unconfirmed: bool = False,
@@ -171,25 +204,14 @@ def get_htlcs_claimed_by_success(
     return a list of txids that spend an HTLC output from the given
     commitment transaction, using the success-path of the HTLC script.
     
-    include_unconfirmed just as in get_htlcs_claimed_by_timeout
+    include_unconfirmed has the same effect as defined in get_htlc_claims
     """
-    # from the bolt:
-    # " HTLC-Timeout and HTLC-Success Transactions... are almost identical,
-    #   except the HTLC-timeout transaction is timelocked
-    #   ...
-    #   locktime: 0 for HTLC-success, cltv_expiry for HTLC-timeout
-    #   "
-    return [
-        child_tx
-        for _, child_tx in txs_graph.out_edges(commitment_txid)
-        if (
-            (txs_graph.nodes[child_tx]["height"] is not None or include_unconfirmed)
-            and
-            txs_graph.is_htlc_claim_tx(child_tx)
-            and
-            txs_graph.nodes[child_tx]["tx"]["locktime"] == 0
+    return list(
+        filter(
+            lambda txid: txs_graph.nodes[txid]["tx"]["locktime"] == 0,
+            get_htlc_claims(txs_graph, commitment_txid, include_unconfirmed),
         )
-    ]
+    )
 
 
 def find_double_spends(txs_graph: TxsGraph) -> Dict[TXID, Dict[int, List[TXID]]]:
@@ -270,7 +292,6 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
         "nsequence".ljust(nsequence_col_len) +
         "htlcs_stolen".ljust(htlcs_stolen_col_len)
     )
-    total_htlcs_stolen = 0
     for commitment_txid in commitment_txids:
         short_txid = commitment_txid[-txid_label_len:]
         height = txs_graph.nodes[commitment_txid]["height"]
@@ -278,8 +299,7 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
         num_outputs = len(txs_graph.nodes[commitment_txid]["tx"]["vout"])
         replaceable = str(txs_graph.is_replaceable_by_fee(txid=commitment_txid))
         nsequence = txs_graph.get_minimal_nsequence(commitment_txid)
-        htlcs_stolen = len(get_htlcs_claimed_by_timeout(txs_graph=txs_graph, commitment_txid=commitment_txid))
-        total_htlcs_stolen += htlcs_stolen
+        htlcs_stolen = len(get_timeout_htlc_claims(txs_graph=txs_graph, commitment_txid=commitment_txid))
         print(
             f"{short_txid:<{txid_col_len}}"
             f"{height:<{height_col_len}}"
@@ -289,23 +309,37 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
             f"{nsequence:<{nsequence_col_len}x}"
             f"{htlcs_stolen:<{htlcs_stolen_col_len}}"
         )
+
+
+def get_stolen_htlc_num(txs_graph: TxsGraph, commitments: List[TXID]) -> [int, int]:
+    """
+    return the total number of htlcs in the given commitments, and the number
+    of htlcs that were claimed after timeout
     
-    print(f"Total HTLCs stolen: {total_htlcs_stolen}")
-
-
-def export_to_jpg(graph: TxsGraph, graph_name: str) -> None:
+    return: (total_htlcs, stolen_htlcs)
     """
-    export the graph to a jpg file, named  <graph_name>.jpg
-    """
-    dotfile = os.path.join(LN, f"{graph_name}.dot")
-    export_txs_graph_to_dot(
-        graph=graph,
-        dotfile=dotfile,
-        txid_to_label=txid_to_short_txid,
+    
+    stolen_htlcs = sum(
+        map(lambda commitment: len(get_timeout_htlc_claims(txs_graph, commitment)), commitments)
     )
-    # convert dot to jpg
-    jpgfile = os.path.join(LN, f"{graph_name}.jpg")
-    os.system(f"cd {LN}; dot2jpg {dotfile} {jpgfile}")
+    
+    total_htlcs = sum(
+        map(lambda commitment: len(get_htlc_claims(txs_graph, commitment)), commitments)
+    )
+    
+    # this is just for a sanity check
+    success_htlcs = sum(
+        map(lambda commitment: len(get_success_htlc_claims(txs_graph, commitment)), commitments)
+    )
+    
+    if stolen_htlcs + success_htlcs != total_htlcs:
+        print(
+            "Warning: success+timeout transactions don't add up to the total number. "
+            "probably partial graph or a bug",
+            file=sys.stderr,
+        )
+    
+    return total_htlcs, stolen_htlcs
 
 
 def get_simulation_datadir(simulation_name: str) -> str:
@@ -330,7 +364,6 @@ def get_simulation_commitments(simulation_name: str) -> List[TXID]:
 
 
 def print_simulation_stats(simulation_name: str) -> None:
-    print(simulation_name)
     commitments = get_simulation_commitments(simulation_name)
     txs_graph = get_simulation_graph(simulation_name)
     sorted_commitments = sorted(commitments, key=lambda txid: txs_graph.nodes[txid]["height"])
@@ -342,7 +375,16 @@ def print_simulation_stats(simulation_name: str) -> None:
 
 def main(simulation_names: List[str]) -> None:
     for simulation_name in simulation_names:
+        print(simulation_name)
         print_simulation_stats(simulation_name)
+        total_htlcs, stolen_htlcs = get_stolen_htlc_num(
+            txs_graph=get_simulation_graph(simulation_name),
+            commitments=get_simulation_commitments(simulation_name),
+        )
+        print(
+            f"Total HTLCs stolen: {stolen_htlcs}/{total_htlcs} "
+            f"({int(stolen_htlcs * 100 / total_htlcs)}%)"
+        )
         print("\n=======\n")
 
 
