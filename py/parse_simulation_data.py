@@ -1,9 +1,8 @@
 import itertools
 import os
 import re
-from typing import Any, Callable, Iterable, List, Set
-
-from networkx.classes.digraph import DiGraph
+from collections import defaultdict
+from typing import Any, Callable, Dict, Iterable, List, Set
 
 from datatypes import BTC, TXID, btc_to_sat
 from paths import LN
@@ -13,7 +12,7 @@ from txs_graph.txs_graph import TxsGraph
 # ---------- txid-to-label functions ----------
 
 
-def get_txid_to_short_txid_and_fee(txs_graph: DiGraph) -> Callable[[TXID], str]:
+def get_txid_to_short_txid_and_fee(txs_graph: TxsGraph) -> Callable[[TXID], str]:
     def txid_to_short_txid_and_fee(txid: TXID) -> str:
         fee = btc_to_sat(txs_graph.nodes[txid]['tx']['fee'])
         return f"{txid[-4:]}; fee={fee}"
@@ -26,7 +25,7 @@ def txid_to_short_txid(txid: TXID) -> str:
 
 
 def export_txs_graph_to_dot(
-    graph: DiGraph,
+    graph: TxsGraph,
     dotfile: str,
     txid_to_label: Callable[[TXID], str],
 ) -> None:
@@ -128,10 +127,16 @@ def find_commitments(simulation_outfile: str, graph: TxsGraph) -> List[TXID]:
     return commitments
 
 
-def get_htlcs_claimed_by_timeout(txs_graph: TxsGraph, commitment_txid: TXID) -> List[TXID]:
+def get_htlcs_claimed_by_timeout(
+    txs_graph: TxsGraph,
+    commitment_txid: TXID,
+    include_unconfirmed: bool = False,
+) -> List[TXID]:
     """
-    return a list of txids that claimed an HTLC output from the given
-    commitment transaction, using timeout-tx (as opposed to success-tx)
+    return a list of txids that spend an HTLC output from the given
+    commitment transaction, using the timeout-path of the HTLC script
+    if include_unconfirmed is True, the result includes transactions that were published
+    but not included in a block
     """
     # from the bolt:
     # " HTLC-Timeout and HTLC-Success Transactions... are almost identical,
@@ -144,20 +149,106 @@ def get_htlcs_claimed_by_timeout(txs_graph: TxsGraph, commitment_txid: TXID) -> 
     return [
         child_tx
         for _, child_tx in txs_graph.out_edges(commitment_txid)
-        if txs_graph.is_htlc_claim_tx(child_tx) and txs_graph.nodes[child_tx]["tx"]["locktime"] > 0
+        if (
+            # we want to include it
+            (txs_graph.nodes[child_tx]["height"] is not None or include_unconfirmed)
+            and
+            # it really spends an HTLC output
+            txs_graph.is_htlc_claim_tx(child_tx)
+            and
+            # is using the "timeout" path of the htlc script
+            txs_graph.nodes[child_tx]["tx"]["locktime"] > 0
+        )
     ]
 
 
-def get_htlcs_claimed_by_success(txs_graph: TxsGraph, commitment_txid: TXID) -> List[TXID]:
+def get_htlcs_claimed_by_success(
+    txs_graph: TxsGraph,
+    commitment_txid: TXID,
+    include_unconfirmed: bool = False,
+) -> List[TXID]:
     """
-    return a list of txids that claimed an HTLC output from the given
-    commitment transaction, using success-tx (as opposed to timeout-tx)
+    return a list of txids that spend an HTLC output from the given
+    commitment transaction, using the success-path of the HTLC script.
+    
+    include_unconfirmed just as in get_htlcs_claimed_by_timeout
     """
+    # from the bolt:
+    # " HTLC-Timeout and HTLC-Success Transactions... are almost identical,
+    #   except the HTLC-timeout transaction is timelocked
+    #   ...
+    #   locktime: 0 for HTLC-success, cltv_expiry for HTLC-timeout
+    #   "
     return [
         child_tx
         for _, child_tx in txs_graph.out_edges(commitment_txid)
-        if txs_graph.is_htlc_claim_tx(child_tx) and txs_graph.nodes[child_tx]["tx"]["locktime"] == 0
+        if (
+            (txs_graph.nodes[child_tx]["height"] is not None or include_unconfirmed)
+            and
+            txs_graph.is_htlc_claim_tx(child_tx)
+            and
+            txs_graph.nodes[child_tx]["tx"]["locktime"] == 0
+        )
     ]
+
+
+def find_double_spends(txs_graph: TxsGraph) -> Dict[TXID, Dict[int, List[TXID]]]:
+    """
+    find double spends in the given TxsGraph. return a dictionary, mapping txid
+    that contains a double-spent output, to a dictionary, mapping output index to
+    txids that spent this output:
+    
+    {
+        TXID: {
+            0: [list of txids that spent TXID:0]
+            2: [list of txids that spent TXID:2]
+        },
+        ...
+    }
+    """
+    res = {}
+    for txid in txs_graph.nodes:
+        res[txid] = defaultdict(list)
+        for src, dest, data in txs_graph.out_edges(txid, data=True):
+            idx = data["index"]
+            res[txid][idx].append(dest)
+        
+        # only keep the lists that have more than one element - these are double-spends
+        res[txid] = {
+            idx: txid_list
+            for idx, txid_list in res[txid].items()
+            if len(txid_list) > 1
+        }
+    
+    # keep only txids that have at least one double-spent output
+    res = {
+        txid: double_spend_dict
+        for txid, double_spend_dict in res.items()
+        if len(double_spend_dict) > 0
+    }
+    
+    return res
+
+
+def print_double_spends(txs_graph: TxsGraph) -> None:
+    double_spends = find_double_spends(txs_graph)
+    for parent_txid, output_to_txid_list in double_spends.items():
+        for output, txid_list in output_to_txid_list.items():
+            short_parent_txid = txid_to_short_txid(parent_txid)
+            print(f"txids that spend {short_parent_txid}:{output}:")
+            for child_txid in txid_list:
+                short_child_txid = txid_to_short_txid(child_txid)
+                fee_sat = btc_to_sat(txs_graph.nodes[child_txid]["fee"])
+                feerate = fee_sat / txs_graph.nodes[child_txid]["tx"]["size"]
+                included_in_block = txs_graph.nodes[child_txid]["height"] is not None
+                
+                print(
+                    f"    {short_child_txid} "
+                    f"fee_satoshi={fee_sat}, "
+                    f"feerate= {feerate}, "
+                    f"included_in_blocks: {included_in_block}"
+                )
+            print()
 
 
 def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) -> None:
@@ -179,7 +270,7 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
         "nsequence".ljust(nsequence_col_len) +
         "htlcs_stolen".ljust(htlcs_stolen_col_len)
     )
-    
+    total_htlcs_stolen = 0
     for commitment_txid in commitment_txids:
         short_txid = commitment_txid[-txid_label_len:]
         height = txs_graph.nodes[commitment_txid]["height"]
@@ -188,6 +279,7 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
         replaceable = str(txs_graph.is_replaceable_by_fee(txid=commitment_txid))
         nsequence = txs_graph.get_minimal_nsequence(commitment_txid)
         htlcs_stolen = len(get_htlcs_claimed_by_timeout(txs_graph=txs_graph, commitment_txid=commitment_txid))
+        total_htlcs_stolen += htlcs_stolen
         print(
             f"{short_txid:<{txid_col_len}}"
             f"{height:<{height_col_len}}"
@@ -197,9 +289,11 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
             f"{nsequence:<{nsequence_col_len}x}"
             f"{htlcs_stolen:<{htlcs_stolen_col_len}}"
         )
+    
+    print(f"Total HTLCs stolen: {total_htlcs_stolen}")
 
 
-def export_to_jpg(graph: DiGraph, graph_name: str) -> None:
+def export_to_jpg(graph: TxsGraph, graph_name: str) -> None:
     """
     export the graph to a jpg file, named  <graph_name>.jpg
     """
@@ -214,24 +308,43 @@ def export_to_jpg(graph: DiGraph, graph_name: str) -> None:
     os.system(f"cd {LN}; dot2jpg {dotfile} {jpgfile}")
 
 
-def main(simulation_name):
-    print(simulation_name)
-    datadir = os.path.join(LN, "simulations", simulation_name)
-    outfile = os.path.join(LN, "simulations", f"{simulation_name}.out")
-    
-    txs_graph = TxsGraph.from_datadir(datadir)
-    
-    commitments = find_commitments(simulation_outfile=outfile, graph=txs_graph)
-    sorted_commitments = sorted(commitments, key=lambda txid: txs_graph.nodes[txid]["height"])
-    
-    print_commitments_info(commitment_txids=sorted_commitments, txs_graph=txs_graph)
-    
-    # this graph includes only interesting txs (no coinbase and other junk)
-    restricted_txs_graph = txs_graph.get_downstream(
-        sources=extract_bitcoin_funding_txids(simulation_outfile=outfile),
+def get_simulation_datadir(simulation_name: str) -> str:
+    return os.path.join(LN, "simulations", simulation_name)
+
+
+def get_simulation_outfile(simulation_name: str) -> str:
+    return os.path.join(LN, "simulations", f"{simulation_name}.out")
+
+
+def get_simulation_graph(simulation_name: str) -> TxsGraph:
+    return TxsGraph.from_datadir(
+        datadir=get_simulation_datadir(simulation_name)
     )
-    # export_to_jpg(graph=restricted_txs_graph, graph_name=simulation_name)
+
+
+def get_simulation_commitments(simulation_name: str) -> List[TXID]:
+    return find_commitments(
+        simulation_outfile=get_simulation_outfile(simulation_name),
+        graph=get_simulation_graph(simulation_name),
+    )
+
+
+def print_simulation_stats(simulation_name: str) -> None:
+    print(simulation_name)
+    commitments = get_simulation_commitments(simulation_name)
+    txs_graph = get_simulation_graph(simulation_name)
+    sorted_commitments = sorted(commitments, key=lambda txid: txs_graph.nodes[txid]["height"])
+    print_commitments_info(
+        commitment_txids=sorted_commitments,
+        txs_graph=txs_graph,
+    )
+
+
+def main(simulation_names: List[str]) -> None:
+    for simulation_name in simulation_names:
+        print_simulation_stats(simulation_name)
+        print("\n=======\n")
 
 
 if __name__ == "__main__":
-    main(simulation_name="simulation-name")
+    main(["simulation_names"])
