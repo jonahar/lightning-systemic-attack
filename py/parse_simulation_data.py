@@ -5,6 +5,10 @@ import sys
 from collections import defaultdict
 from typing import Any, Callable, Dict, Iterable, List, Set
 
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.ticker import MaxNLocator
+
 from datatypes import BTC, TXID, btc_to_sat
 from paths import LN
 from txs_graph.txs_graph import TxsGraph
@@ -334,6 +338,48 @@ def print_simulation_stats(simulation_name: str) -> None:
         commitment_txids=sorted_commitments,
         txs_graph=txs_graph,
     )
+
+
+def stolen_htlcs_vs_num_victims_graph(simulation_names: List[str]) -> None:
+    """
+    plot the graphs of  %stolen-HTLCs vs number-of-victims.
+    Different graph for each blockmaxweight, all on the same figure
+    """
+    simulation_name_regex = re.compile("steal-attack-(\\d+)-lnd-victims-blockmaxweight=(\\d+)")
+    # mapping from blockmaxweight to array with shape 2xN
+    graphs_data: Dict[int, np.ndarray] = defaultdict(lambda: np.zeros(shape=(2, 0), dtype=np.int))
+    
+    # initialize graphs_data
+    for simulation_name in simulation_names:
+        m = simulation_name_regex.fullmatch(simulation_name)
+        if m is None:
+            raise ValueError(f"Unrecognized simulation_name format: {simulation_name}")
+        num_victims = int(m.group(1))
+        blockmaxweight = int(m.group(2))
+        total_htlcs, stolen_htlcs = get_stolen_htlc_num(
+            txs_graph=get_simulation_graph(simulation_name),
+            commitments=get_simulation_commitments(simulation_name),
+        )
+        htlcs_percent = round(stolen_htlcs * 100 / total_htlcs)
+        graphs_data[blockmaxweight] = np.hstack(
+            (graphs_data[blockmaxweight], [[num_victims], [htlcs_percent]])
+        )
+    
+    fig = plt.figure()
+    for blockmaxweight, graph_data in graphs_data.items():
+        # sort by number of victims
+        indices = np.argsort(graph_data[0])
+        graph_data = graph_data[:, indices]
+        plt.plot(graph_data[0], graph_data[1], label=f"blockmaxweight={blockmaxweight}")
+    
+    # force integer ticks for the num-victims axis
+    fig.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+    
+    plt.xlabel("number of victims")
+    plt.ylabel("% of HTLCs stolen")
+    plt.legend(loc="best")
+    plt.grid()
+    plt.show()
 
 
 def get_simulation_datadir(simulation_name: str) -> str:
