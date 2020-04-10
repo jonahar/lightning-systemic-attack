@@ -64,21 +64,6 @@ def export_txs_graph_to_dot(
         f.write("}\n")
 
 
-def export_to_jpg(graph: TxsGraph, graph_name: str) -> None:
-    """
-    export the graph to a jpg file, named  <graph_name>.jpg
-    """
-    dotfile = os.path.join(LN, f"{graph_name}.dot")
-    export_txs_graph_to_dot(
-        graph=graph,
-        dotfile=dotfile,
-        txid_to_label=txid_to_short_txid,
-    )
-    # convert dot to jpg
-    jpgfile = os.path.join(LN, f"{graph_name}.jpg")
-    os.system(f"cd {LN}; dot2jpg {dotfile} {jpgfile}")
-
-
 def extract_bitcoin_funding_txids(simulation_outfile: str) -> Set[TXID]:
     """
     return the set of txs that funded the different nodes.
@@ -214,6 +199,36 @@ def get_success_htlc_claims(
     )
 
 
+def get_stolen_htlc_num(txs_graph: TxsGraph, commitments: List[TXID]) -> [int, int]:
+    """
+    return the total number of htlcs in the given commitments, and the number
+    of htlcs that were claimed after timeout
+    
+    return: (total_htlcs, stolen_htlcs)
+    """
+    
+    stolen_htlcs = sum(
+        map(lambda commitment: len(get_timeout_htlc_claims(txs_graph, commitment)), commitments)
+    )
+    
+    total_htlcs = sum(
+        map(lambda commitment: len(get_htlc_claims(txs_graph, commitment)), commitments)
+    )
+    
+    # this is just a sanity check
+    success_htlcs = sum(
+        map(lambda commitment: len(get_success_htlc_claims(txs_graph, commitment)), commitments)
+    )
+    if stolen_htlcs + success_htlcs != total_htlcs:
+        print(
+            "Warning: success+timeout transactions don't add up to the total number "
+            "of htlc claims. probably a partial graph was given, or there is a bug",
+            file=sys.stderr,
+        )
+    
+    return total_htlcs, stolen_htlcs
+
+
 def find_double_spends(txs_graph: TxsGraph) -> Dict[TXID, Dict[int, List[TXID]]]:
     """
     find double spends in the given TxsGraph. return a dictionary, mapping txid
@@ -311,35 +326,14 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
         )
 
 
-def get_stolen_htlc_num(txs_graph: TxsGraph, commitments: List[TXID]) -> [int, int]:
-    """
-    return the total number of htlcs in the given commitments, and the number
-    of htlcs that were claimed after timeout
-    
-    return: (total_htlcs, stolen_htlcs)
-    """
-    
-    stolen_htlcs = sum(
-        map(lambda commitment: len(get_timeout_htlc_claims(txs_graph, commitment)), commitments)
+def print_simulation_stats(simulation_name: str) -> None:
+    commitments = get_simulation_commitments(simulation_name)
+    txs_graph = get_simulation_graph(simulation_name)
+    sorted_commitments = sorted(commitments, key=lambda txid: txs_graph.nodes[txid]["height"])
+    print_commitments_info(
+        commitment_txids=sorted_commitments,
+        txs_graph=txs_graph,
     )
-    
-    total_htlcs = sum(
-        map(lambda commitment: len(get_htlc_claims(txs_graph, commitment)), commitments)
-    )
-    
-    # this is just for a sanity check
-    success_htlcs = sum(
-        map(lambda commitment: len(get_success_htlc_claims(txs_graph, commitment)), commitments)
-    )
-    
-    if stolen_htlcs + success_htlcs != total_htlcs:
-        print(
-            "Warning: success+timeout transactions don't add up to the total number. "
-            "probably partial graph or a bug",
-            file=sys.stderr,
-        )
-    
-    return total_htlcs, stolen_htlcs
 
 
 def get_simulation_datadir(simulation_name: str) -> str:
@@ -360,16 +354,6 @@ def get_simulation_commitments(simulation_name: str) -> List[TXID]:
     return find_commitments(
         simulation_outfile=get_simulation_outfile(simulation_name),
         graph=get_simulation_graph(simulation_name),
-    )
-
-
-def print_simulation_stats(simulation_name: str) -> None:
-    commitments = get_simulation_commitments(simulation_name)
-    txs_graph = get_simulation_graph(simulation_name)
-    sorted_commitments = sorted(commitments, key=lambda txid: txs_graph.nodes[txid]["height"])
-    print_commitments_info(
-        commitment_txids=sorted_commitments,
-        txs_graph=txs_graph,
     )
 
 
