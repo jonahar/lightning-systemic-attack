@@ -1,15 +1,15 @@
 {
     "1": {
-        "evil": false,
+        "client": "c-lightning",
+        "evil": true,
         "peers": [
             "4"
-        ],
-        "client": "c-lightning"
+        ]
     },
     "3": {
+        "client": "c-lightning",
         "evil": true,
-        "peers": [],
-        "client": "c-lightning"
+        "peers": []
     },
     "4": {
         "client": "lnd",
