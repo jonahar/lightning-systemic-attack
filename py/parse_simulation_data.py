@@ -331,23 +331,31 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
 
 
 def print_simulation_stats(simulation_name: str) -> None:
-    commitments = get_simulation_commitments(simulation_name)
     txs_graph = get_simulation_graph(simulation_name)
+    commitments = get_simulation_commitments(simulation_name)
     sorted_commitments = sorted(commitments, key=lambda txid: txs_graph.nodes[txid]["height"])
     print_commitments_info(
         commitment_txids=sorted_commitments,
         txs_graph=txs_graph,
     )
+    total_htlcs, stolen_htlcs = get_stolen_htlc_num(
+        txs_graph=txs_graph,
+        commitments=sorted_commitments,
+    )
+    print(
+        f"Total HTLCs stolen: {stolen_htlcs}/{total_htlcs} "
+        f"({round(stolen_htlcs * 100 / total_htlcs)}%)"
+    )
 
 
-def stolen_htlcs_vs_num_victims_graph(simulation_names: List[str]) -> None:
+def get_stolen_htlcs_vs_num_victims_data(simulation_names: List[str]) -> Dict[int, np.ndarray]:
     """
-    plot the graphs of  %stolen-HTLCs vs number-of-victims.
-    Different graph for each blockmaxweight, all on the same figure
+    return a mapping from blockmaxweight to a numpy array with shape 2xN: first
+    row with num_victims values and second row with stolen_htlcs_percent values
     """
     simulation_name_regex = re.compile("steal-attack-(\\d+)-lnd-victims-blockmaxweight=(\\d+)")
     # mapping from blockmaxweight to array with shape 2xN
-    graphs_data: Dict[int, np.ndarray] = defaultdict(lambda: np.zeros(shape=(2, 0), dtype=np.int))
+    data: Dict[int, np.ndarray] = defaultdict(lambda: np.zeros(shape=(2, 0), dtype=np.int))
     
     # initialize graphs_data
     for simulation_name in simulation_names:
@@ -361,12 +369,22 @@ def stolen_htlcs_vs_num_victims_graph(simulation_names: List[str]) -> None:
             commitments=get_simulation_commitments(simulation_name),
         )
         htlcs_percent = round(stolen_htlcs * 100 / total_htlcs)
-        graphs_data[blockmaxweight] = np.hstack(
-            (graphs_data[blockmaxweight], [[num_victims], [htlcs_percent]])
+        data[blockmaxweight] = np.hstack(
+            (data[blockmaxweight], [[num_victims], [htlcs_percent]])
         )
     
+    return data
+
+
+def plot_stolen_htlcs_vs_num_victims_graph(simulation_names: List[str]) -> None:
+    """
+    plot the graphs of  %stolen-HTLCs vs number-of-victims.
+    Different graph for each blockmaxweight, all on the same figure
+    """
+    data = get_stolen_htlcs_vs_num_victims_data(simulation_names)
+    
     fig = plt.figure()
-    for blockmaxweight, graph_data in graphs_data.items():
+    for blockmaxweight, graph_data in data.items():
         # sort by number of victims
         indices = np.argsort(graph_data[0])
         graph_data = graph_data[:, indices]
@@ -407,15 +425,9 @@ def main(simulation_names: List[str]) -> None:
     for simulation_name in simulation_names:
         print(simulation_name)
         print_simulation_stats(simulation_name)
-        total_htlcs, stolen_htlcs = get_stolen_htlc_num(
-            txs_graph=get_simulation_graph(simulation_name),
-            commitments=get_simulation_commitments(simulation_name),
-        )
-        print(
-            f"Total HTLCs stolen: {stolen_htlcs}/{total_htlcs} "
-            f"({int(stolen_htlcs * 100 / total_htlcs)}%)"
-        )
         print("\n=======\n")
+    
+    plot_stolen_htlcs_vs_num_victims_graph(simulation_names)
 
 
 if __name__ == "__main__":
