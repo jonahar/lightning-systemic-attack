@@ -584,6 +584,7 @@ def main() -> None:
         sender_idx, receiver_idx, num_payments, amount_msat = args.make_payments
         cg.wait_for_all_channel_announcements(sender_idx)
         cg.advance_blockchain(num_blocks=30, block_time_sec=20)
+        cg.wait(seconds=100)  # wait a bit so the nodes are synced and see the same blockchain height
         cg.make_payments(*args.make_payments)
         cg.print_node_htlcs(node_idx=receiver_idx)
         if args.dump_data:
