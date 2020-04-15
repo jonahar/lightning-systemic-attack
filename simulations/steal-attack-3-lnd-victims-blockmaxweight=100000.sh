@@ -11,12 +11,14 @@ python3 -m commands_generator.commands_generator \
     --establish-channels \
     --make-payments 1 3 4347 11000000 \
     --steal-attack 1 3 150 \
-    --dump-data "$DATA_DIR" \
+    --dump-data "$DATA_DIR.tmp" \
     --block-time 180 \
     --bitcoin-blockmaxweight 100000 \
     --simulation-number $SIMULATION \
     --outfile $COMMANDS_FILE
 
 rm -rf /tmp/lightning-simulations/$SIMULATION
-bash $COMMANDS_FILE 2>&1 | tee "$OUTPUT_FILE"
-
+rm -rf "$DATA_DIR"
+bash $COMMANDS_FILE 2>&1 | tee "$OUTPUT_FILE.tmp"
+mv "$OUTPUT_FILE.tmp" "$OUTPUT_FILE"
+mv "$DATA_DIR.tmp" "$DATA_DIR"
