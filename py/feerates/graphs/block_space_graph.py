@@ -7,7 +7,7 @@ import numpy as np
 from bitcoin_cli import get_tx_feerate, get_tx_weight, get_txs_in_block, set_bitcoin_cli
 from datatypes import BlockHeight, Feerate
 from feerates import logger
-from feerates.graphs.estimated_feerates import get_top_p_minimal_feerate, parse_estimation_files
+from feerates.graphs.estimated_feerates import get_feerates_percentile, parse_estimation_files
 from feerates.graphs.f_function import get_first_block_after_time_t
 from feerates.graphs.plot_utils import PlotData
 from utils import leveldb_cache, timeit
@@ -219,7 +219,7 @@ def main():
     p_values = [0.2, 0.5, 0.8]
     
     feerates_to_eval = [
-        get_top_p_minimal_feerate(samples=feerates, p=p)
+        get_feerates_percentile(samples=feerates, p=p)
         for p in p_values
     ]
     # feerates_to_eval may be a little different in different runs due to numerical issues

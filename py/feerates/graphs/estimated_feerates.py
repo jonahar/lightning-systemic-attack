@@ -69,13 +69,13 @@ def parse_estimation_files() -> Dict[int, List[PlotData]]:
     return data
 
 
-def get_top_p_minimal_feerate(samples: Iterable[float], p: float) -> float:
+def get_feerates_percentile(samples: Iterable[float], p: float) -> float:
     """
-    return the minimal feerate among the p top feerates.
+    return the p'th percentile of the samples
     0 < p < 1
     """
     sorted_samples = sorted(samples)
-    return sorted_samples[-int(len(sorted_samples) * p):][0]
+    return sorted_samples[:int(len(sorted_samples) * p)][-1]
 
 
 def main():
@@ -84,15 +84,15 @@ def main():
     p_values = [0.2, 0.5, 0.8]
     for num_blocks, plot_data_list in data.items():
         for plot_data in plot_data_list:
-            fig = plot_figure(title=f"estimated feerates", plot_data_list=[plot_data])
+            fig = plot_figure(title="", plot_data_list=[plot_data])
             plt.figure(fig.number)
             for p in p_values:
-                generalized_median = get_top_p_minimal_feerate(plot_data.feerates, p=p)
+                percentile = get_feerates_percentile(plot_data.feerates, p=p)
                 plt.hlines(
-                    y=generalized_median,
+                    y=percentile,
                     xmin=plot_data.timestamps[0],
                     xmax=plot_data.timestamps[-1],
-                    label=f"top {p} estimates ({round(generalized_median, 1)})",
+                    label=f"{int(p * 100)}'th percentile ({round(percentile, 1)})",
                 )
             plt.legend(loc="best")
     
