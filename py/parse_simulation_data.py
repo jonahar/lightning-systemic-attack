@@ -10,7 +10,7 @@ import numpy as np
 from matplotlib.ticker import MaxNLocator
 
 from datatypes import BTC, TXID, btc_to_sat
-from paths import LN
+from paths import SIMULATIONS_DIR
 from txs_graph.txs_graph import TxsGraph
 
 
@@ -333,6 +333,12 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
 def print_simulation_stats(simulation_name: str) -> None:
     txs_graph = get_simulation_graph(simulation_name)
     commitments = get_simulation_commitments(simulation_name)
+    # only keep commitments who are not graceful closing transactions
+    commitments = filter(
+        lambda commitment_txid: txs_graph.get_minimal_nsequence(commitment_txid) < 0xffffffff,
+        commitments,
+    )
+    
     sorted_commitments = sorted(commitments, key=lambda txid: txs_graph.nodes[txid]["height"])
     print_commitments_info(
         commitment_txids=sorted_commitments,
@@ -348,12 +354,14 @@ def print_simulation_stats(simulation_name: str) -> None:
     )
 
 
+simulation_name_regex = re.compile("steal-attack-(\\d+)-lnd-victims-blockmaxweight=(\\d+)")
+
+
 def get_stolen_htlcs_vs_num_victims_data(simulation_names: List[str]) -> Dict[int, np.ndarray]:
     """
     return a mapping from blockmaxweight to a numpy array with shape 2xN: first
     row with num_victims values and second row with stolen_htlcs_percent values
     """
-    simulation_name_regex = re.compile("steal-attack-(\\d+)-lnd-victims-blockmaxweight=(\\d+)")
     # mapping from blockmaxweight to array with shape 2xN
     data: Dict[int, np.ndarray] = defaultdict(lambda: np.zeros(shape=(2, 0), dtype=np.int))
     
@@ -368,7 +376,7 @@ def get_stolen_htlcs_vs_num_victims_data(simulation_names: List[str]) -> Dict[in
             txs_graph=get_simulation_graph(simulation_name),
             commitments=get_simulation_commitments(simulation_name),
         )
-        htlcs_percent = round(stolen_htlcs * 100 / total_htlcs)
+        htlcs_percent = (stolen_htlcs * 100 / total_htlcs)
         data[blockmaxweight] = np.hstack(
             (data[blockmaxweight], [[num_victims], [htlcs_percent]])
         )
@@ -383,12 +391,12 @@ def plot_stolen_htlcs_vs_num_victims_graph(simulation_names: List[str]) -> None:
     """
     data = get_stolen_htlcs_vs_num_victims_data(simulation_names)
     
-    fig = plt.figure()
+    fig = plt.figure(figsize=[9.6, 7.2])
     for blockmaxweight, graph_data in data.items():
         # sort by number of victims
         indices = np.argsort(graph_data[0])
         graph_data = graph_data[:, indices]
-        plt.plot(graph_data[0], graph_data[1], label=f"blockmaxweight={blockmaxweight}")
+        plt.plot(graph_data[0], graph_data[1], marker="o", label=f"blockmaxweight={blockmaxweight}")
     
     # force integer ticks for the num-victims axis
     fig.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -397,15 +405,16 @@ def plot_stolen_htlcs_vs_num_victims_graph(simulation_names: List[str]) -> None:
     plt.ylabel("% of HTLCs stolen")
     plt.legend(loc="best")
     plt.grid()
+    plt.savefig("stolen-htlcs-vs-num-victims.png")
     plt.show()
 
 
 def get_simulation_datadir(simulation_name: str) -> str:
-    return os.path.join(LN, "simulations", simulation_name)
+    return os.path.join(SIMULATIONS_DIR, simulation_name)
 
 
 def get_simulation_outfile(simulation_name: str) -> str:
-    return os.path.join(LN, "simulations", f"{simulation_name}.out")
+    return os.path.join(SIMULATIONS_DIR, f"{simulation_name}.out")
 
 
 def get_simulation_graph(simulation_name: str) -> TxsGraph:
@@ -431,4 +440,8 @@ def main(simulation_names: List[str]) -> None:
 
 
 if __name__ == "__main__":
-    main(["simulation_names"])
+    simulation_names = sorted(filter(
+        lambda name: os.path.isdir(get_simulation_datadir(name)) and name.startswith("steal-attack"),
+        os.listdir(SIMULATIONS_DIR)
+    ))
+    main(simulation_names)
