@@ -116,6 +116,7 @@ class LndCommandsGenerator(LightningCommandsGenerator):
                 break
             fi
             kill -s SIGKILL $lnd_pid
+            sleep $wait_interval
             # wait a bit longer next time, in case that wasn't enough
             wait_interval=$((wait_interval+2))
             lncli_timeout=$((lncli_timeout+2))
