@@ -3,6 +3,7 @@ import os
 import re
 import sys
 from collections import defaultdict
+from functools import lru_cache
 from typing import Any, Callable, Dict, Iterable, List, Set
 
 import matplotlib.pyplot as plt
@@ -12,9 +13,10 @@ from matplotlib.ticker import MaxNLocator
 from datatypes import BTC, TXID, btc_to_sat
 from paths import SIMULATIONS_DIR
 from txs_graph.txs_graph import TxsGraph
+from utils import setup_logging
 
-
-# ---------- txid-to-label functions ----------
+GRAPH_FILE = "stolen-htlcs-vs-num-victims.png"
+log = setup_logging()
 
 
 def get_txid_to_short_txid_and_fee(txs_graph: TxsGraph) -> Callable[[TXID], str]:
@@ -294,21 +296,17 @@ def print_double_spends(txs_graph: TxsGraph) -> None:
 
 def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) -> None:
     txid_label_len = 6
-    txid_col_len = txid_label_len + 2
+    txid_col_len = txid_label_len + 7
     height_col_len = 8
-    min_exp_height_col_len = 15
+    min_exp_height_col_len = 16
     num_outputs_col_len = 13
-    replaceable_col_len = 13
-    nsequence_col_len = 11
     htlcs_stolen_col_len = 11
     
     print(
-        "txid".ljust(txid_col_len) +
+        "commit_txid".ljust(txid_col_len) +
         "height".ljust(height_col_len) +
         "min_exp_height".ljust(min_exp_height_col_len) +
         "num_outputs".ljust(num_outputs_col_len) +
-        "replaceable".ljust(replaceable_col_len) +
-        "nsequence".ljust(nsequence_col_len) +
         "htlcs_stolen".ljust(htlcs_stolen_col_len)
     )
     for commitment_txid in commitment_txids:
@@ -316,16 +314,12 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
         height = txs_graph.nodes[commitment_txid]["height"]
         min_exp_height = txs_graph.get_minimal_htlc_expiration_height(commitment_txid)
         num_outputs = len(txs_graph.nodes[commitment_txid]["tx"]["vout"])
-        replaceable = str(txs_graph.is_replaceable_by_fee(txid=commitment_txid))
-        nsequence = txs_graph.get_minimal_nsequence(commitment_txid)
         htlcs_stolen = len(get_timeout_htlc_claims(txs_graph=txs_graph, commitment_txid=commitment_txid))
         print(
             f"{short_txid:<{txid_col_len}}"
             f"{height:<{height_col_len}}"
             f"{min_exp_height:<{min_exp_height_col_len}}"
             f"{num_outputs:<{num_outputs_col_len}}"
-            f"{replaceable:<{replaceable_col_len}}"
-            f"{nsequence:<{nsequence_col_len}x}"
             f"{htlcs_stolen:<{htlcs_stolen_col_len}}"
         )
 
@@ -405,7 +399,7 @@ def plot_stolen_htlcs_vs_num_victims_graph(simulation_names: List[str]) -> None:
     plt.ylabel("% of HTLCs stolen")
     plt.legend(loc="best")
     plt.grid()
-    plt.savefig("stolen-htlcs-vs-num-victims.png")
+    plt.savefig(GRAPH_FILE)
     plt.show()
 
 
@@ -417,6 +411,7 @@ def get_simulation_outfile(simulation_name: str) -> str:
     return os.path.join(SIMULATIONS_DIR, f"{simulation_name}.out")
 
 
+@lru_cache(maxsize=64)
 def get_simulation_graph(simulation_name: str) -> TxsGraph:
     return TxsGraph.from_datadir(
         datadir=get_simulation_datadir(simulation_name)
