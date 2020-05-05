@@ -3,10 +3,11 @@ from math import ceil
 from typing import List
 
 from bitcoin_cli import (
-    blockchain_height, get_block_by_height, get_block_time, get_transaction, get_tx_feerate
+    get_block_by_height, get_transaction, get_tx_feerate
 )
 from datatypes import Block, BlockHeight, Feerate, TXID, Timestamp
 from feerates import logger
+from feerates.graphs.graph_utils import get_first_block_after_time_t
 from utils import leveldb_cache, timeit
 
 """
@@ -16,26 +17,6 @@ This module is responsible for computing the F function. this is defined as
 Where M is the first block height that came after time t
 and G(b,p) is the set of the p top paying transactions in block height b
 """
-
-
-def get_first_block_after_time_t(t: Timestamp) -> BlockHeight:
-    """
-    return the height of the first block with timestamp greater or equal to
-    the given timestamp
-    """
-    low: int = 0
-    high = blockchain_height()
-    
-    # simple binary search
-    while low < high:
-        m = (low + high) // 2
-        m_time = get_block_time(m)
-        if m_time < t:
-            low = m + 1
-        else:
-            high = m
-    
-    return low
 
 
 def remove_coinbase_txid(txids: List[TXID]) -> List[TXID]:

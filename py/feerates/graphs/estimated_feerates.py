@@ -26,7 +26,7 @@ MIN_TIMESTAMP = 1583317269
 MAX_TIMESTAMP = 1585819506
 
 # only show graphs for these values of num_blocks. set to None to include all
-num_blocks_to_include = [2]
+num_blocks_to_include = [1]
 
 
 def parse_estimation_files() -> Dict[int, List[PlotData]]:
