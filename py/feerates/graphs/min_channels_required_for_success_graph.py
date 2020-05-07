@@ -1,4 +1,6 @@
 from datetime import datetime
+from math import ceil
+from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,6 +10,7 @@ from datatypes import Feerate, Timestamp
 from feerates.graphs.block_space_graph import get_block_space_for_feerate
 from feerates.graphs.estimated_feerates import parse_estimation_files
 from feerates.graphs.graph_utils import get_first_block_after_time_t
+from utils import leveldb_cache
 
 num_blocks = 1
 plot_data = parse_estimation_files()[num_blocks][1]
@@ -62,10 +65,11 @@ def get_feerate_estimation_at_time_t(t: Timestamp) -> Feerate:
     return feerates[timestamp_idx_to_eval]
 
 
+@leveldb_cache(value_to_str=str, str_to_value=int)
 def get_max_confirmed_htlcs(t: Timestamp) -> int:
     """
     return the maximum number of HTLCs that can be confirmed before expiration
-    in an attack starting at time x.
+    in an attack starting at time t.
     Assuming the channel's feerate was determined at time x by bitcoind
     """
     start_height = get_first_block_after_time_t(t)
@@ -79,55 +83,63 @@ def get_max_confirmed_htlcs(t: Timestamp) -> int:
     avail_space = 0
     for h in range(close_height + 1, expiration_height + 1):
         block_avail_space_percent = get_block_space_for_feerate(height=h, feerate=channel_feerate)
-        avail_space += (block_avail_space_percent * BITCOIN_BLOCK_MAX_WEIGHT) // 100
+        avail_space += int((block_avail_space_percent * BITCOIN_BLOCK_MAX_WEIGHT) // 100)
     
     max_confirmed_htlcs = how_many_htlcs_fit_in_weight(avail_space)
     return max_confirmed_htlcs
 
 
-def plot_attack_start_time_vs_confirmed_htlcs():
+def plot_attack_start_time_vs_confirmed_htlcs(timestamp_values: List[Timestamp]):
     """
     For a given time X, if we open channels at time X and execute the attack
     on time X+24hour , Y is the minimal number of HTLCs to expire
     """
-    # we want to exclude timestamps near the last 100 blocks.
-    # 100 blocks ~ 1000 minutes ~ 1000 samples
-    
-    timestamps_values = timestamps[:-1000:5]
     max_confirmed_htlcs_values = list(
-        map(lambda t: get_max_confirmed_htlcs(t), timestamps_values)
+        map(lambda t: get_max_confirmed_htlcs(t), timestamp_values)
     )
     
-    num_channels_values = [
-        max_confirmed_htlcs // HTLCS_PER_CHANNEL
-        for max_confirmed_htlcs in max_confirmed_htlcs_values
-    ]
-    
-    xticks = np.linspace(start=timestamps_values[0], stop=timestamps_values[-1], num=10)
-    timestamp_to_date_str = lambda t: datetime.utcfromtimestamp(t).strftime('%Y-%m-%d %H:%M')
+    xticks = np.linspace(start=timestamp_values[0], stop=timestamp_values[-1], num=10)
+    timestamp_to_date_str = lambda t: datetime.utcfromtimestamp(t).strftime('%Y-%m-%d')
+    xlabels = [timestamp_to_date_str(t) for t in xticks]
     
     plt.figure()
-    plt.plot(timestamps_values, max_confirmed_htlcs_values, label="")
+    plt.plot(timestamp_values, max_confirmed_htlcs_values)
     plt.grid()
     plt.xlabel("Attack start time")
     plt.ylabel("Maximum #HTLC-success to be confirmed before expiration")
-    plt.xticks(
-        ticks=xticks,
-        labels=[timestamp_to_date_str(t) for t in xticks]
-    )
+    plt.xticks(ticks=xticks, labels=xlabels)
+    
+    # ----------------
+    
+    num_channels_values = [
+        ceil(max_confirmed_htlcs / HTLCS_PER_CHANNEL)
+        for max_confirmed_htlcs in max_confirmed_htlcs_values
+    ]
     
     plt.figure()
-    plt.plot(timestamps_values, num_channels_values, label="")
+    plt.plot(timestamp_values, num_channels_values)
     plt.grid()
     plt.xlabel("Attack start time")
     plt.ylabel("Minimum #attacked-channels required for stealing")
-    plt.xticks(
-        ticks=xticks,
-        labels=[timestamp_to_date_str(t) for t in xticks]
-    )
+    plt.xticks(ticks=xticks, labels=xlabels)
+    
+    # ----------------
+    
+    max_num_channels = max(num_channels_values)
+    num_channels_range = np.arange(0, max_num_channels + 1)
+    
+    num_channels_hist, bins = np.histogram(num_channels_values, bins=np.arange(max_num_channels + 2))
+    num_channels_hist_cumsum = np.cumsum(num_channels_hist)
+    num_channels_hist_cumsum_normalized = (num_channels_hist_cumsum * 100) / len(timestamp_values)
+    
+    plt.figure()
+    plt.plot(num_channels_range, num_channels_hist_cumsum_normalized)
+    plt.grid()
+    plt.xlabel("number of victims")
+    plt.ylabel("Percent of time-points in which X victims is enough for successful attack")
     
     plt.show()
 
 
 set_bitcoin_cli("user")
-plot_attack_start_time_vs_confirmed_htlcs()
+plot_attack_start_time_vs_confirmed_htlcs(timestamp_values=timestamps[::5])
