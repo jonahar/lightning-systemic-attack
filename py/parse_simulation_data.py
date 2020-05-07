@@ -70,62 +70,61 @@ def export_txs_graph_to_dot(
         f.write("}\n")
 
 
-def extract_bitcoin_funding_txids(simulation_outfile: str) -> Set[TXID]:
-    """
-    return the set of txs that funded the different nodes.
-    These are the txs in which the miner node sent the initial balance for each
-    lightning node
-    """
-    FUNDING_INFO_LINE = "funding lightning nodes"
-    txid_regex = re.compile("[0-9A-Fa-f]{64}")
-    
-    txids = set()
-    with open(simulation_outfile) as f:
-        line = f.readline().strip()
-        while line is not None and line != FUNDING_INFO_LINE:
-            line = f.readline().strip()
-        if line is None:
-            raise ValueError("Couldn't find funding rows in the given file. is file in bad format?")
-        line = f.readline().strip()
-        while txid_regex.fullmatch(line):
-            txids.add(line)
-            line = f.readline().strip()
-    return txids
-
-
 def flatten(s: Iterable[Iterable[Any]]) -> List[Any]:
     return list(itertools.chain.from_iterable(s))
 
 
-def find_commitments(simulation_outfile: str, graph: TxsGraph) -> List[TXID]:
-    bitcoin_fundings = extract_bitcoin_funding_txids(simulation_outfile=simulation_outfile)
+def find_funding_txids(simulation_name: str) -> Set[TXID]:
+    datadir = get_simulation_datadir(simulation_name)
+    txid_regex = "[0-9A-Fa-f]{64}"
+    funding_txid_row_pattern = re.compile(f'"funding_txid": "({txid_regex})"')
+    funding_txids = set()
+    for entry in os.listdir(datadir):
+        if entry.startswith("node_") and entry.endswith("_channels"):
+            with open(os.path.join(datadir, entry)) as f:
+                for line in f:
+                    m = funding_txid_row_pattern.search(line)
+                    if m:
+                        funding_txids.add(m.group(1))
     
-    ln_channel_fundings = flatten(
-        graph.get_all_direct_children(txid)
-        for txid in bitcoin_fundings
-    )
+    # sanity check
+    txs_graph = get_simulation_graph(simulation_name)
+    if not all(map(lambda txid: txid in txs_graph, funding_txids)):
+        raise RuntimeError(
+            "Error while looking for funding txids. "
+            "extracted txid was not found in the graph"
+        )
+    
+    return funding_txids
+
+
+def find_commitments(simulation_name: str) -> List[TXID]:
+    funding_txids = find_funding_txids(simulation_name)
+    graph = get_simulation_graph(simulation_name)
     
     LN_CHANNEL_BALANCE = 0.1
     
     commitments = flatten(
-        list(filter(
-            # only keep those with the expected balance
-            lambda child_txid: graph.edges[(channel_funding_txid, child_txid)]["value"] == LN_CHANNEL_BALANCE,
-            graph.get_all_direct_children(txid=channel_funding_txid)
-        ))
-        for channel_funding_txid in ln_channel_fundings
+        list(
+            filter(
+                # only keep those with the expected balance
+                lambda child_txid: graph.edges[(channel_funding_txid, child_txid)]["value"] == LN_CHANNEL_BALANCE,
+                graph.get_all_direct_children(txid=channel_funding_txid)
+            )
+        )
+        for channel_funding_txid in funding_txids
     )
     
     # verifications
-    if len(ln_channel_fundings) != len(commitments):
+    if len(funding_txids) != len(commitments):
         raise ValueError(
-            "Failed to find commitments."
+            "Failed to find commitments. "
             "number of commitment txs found doesn't correspond to number of funding txs found"
         )
     
     for commitment_txid in commitments:
         num_inputs = len(graph.nodes[commitment_txid]["tx"]["vin"])
-        if len(graph.nodes[commitment_txid]["tx"]["vin"]) != 1:
+        if num_inputs != 1:
             raise ValueError(
                 f"Failed to find commitments. "
                 f"txid {commitment_txid[-4:]} expected to have exactly 1 input, but has {num_inputs}"
@@ -326,14 +325,14 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
 
 def print_simulation_stats(simulation_name: str) -> None:
     txs_graph = get_simulation_graph(simulation_name)
-    commitments = get_simulation_commitments(simulation_name)
+    all_commitments = find_commitments(simulation_name=simulation_name)
     # only keep commitments who are not graceful closing transactions
     commitments = filter(
         lambda commitment_txid: txs_graph.get_minimal_nsequence(commitment_txid) < 0xffffffff,
-        commitments,
+        all_commitments,
     )
-    
     sorted_commitments = sorted(commitments, key=lambda txid: txs_graph.nodes[txid]["height"])
+    print(f"Total number of commitments: {len(sorted_commitments)}")
     print_commitments_info(
         commitment_txids=sorted_commitments,
         txs_graph=txs_graph,
@@ -370,7 +369,7 @@ def get_num_victims_vs_stolen_htlcs_data(simulation_names: List[str]) -> Dict[in
         blockmaxweight = int(m.group(2))
         total_htlcs, stolen_htlcs = get_stolen_htlc_num(
             txs_graph=get_simulation_graph(simulation_name),
-            commitments=get_simulation_commitments(simulation_name),
+            commitments=find_commitments(simulation_name),
         )
         stolen_htlcs_percent = (stolen_htlcs * 100 / total_htlcs)
         data[blockmaxweight][0].append(num_victims)
@@ -425,13 +424,6 @@ def get_simulation_outfile(simulation_name: str) -> str:
 def get_simulation_graph(simulation_name: str) -> TxsGraph:
     return TxsGraph.from_datadir(
         datadir=get_simulation_datadir(simulation_name)
-    )
-
-
-def get_simulation_commitments(simulation_name: str) -> List[TXID]:
-    return find_commitments(
-        simulation_outfile=get_simulation_outfile(simulation_name),
-        graph=get_simulation_graph(simulation_name),
     )
 
 
