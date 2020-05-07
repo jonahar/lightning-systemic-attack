@@ -1,3 +1,4 @@
+from functools import lru_cache
 from math import floor
 from typing import Dict, List
 
@@ -15,6 +16,7 @@ from utils import leveldb_cache, timeit
 BLOCK_MAX_WEIGHT = 4_000_000
 
 
+@lru_cache()
 @timeit(logger=logger, print_args=True)
 @leveldb_cache(value_to_str=str, str_to_value=float)
 def get_block_space_for_feerate(height: BlockHeight, feerate: Feerate) -> float:
