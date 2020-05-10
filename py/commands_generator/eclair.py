@@ -48,7 +48,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         eclair.api.enabled=true
         eclair.api.password=kek
         eclair.api.port={self.rpc_port}
-        eclair.bitcoind.host=localhost
+        eclair.bitcoind.host=127.0.0.1
         eclair.bitcoind.rpcpassword=kek
         eclair.bitcoind.rpcport={self.bitcoin_rpc_port}
         eclair.bitcoind.rpcuser=kek
@@ -74,7 +74,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         """)
     
     def __eclair_cli_command_prefix(self) -> str:
-        return f"{ECLAIR_CLI} -p kek -a localhost:{self.rpc_port} "
+        return f"{ECLAIR_CLI} -p kek -a 127.0.0.1:{self.rpc_port} "
     
     def __write_eclair_cli_command(self, args: str) -> None:
         self._write_line(
@@ -118,7 +118,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         peer_id_bash_var = f"ID_{peer.idx}"
         peer.set_id(bash_var=peer_id_bash_var)
         self.__write_eclair_cli_command(
-            args=f"connect --uri=${{{peer_id_bash_var}}}@localhost:{peer_listen_port}"
+            args=f"connect --uri=${{{peer_id_bash_var}}}@127.0.0.1:{peer_listen_port}"
         )
         self.__write_eclair_cli_command(
             args=f"open --nodeId=${peer_id_bash_var} --fundingSatoshis={initial_balance_sat}"

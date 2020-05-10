@@ -253,8 +253,8 @@ class CommandsGenerator:
         for node_idx in self.topology.keys():
             node_listen_port = self.resources_allocator.get_bitcoin_node_listen_port(node_idx)
             # miner adds node
-            self.bitcoin_clients[BITCOIN_MINER_IDX].add_peer(host="localhost", port=node_listen_port)
-            self.bitcoin_clients[node_idx].add_peer(host="localhost", port=miner_listen_port)
+            self.bitcoin_clients[BITCOIN_MINER_IDX].add_peer(host="127.0.0.1", port=node_listen_port)
+            self.bitcoin_clients[node_idx].add_peer(host="127.0.0.1", port=miner_listen_port)
     
     def connect_bitcoin_nodes_in_circle(self):
         self.__maybe_info("connecting all bitcoin nodes in circle")
@@ -264,7 +264,7 @@ class CommandsGenerator:
             peer_1_idx = int(all_nodes[i % num_nodes])
             peer_2_idx = int(all_nodes[(i + 1) % num_nodes])
             peer_2_listen_port = self.resources_allocator.get_bitcoin_node_listen_port(peer_2_idx)
-            self.bitcoin_clients[peer_1_idx].add_peer(host="localhost", port=peer_2_listen_port)
+            self.bitcoin_clients[peer_1_idx].add_peer(host="127.0.0.1", port=peer_2_listen_port)
     
     def start_lightning_nodes(self) -> None:
         """generate code to start all lightning nodes"""

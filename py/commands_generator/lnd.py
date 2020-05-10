@@ -44,7 +44,7 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         """
         return (
             f"{LND_CLI_BINARY}"
-            f"  --rpcserver localhost:{self.rpc_port}"
+            f"  --rpcserver 127.0.0.1:{self.rpc_port}"
             f"  --lnddir {self.lightning_dir}"
             f"  --no-macaroons"
         )
@@ -74,12 +74,12 @@ class LndCommandsGenerator(LightningCommandsGenerator):
             f"  --tlskeypath={self.lightning_dir}/tls.key"
             f"  --no-macaroons"
             f"  --restlisten={self.rest_port}"
-            f"  --rpclisten=localhost:{self.rpc_port}"
-            f"  --listen=localhost:{self.listen_port}"
-            f"  --bitcoind.rpchost=localhost:{self.bitcoin_rpc_port}"
+            f"  --rpclisten=127.0.0.1:{self.rpc_port}"
+            f"  --listen=127.0.0.1:{self.listen_port}"
+            f"  --bitcoind.rpchost=127.0.0.1:{self.bitcoin_rpc_port}"
             f"  --bitcoind.dir={self.bitcoin_dir}"
-            f"  --bitcoind.zmqpubrawblock=localhost:{self.zmqpubrawblock_port}"
-            f"  --bitcoind.zmqpubrawtx=localhost:{self.zmqpubrawtx_port}"
+            f"  --bitcoind.zmqpubrawblock=127.0.0.1:{self.zmqpubrawblock_port}"
+            f"  --bitcoind.zmqpubrawtx=127.0.0.1:{self.zmqpubrawtx_port}"
             f"  --debuglevel=debug"
             f"  {alias_flag}"
             # redirecting stdout+stderr and run in the background, because stupid lnd
@@ -151,7 +151,7 @@ class LndCommandsGenerator(LightningCommandsGenerator):
     ) -> None:
         peer.set_id(bash_var=f"ID_{peer.idx}")
         self.__write_lncli_command(
-            f"connect ${{ID_{peer.idx}}}@localhost:{peer_listen_port}"
+            f"connect ${{ID_{peer.idx}}}@127.0.0.1:{peer_listen_port}"
         )
         self.__write_lncli_command(
             f"openchannel --node_key=${{ID_{peer.idx}}} --local_amt={initial_balance_sat}"

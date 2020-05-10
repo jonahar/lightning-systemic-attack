@@ -44,13 +44,13 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
             f"{binary} "
             f"  --conf={CLIGHTNING_CONF_PATH}"
             f"  --lightning-dir={self.datadir}"
-            f"  --addr=localhost:{self.listen_port}"
+            f"  --addr=127.0.0.1:{self.listen_port}"
             f"  --log-file=log"  # relative to lightning-dir
             f"  {alias_flag}"
             f"  {evil_flag}"
             f"  {silent_flag}"
             f"  {log_level_flag}"
-            f"  --bitcoin-rpcconnect=localhost"
+            f"  --bitcoin-rpcconnect=127.0.0.1"
             f"  --bitcoin-rpcport={self.bitcoin_rpc_port}"
             f"  --daemon"
         )
@@ -84,7 +84,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
     ) -> None:
         bash_var = f"ID_{peer.idx}"
         peer.set_id(bash_var=bash_var)
-        self._write_line(f"{self.__lightning_cli_command_prefix()} connect ${bash_var} localhost:{peer_listen_port}")
+        self._write_line(f"{self.__lightning_cli_command_prefix()} connect ${bash_var} 127.0.0.1:{peer_listen_port}")
         self._write_line(
             f"{self.__lightning_cli_command_prefix()} fundchannel ${bash_var} {initial_balance_sat}")
     
