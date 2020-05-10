@@ -568,7 +568,6 @@ def main() -> None:
     cg.start_lightning_nodes()
     
     if args.establish_channels:
-        cg.fill_blockchain(40)  # 40 seems to be enough for the estimatesmartfee method to start working
         cg.fund_nodes()
         cg.wait_for_funds()
         cg.establish_channels()
