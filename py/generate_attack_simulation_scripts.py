@@ -3,49 +3,65 @@ import os
 
 from paths import LN
 
-min_num_victims = 1
-max_num_victims = 10
-num_payments_multiplier = 3
-blockmaxweight_values = [100_000, 200_000, 300_000, 400_000]
+num_attacker_sending_nodes = 5
+num_attacker_receiving_nodes = num_attacker_sending_nodes
+num_victims_values = [5, 10, 20]
+blockmaxweight_values = [1_000_000, 2_000_000, 4_000_000]
 
-num_victims_values = list(range(min_num_victims, max_num_victims + 1))
 min_simulation_num = 1
 max_simulation_num = 5
+num_payments_multiplier = 2
 
 for num_victims in num_victims_values:
-    # generate topology file
-    topology = {
-        1: {
-            "client": "c-lightning",
-            "evil": True,
-            "peers": list(map(str, range(4, 4 + num_victims)))
-        },
-        3: {
-            "client": "c-lightning",
-            "evil": True,
-            "peers": []
-        },
-    }
+    # generate topology
+    # sending-node ids start with 1
+    # receiving-node ids start with 3
+    # victim ids start with 4
     
-    for i in range(4, 4 + num_victims):
-        topology[i] = {
-            "client": "lnd",
-            "peers": [
-                "3"
-            ]
+    sending_node_ids = [f"1{i}" for i in range(1, num_attacker_sending_nodes + 1)]
+    receiving_node_ids = [f"3{i}" for i in range(1, num_attacker_receiving_nodes + 1)]
+    victim_node_ids = [f"4{i}" for i in range(1, num_victims + 1)]
+    
+    topology = {}
+    
+    for sending_node_id in sending_node_ids:
+        topology[sending_node_id] = {
+            "client": "c-lightning",
+            "evil": True,
+            "peers": victim_node_ids,
+            "type": "attacker-sending"
+            
         }
-    topology_filename = f"topology-{num_victims}-lnd-victims.json"
+    
+    for receiving_node_id in receiving_node_ids:
+        topology[receiving_node_id] = {
+            "client": "c-lightning",
+            "evil": True,
+            "peers": [],
+            "type": "attacker-receiving",
+        }
+    
+    for victim_node_id in victim_node_ids:
+        topology[victim_node_id] = {
+            "client": "lnd",
+            "peers": receiving_node_ids,
+            "type": "victim"
+        }
+    
+    topology_filename = f"topology-{num_attacker_sending_nodes}-{num_victims}-{num_attacker_receiving_nodes}.json"
     topology_fullpath = os.path.join(LN, "topologies", topology_filename)
     with open(topology_fullpath, mode="w") as f:
         json.dump(topology, f, sort_keys=True, indent=4)
     
     # generate simulation script
-    num_payments = int(483 * num_victims * num_payments_multiplier)
+    num_payments = int(483 * num_payments_multiplier)
     for blockmaxweight in blockmaxweight_values:
-        script_name = f"steal-attack-{num_victims}-lnd-victims-blockmaxweight={blockmaxweight}"
+        script_name = (
+            f"steal-attack-{num_attacker_sending_nodes}-{num_victims}-{num_attacker_receiving_nodes}-blockmaxweight={blockmaxweight}"
+        )
         script_path = os.path.join(LN, "simulations", f"{script_name}.sh")
         simulation_num = (
-            min_simulation_num + (num_victims % (max_simulation_num - min_simulation_num + 1))
+            min_simulation_num + (int(num_victims / 10) % (max_simulation_num - min_simulation_num + 1))
         )
         script = f"""#!/usr/bin/env bash
 SCRIPT_NAME="{script_name}"
@@ -58,10 +74,10 @@ cd $LN/py
 python3 -m commands_generator.commands_generator \\
     --topology "$TOPOLOGY" \\
     --establish-channels \\
-    --make-payments 1 3 {num_payments} 11000000 \\
-    --steal-attack 1 3 150 \\
+    --make-payments {num_payments} 11000000 \\
+    --steal-attack \\
     --dump-data "$DATA_DIR.tmp" \\
-    --block-time 180 \\
+    --block-time 240 \\
     --bitcoin-blockmaxweight {blockmaxweight} \\
     --simulation-number $SIMULATION \\
     --outfile $COMMANDS_FILE

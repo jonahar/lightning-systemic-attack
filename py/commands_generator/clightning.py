@@ -55,6 +55,10 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
             f"  --daemon"
         )
     
+    def start_silent(self) -> None:
+        self.silent = True
+        self.start()
+    
     def __lightning_cli_command_prefix(self) -> str:
         return (
             f"""{LIGHTNING_CLI_BINARY} --conf="{CLIGHTNING_CONF_PATH}" --lightning-dir="{self.datadir}" """

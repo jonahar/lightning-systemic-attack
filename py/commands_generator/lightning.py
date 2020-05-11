@@ -29,6 +29,13 @@ class LightningCommandsGenerator(ABC):
         """
         pass
     
+    def start_silent(self) -> None:
+        """
+        generate code to start this lightning node in silent mode.
+        optional method
+        """
+        raise TypeError("method start_silent() not supported by this client")
+    
     @abstractmethod
     def stop(self) -> None:
         """
@@ -161,16 +168,14 @@ class LightningCommandsGenerator(ABC):
         """
         pass
     
-    @abstractmethod
     def reveal_preimages(self, peer: "LightningCommandsGenerator" = None) -> None:
         """
         generate code that reveals preimages that are being held by this node.
         if 'peer' is given, reveal only preimages in channels with that peer.
         
-        This method is optional, and shouldn't necessarily be implemented by
-        every subclass
+        optional method
         """
-        pass
+        raise TypeError("method reveal_preimages() not supported by this client")
     
     @abstractmethod
     def sweep_funds(self) -> None:
