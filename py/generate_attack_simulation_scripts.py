@@ -10,7 +10,7 @@ blockmaxweight_values = [1_000_000, 2_000_000, 4_000_000]
 
 min_simulation_num = 1
 max_simulation_num = 5
-num_payments_multiplier = 2
+num_payments_multiplier = 3
 
 for num_victims in num_victims_values:
     # generate topology
