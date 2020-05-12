@@ -404,18 +404,6 @@ class CommandsGenerator:
                 amount_msat=amount_msat,
             )
     
-    # def wait_for_all_channel_announcements(self, sender_idx: NodeIndex):
-    #     """
-    #     wait until sender_idx knows all the channels in the network.
-    #     these are channels from sender to each of his peers, and channels from each
-    #     peer to another node (the receiver).
-    #
-    #     the expected number of directed channels is num_peers * 2 * 2
-    #     """
-    #     expected_num_channels = len(self.topology[sender_idx]["peers"]) * 2 * 2
-    #     self.__maybe_info(f"waiting until {expected_num_channels} channels are known to node {sender_idx}")
-    #     self.lightning_clients[sender_idx].wait_for_known_channels(num_channels=expected_num_channels)
-    
     def make_payments(self, num_payments: int, amount_msat: int):
         """
         make `num_payments` payments of the given amount between each sending
