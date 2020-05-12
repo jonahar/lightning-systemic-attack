@@ -3,7 +3,7 @@ import json
 import os
 import sys
 from enum import Enum
-from itertools import product
+from itertools import combinations, product
 from typing import Any, Dict, List, TextIO
 
 from commands_generator.bitcoin_core import BitcoinCommandsGenerator, BitcoinCoreCommandsGenerator
@@ -359,6 +359,19 @@ class CommandsGenerator:
                 initial_balance_sat=INITIAL_CHANNEL_BALANCE_SAT,
             )
     
+    def connect_attacker_nodes(self) -> None:
+        """
+        connect all attacker's nodes to each other
+        """
+        self.__maybe_info("connect all attacker's nodes to each other")
+        all_nodes = self.get_all_attacker_receiving_nodes() + self.get_all_attacker_sending_nodes()
+        for n1, n2 in combinations(all_nodes, r=2):
+            self.__maybe_info(f"connecting {n1} to {n2}")
+            self.lightning_clients[n1].connect(
+                peer=self.lightning_clients[n2],
+                peer_listen_port=self.resources_allocator.get_lightning_node_listen_port(n2),
+            )
+    
     def establish_channels(self) -> None:
         """generate code to connect nodes and establish all channels"""
         senders = self.get_all_attacker_sending_nodes()
@@ -610,6 +623,7 @@ def main() -> None:
     if args.establish_channels:
         cg.fund_nodes()
         cg.wait_for_funds()
+        cg.connect_attacker_nodes()
         cg.establish_channels()
         cg.wait_for_funding_transactions()
         # mine enough blocks so the channels reach NORMAL_STATE
