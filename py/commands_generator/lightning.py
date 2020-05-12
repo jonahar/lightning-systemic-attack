@@ -67,6 +67,13 @@ class LightningCommandsGenerator(ABC):
         pass
     
     @abstractmethod
+    def connect(self, peer: "LightningCommandsGenerator", peer_listen_port: int):
+        """
+        generate code to connect this node to "peer". no channel is established
+        """
+        pass
+    
+    @abstractmethod
     def establish_channel(
         self,
         peer: "LightningCommandsGenerator",

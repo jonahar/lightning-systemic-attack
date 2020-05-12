@@ -109,17 +109,22 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         self.bitcoin_commands_generator.set_node_balance(bash_var=balance_bash_var)
         self._write_line("done")
     
+    def connect(self, peer: LightningCommandsGenerator, peer_listen_port: int):
+        peer_id_bash_var = f"ID_{peer.idx}"
+        peer.set_id(bash_var=peer_id_bash_var)
+        self.__write_eclair_cli_command(
+            args=f"connect --uri=${{{peer_id_bash_var}}}@127.0.0.1:{peer_listen_port}"
+        )
+    
     def establish_channel(
         self,
         peer: LightningCommandsGenerator,
         peer_listen_port: int,
         initial_balance_sat: int,
     ) -> None:
+        self.connect(peer, peer_listen_port)
         peer_id_bash_var = f"ID_{peer.idx}"
         peer.set_id(bash_var=peer_id_bash_var)
-        self.__write_eclair_cli_command(
-            args=f"connect --uri=${{{peer_id_bash_var}}}@127.0.0.1:{peer_listen_port}"
-        )
         self.__write_eclair_cli_command(
             args=f"open --nodeId=${peer_id_bash_var} --fundingSatoshis={initial_balance_sat}"
         )

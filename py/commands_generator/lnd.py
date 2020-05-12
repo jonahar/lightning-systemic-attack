@@ -143,16 +143,18 @@ class LndCommandsGenerator(LightningCommandsGenerator):
     done
     """)
     
+    def connect(self, peer: LightningCommandsGenerator, peer_listen_port: int):
+        peer.set_id(bash_var=f"ID_{peer.idx}")
+        self.__write_lncli_command(f"connect ${{ID_{peer.idx}}}@127.0.0.1:{peer_listen_port}")
+    
     def establish_channel(
         self,
         peer: LightningCommandsGenerator,
         peer_listen_port: int,
         initial_balance_sat: int,
     ) -> None:
+        self.connect(peer, peer_listen_port)
         peer.set_id(bash_var=f"ID_{peer.idx}")
-        self.__write_lncli_command(
-            f"connect ${{ID_{peer.idx}}}@127.0.0.1:{peer_listen_port}"
-        )
         self.__write_lncli_command(
             f"openchannel --node_key=${{ID_{peer.idx}}} --local_amt={initial_balance_sat}"
         )

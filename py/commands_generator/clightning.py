@@ -80,15 +80,20 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
     done
     """)
     
+    def connect(self, peer: LightningCommandsGenerator, peer_listen_port: int):
+        bash_var = f"ID_{peer.idx}"
+        peer.set_id(bash_var=bash_var)
+        self._write_line(f"{self.__lightning_cli_command_prefix()} connect ${bash_var} 127.0.0.1:{peer_listen_port}")
+    
     def establish_channel(
         self,
         peer: LightningCommandsGenerator,
         peer_listen_port: int,
         initial_balance_sat: int,
     ) -> None:
+        self.connect(peer=peer, peer_listen_port=peer_listen_port)
         bash_var = f"ID_{peer.idx}"
         peer.set_id(bash_var=bash_var)
-        self._write_line(f"{self.__lightning_cli_command_prefix()} connect ${bash_var} 127.0.0.1:{peer_listen_port}")
         self._write_line(
             f"{self.__lightning_cli_command_prefix()} fundchannel ${bash_var} {initial_balance_sat}")
     
