@@ -423,6 +423,8 @@ class CommandsGenerator:
                 num_payments=total_payments_by_node,
                 amount_msat=amount_msat,
             )
+            self.__maybe_info(f"number of HTLCs node {receiver} has on each channel:")
+            self.lightning_clients[receiver].print_node_htlcs()
     
     def reveal_preimages(self):
         """
