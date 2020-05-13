@@ -391,22 +391,24 @@ class CommandsGenerator:
                 amount_msat=amount_msat,
             )
     
-    def make_payments(self, num_payments: int, amount_msat: int):
+    def make_payments(self, payments_per_channel: int, amount_msat: int):
         """
-        make `num_payments` payments of the given amount between each sending
-        and receiving node
+        Make payments between pairs of sending/receiving nodes.
+        This function assumes there's an equal number of sending/receiving nodes
         """
-        for sender in self.get_all_attacker_sending_nodes():
-            for receiver in self.get_all_attacker_receiving_nodes():
-                self.__maybe_info(
-                    f"making {num_payments} payments "
-                    f"between {sender} (sender) and {receiver} (receiver) with amount {amount_msat}msat"
-                )
-                self.lightning_clients[sender].make_payments(
-                    receiver=self.lightning_clients[receiver],
-                    num_payments=num_payments,
-                    amount_msat=amount_msat,
-                )
+        total_payments_by_node = payments_per_channel * len(self.get_all_victim_nodes())
+        for sender, receiver in zip(
+            self.get_all_attacker_sending_nodes(), self.get_all_attacker_receiving_nodes()
+        ):
+            self.__maybe_info(
+                f"making {total_payments_by_node} payments "
+                f"between {sender} (sender) and {receiver} (receiver) with amount {amount_msat}msat"
+            )
+            self.lightning_clients[sender].make_payments(
+                receiver=self.lightning_clients[receiver],
+                num_payments=total_payments_by_node,
+                amount_msat=amount_msat,
+            )
     
     def reveal_preimages(self):
         """
@@ -536,10 +538,9 @@ def parse_args():
         help="generate code to establish channels",
     )
     parser.add_argument(
-        "--make-payments", type=int, nargs=2, metavar=("NUM_PAYMENTS", "AMOUNT_MSAT"),
-        help="generate code to make payments between each sending node and receiving node. "
-             "each payments with amount AMOUNT_MSAT and a total of NUM_PAYMENTS payments "
-             "between each pair of sending/receiving",
+        "--make-payments", type=int, nargs=2, metavar=("PAYMENTS_PER_CHANNEL", "AMOUNT_MSAT"),
+        help="generate code to make PAYMENTS_PER_CHANNEL payments on each "
+             "channel of a sending-node (on average). each payment with amount AMOUNT_MSAT",
     )
     parser.add_argument(
         "--steal-attack", action='store_true',
@@ -610,7 +611,8 @@ def main() -> None:
         cg.wait(seconds=100)  # wait a bit so the nodes are synced and see the same blockchain height
     
     if args.make_payments:
-        cg.make_payments(*args.make_payments)
+        payments_per_channel, amount_msat = args.make_payments
+        cg.make_payments(payments_per_channel=payments_per_channel, amount_msat=amount_msat)
         cg.print_receiving_nodes_htlcs()
         if args.dump_data:
             cg.dump_channels_info(args.dump_data)
