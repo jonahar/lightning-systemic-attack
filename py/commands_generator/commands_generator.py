@@ -42,7 +42,6 @@ class CommandsGenerator:
         "peers": ["ID2", "ID4"],   // mandatory. may be an empty list
         "type": "victim"           // mandatory. one of `victim`, `attacker-sending`, `attacker-receiving`
         "evil": false,             // optional. defaults to false
-        "silent": false,           // optional. defaults to false
         "alias": "alice"           // optional. defaults to ID
         "client": "c-lightning"    // optional. defaults to c-lightning
       },
@@ -111,7 +110,6 @@ class CommandsGenerator:
         alias = info.get("alias", str(node_idx))
         lightning_dir = self.resources_allocator.get_lightning_node_datadir(node_idx=node_idx)
         evil = info.get("evil", False)
-        silent = info.get("silent", False)
         return ClightningCommandsGenerator(
             idx=node_idx,
             file=self.file,
@@ -120,7 +118,7 @@ class CommandsGenerator:
             bitcoin_rpc_port=self.resources_allocator.get_bitcoin_node_rpc_port(node_idx),
             alias=alias,
             evil=evil,
-            silent=silent,
+            silent=False,
         )
     
     def __init_lnd_client(self, node_idx: NodeIndex) -> LndCommandsGenerator:
