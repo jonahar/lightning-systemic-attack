@@ -154,18 +154,19 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
         self.__set_riskfactor()
         receiver.set_id(bash_var="RECEIVER_ID")
         self._write_line(f"for i in $(seq 1 $NUM_PAYMENTS); do")
+        self._write_line(f"""
+        ROUTE=$({self.__lightning_cli_command_prefix()} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")
+        if [[ $ROUTE != null ]]; then
+        """)
         receiver.create_invoice(payment_req_bash_var="PAYMENT_REQ", amount_msat=amount_msat)
-        self._write_line(
-            f"""PAYMENT_HASH=$({self.__lightning_cli_command_prefix()} decodepay $PAYMENT_REQ | jq -r ".payment_hash")"""
-        )
-        self._write_line(
-            f"""ROUTE=$({self.__lightning_cli_command_prefix()} getroute $RECEIVER_ID {amount_msat} $RISKFACTOR | jq -r ".route")"""
-        )
-        self._write_line(
-            f"""{self.__lightning_cli_command_prefix()} sendpay "$ROUTE" "$PAYMENT_HASH" > /dev/null"""
-        )
-        self._write_line(f"show-progress-bar $(((i*100)/NUM_PAYMENTS))")
-        self._write_line(f"done")
+        self._write_line(f"""
+            PAYMENT_HASH=$({self.__lightning_cli_command_prefix()} decodepay $PAYMENT_REQ | jq -r ".payment_hash")
+            {self.__lightning_cli_command_prefix()} sendpay "$ROUTE" "$PAYMENT_HASH" > /dev/null
+        fi        
+        show-progress-bar $(((i*100)/NUM_PAYMENTS))
+        """)
+        self._write_line("done")
+        
         self._write_line(f"echo")  # to start a new line after the progress bar
     
     def print_node_htlcs(self) -> None:
