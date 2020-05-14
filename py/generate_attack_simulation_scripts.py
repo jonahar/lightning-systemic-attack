@@ -3,14 +3,14 @@ import os
 
 from paths import LN
 
-num_attacker_sending_nodes = 5
+num_attacker_sending_nodes = 10
 num_attacker_receiving_nodes = num_attacker_sending_nodes
-num_victims_values = [5, 10, 20]
+num_victims_values = [5, 7, 10]
 blockmaxweight_values = [1_000_000, 2_000_000, 4_000_000]
 
 min_simulation_num = 1
 max_simulation_num = 5
-num_payments_multiplier = 3
+num_payments_multiplier = 2
 
 for num_victims in num_victims_values:
     # generate topology
@@ -73,9 +73,8 @@ COMMANDS_FILE=$LN/generated_commands_$SIMULATION
 cd $LN/py
 python3 -m commands_generator.commands_generator \\
     --topology "$TOPOLOGY" \\
-    --establish-channels \\
-    --make-payments {num_payments} 11000000 \\
-    --steal-attack \\
+    --payments-per-channel {num_payments} \\
+    --amount-msat 11000000 \\
     --dump-data "$DATA_DIR.tmp" \\
     --block-time 240 \\
     --bitcoin-blockmaxweight {blockmaxweight} \\
