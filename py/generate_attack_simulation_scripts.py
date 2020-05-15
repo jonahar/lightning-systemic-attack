@@ -3,9 +3,8 @@ import os
 
 from paths import LN
 
-num_attacker_sending_nodes = 10
-num_attacker_receiving_nodes = num_attacker_sending_nodes
-num_victims_values = [5, 7, 10]
+num_sending_nodes = 10
+num_victims_values = [10]
 blockmaxweight_values = [1_000_000, 2_000_000, 4_000_000]
 
 min_simulation_num = 1
@@ -13,13 +12,14 @@ max_simulation_num = 5
 num_payments_multiplier = 2
 
 for num_victims in num_victims_values:
+    num_receiving_nodes = num_victims
     # generate topology
     # sending-node ids start with 1
     # receiving-node ids start with 3
     # victim ids start with 4
     
-    sending_node_ids = [f"1{i}" for i in range(1, num_attacker_sending_nodes + 1)]
-    receiving_node_ids = [f"3{i}" for i in range(1, num_attacker_receiving_nodes + 1)]
+    sending_node_ids = [f"1{i}" for i in range(1, num_receiving_nodes + 1)]
+    receiving_node_ids = [f"3{i}" for i in range(1, num_receiving_nodes + 1)]
     victim_node_ids = [f"4{i}" for i in range(1, num_victims + 1)]
     
     topology = {}
@@ -48,7 +48,7 @@ for num_victims in num_victims_values:
             "type": "victim"
         }
     
-    topology_filename = f"topology-{num_attacker_sending_nodes}-{num_victims}-{num_attacker_receiving_nodes}.json"
+    topology_filename = f"topology-{num_sending_nodes}-{num_victims}-{num_receiving_nodes}.json"
     topology_fullpath = os.path.join(LN, "topologies", topology_filename)
     with open(topology_fullpath, mode="w") as f:
         json.dump(topology, f, sort_keys=True, indent=4)
@@ -57,7 +57,7 @@ for num_victims in num_victims_values:
     num_payments = int(483 * num_payments_multiplier)
     for blockmaxweight in blockmaxweight_values:
         script_name = (
-            f"steal-attack-{num_attacker_sending_nodes}-{num_victims}-{num_attacker_receiving_nodes}-blockmaxweight={blockmaxweight}"
+            f"steal-attack-{num_sending_nodes}-{num_victims}-{num_receiving_nodes}-blockmaxweight={blockmaxweight}"
         )
         script_path = os.path.join(LN, "simulations", f"{script_name}.sh")
         simulation_num = (
