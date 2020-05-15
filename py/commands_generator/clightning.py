@@ -171,7 +171,7 @@ class ClightningCommandsGenerator(LightningCommandsGenerator):
     
     def print_node_htlcs(self) -> None:
         self._write_line(
-            f"""{self.__lightning_cli_command_prefix()} listpeers| jq ".peers[] | .channels[0].htlcs" | jq length"""
+            f"""{self.__lightning_cli_command_prefix()} listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length"""
         )
     
     def close_all_channels(self) -> None:
