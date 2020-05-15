@@ -3,7 +3,7 @@ import json
 import os
 import sys
 from enum import Enum
-from itertools import combinations, product
+from itertools import product
 from typing import Any, Dict, List, TextIO
 
 from commands_generator.bitcoin_core import BitcoinCommandsGenerator, BitcoinCoreCommandsGenerator
@@ -219,19 +219,19 @@ class CommandsGenerator:
             )
         )
     
-    def get_all_attacker_sending_nodes(self) -> List[NodeIndex]:
+    def senders(self) -> List[NodeIndex]:
         return self.get_all_nodes_with_type(NodeType.ATTACKER_SENDING)
     
-    def get_all_attacker_receiving_nodes(self) -> List[NodeIndex]:
+    def receivers(self) -> List[NodeIndex]:
         return self.get_all_nodes_with_type(NodeType.ATTACKER_RECEIVING)
     
-    def get_all_victim_nodes(self) -> List[NodeIndex]:
+    def victims(self) -> List[NodeIndex]:
         return self.get_all_nodes_with_type(NodeType.VICTIM)
     
     def get_total_number_of_channels(self) -> int:
-        num_attacker_sending = len(self.get_all_attacker_sending_nodes())
-        num_attacker_receiving = len(self.get_all_attacker_receiving_nodes())
-        num_victims = len(self.get_all_victim_nodes())
+        num_attacker_sending = len(self.senders())
+        num_attacker_receiving = len(self.receivers())
+        num_victims = len(self.victims())
         return num_attacker_sending * num_victims + num_victims * num_attacker_receiving
     
     def shebang(self) -> None:
@@ -343,10 +343,12 @@ class CommandsGenerator:
             if len(self.topology[idx]["peers"]) != 0:
                 self.lightning_clients[idx].wait_for_funds()
     
-    def __establish_channels_between_groups(self, g1: List[NodeIndex], g2: List[NodeIndex]) -> None:
+    def establish_channels_between_groups(self, g1: List[NodeIndex], g2: List[NodeIndex]) -> int:
         """
-        establish channels between each node in g1 to each node in g2
+        establish channels between each node in g1 to each node in g2.
+        return the number of established channels
         """
+        num_channels = 0
         for n1, n2 in product(g1, g2):
             self.__maybe_info(f"establishing channel from {n1} to {n2}")
             n1_client = self.lightning_clients[n1]
@@ -356,75 +358,26 @@ class CommandsGenerator:
                 peer_listen_port=self.resources_allocator.get_lightning_node_listen_port(n2),
                 initial_balance_sat=INITIAL_CHANNEL_BALANCE_SAT,
             )
+            num_channels += 1
+        return num_channels
     
     def establish_channels(self) -> None:
         """generate code to connect nodes and establish all channels"""
-        senders = self.get_all_attacker_sending_nodes()
-        victims = self.get_all_victim_nodes()
-        receivers = self.get_all_attacker_receiving_nodes()
-        self.__establish_channels_between_groups(senders, victims)
-        self.__establish_channels_between_groups(victims, receivers)
+        senders = self.senders()
+        victims = self.victims()
+        receivers = self.receivers()
+        self.establish_channels_between_groups(senders, victims)
+        self.establish_channels_between_groups(victims, receivers)
     
-    def wait_for_funding_transactions(self):
+    def connect_nodes(self, n1: NodeIndex, n2: NodeIndex) -> None:
         """
-        generate code that waits until all funding transactions have propagated
-        to the miner node's mempool
+        connect nodes n1 and n2 (only connect as peers without establishing a channel)
         """
-        self.__maybe_info("waiting for funding transactions to enter miner's mempool")
-        total_num_channels = self.get_total_number_of_channels()
-        self.bitcoin_clients[BITCOIN_MINER_IDX].wait_for_txs_in_mempool(num_txs=total_num_channels)
-    
-    def connect_attacker_nodes(self) -> None:
-        """
-        connect all attacker's nodes to each other
-        """
-        self.__maybe_info("connect all attacker's nodes to each other")
-        all_nodes = self.get_all_attacker_receiving_nodes() + self.get_all_attacker_sending_nodes()
-        for n1, n2 in combinations(all_nodes, r=2):
-            self.__maybe_info(f"connecting {n1} to {n2}")
-            self.lightning_clients[n1].connect(
-                peer=self.lightning_clients[n2],
-                peer_listen_port=self.resources_allocator.get_lightning_node_listen_port(n2),
-            )
-    
-    def wait_for_channel_announcements(self):
-        """
-        wait until the sending nodes are aware of all the channels in the
-        network (channels from sending-nodes to victims and from victims to
-        receiving-nodes)
-        """
-        
-        num_senders = len(self.get_all_attacker_sending_nodes())
-        num_receivers = len(self.get_all_attacker_receiving_nodes())
-        num_victims = len(self.get_all_victim_nodes())
-        
-        expected_num_channels = (num_senders * num_victims + num_victims * num_receivers)
-        expected_num_channels *= 2  # multiply by 2 because channels are directed
-        
-        for sender in self.get_all_attacker_sending_nodes():
-            self.__maybe_info(f"waiting until {expected_num_channels} channels are known to node {sender}")
-            self.lightning_clients[sender].wait_for_known_channels(num_channels=expected_num_channels)
-    
-    def make_payments(self, payments_per_channel: int, amount_msat: int):
-        """
-        Make payments between pairs of sending/receiving nodes.
-        This function assumes there's an equal number of sending/receiving nodes
-        """
-        total_payments_by_node = payments_per_channel * len(self.get_all_victim_nodes())
-        for sender, receiver in zip(
-            self.get_all_attacker_sending_nodes(), self.get_all_attacker_receiving_nodes()
-        ):
-            self.__maybe_info(
-                f"making {total_payments_by_node} payments "
-                f"between {sender} (sender) and {receiver} (receiver) with amount {amount_msat}msat"
-            )
-            self.lightning_clients[sender].make_payments(
-                receiver=self.lightning_clients[receiver],
-                num_payments=total_payments_by_node,
-                amount_msat=amount_msat,
-            )
-            self.__maybe_info(f"number of HTLCs node {receiver} has on each channel:")
-            self.lightning_clients[receiver].print_node_htlcs()
+        self.__maybe_info(f"connecting {n1} to {n2}")
+        self.lightning_clients[n1].connect(
+            peer=self.lightning_clients[n2],
+            peer_listen_port=self.resources_allocator.get_lightning_node_listen_port(n2),
+        )
     
     def establish_channel(self, initiator: NodeIndex, other: NodeIndex) -> None:
         """establish channel between the given nodes"""
@@ -435,86 +388,104 @@ class CommandsGenerator:
             initial_balance_sat=INITIAL_CHANNEL_BALANCE_SAT,
         )
     
+    def establish_victims_receiving_channels(self) -> int:
+        """
+        establish channels between victims and receiving nodes - one channel for
+        each victim/receiving node
+        (so no more than the number of victims and no more than the number of
+         receiving nodes)
+         
+         return the number of established channels
+        """
+        num_channels = 0
+        for victim, receiver in zip(self.victims(), self.receivers()):
+            self.establish_channel(victim, receiver)
+            num_channels += 1
+        return num_channels
+    
+    def wait_to_route(self, src: NodeIndex, dest: NodeIndex, amount_msat: int) -> None:
+        """
+        wait until there is a known route from src to dest
+        """
+        
+        self.__maybe_info(f"waiting for a known route from {src} to {dest}")
+        self.lightning_clients[src].wait_to_route(
+            receiver=self.lightning_clients[dest], amount_msat=amount_msat,
+        )
+    
+    def make_payments(self, sender: NodeIndex, receiver: NodeIndex, num_payments: int, amount_msat: int) -> None:
+        """
+        make `num_payments` payments from `sender` to `receiver`
+        """
+        self.__maybe_info(f"making {num_payments} payments from {sender} to {receiver}")
+        self.lightning_clients[sender].make_payments(
+            receiver=self.lightning_clients[receiver],
+            num_payments=num_payments,
+            amount_msat=amount_msat,
+        )
+    
     def attack(self, payments_per_channel: int, amount_msat: int) -> None:
         """
-        Make payments between sending and receiving nodes. a single channel is
-        loaded with payments at any moment.
+        Generate code to execute the attack.
+        At the end of this code, all sending nodes are in silent mode, second-hop
+        channels (victim<->receiving-node) are closed, and all channels are loaded
+        with htlcs
         """
-        senders = self.get_all_attacker_sending_nodes()
-        receivers = self.get_all_attacker_receiving_nodes()
-        victims = self.get_all_victim_nodes()
-        
-        for sender, receiver in zip(senders, receivers):
+        for sender in self.senders():
             sender_client = self.lightning_clients[sender]
-            receiver_client = self.lightning_clients[receiver]
-            for victim in victims:
-                victim_client = self.lightning_clients[victim]
-                self.__maybe_info(f"starting nodes {sender}, {victim}, {receiver}")
-                sender_client.start()
-                victim_client.start()
-                receiver_client.start()
-                
-                self.establish_channel(sender, victim)
-                self.establish_channel(victim, receiver)
-                
-                self.__maybe_info("waiting for funding transactions to enter miner's mempool")
-                self.bitcoin_clients[BITCOIN_MINER_IDX].wait_for_txs_in_mempool(num_txs=2)
-                self.advance_blockchain(num_blocks=10, block_time_sec=2)
-                
-                sender_client.connect(
-                    peer=receiver_client,
-                    peer_listen_port=self.resources_allocator.get_lightning_node_listen_port(receiver),
-                )
-                
-                self.__maybe_info(f"waiting for a known route from {sender} to {receiver} via {victim}")
-                sender_client.wait_to_route_via(
-                    src=victim_client,
-                    dest=receiver_client,
-                    amount_msat=amount_msat,
-                )
-                self.__maybe_info(f"making {payments_per_channel} payments from {sender} to {receiver}")
-                sender_client.make_payments(
-                    receiver=receiver_client,
+            self.__maybe_info(f"starting sending-node {sender}")
+            sender_client.start()
+            num_channels = self.establish_channels_between_groups([sender], self.victims())
+            num_channels += self.establish_victims_receiving_channels()
+            
+            self.__maybe_info("waiting for funding transactions to enter miner's mempool")
+            self.bitcoin_clients[BITCOIN_MINER_IDX].wait_for_txs_in_mempool(num_txs=num_channels)
+            # mine the newly created channels
+            self.advance_blockchain(num_blocks=15, block_time_sec=2)
+            
+            for receiver in self.receivers():
+                self.connect_nodes(sender, receiver)
+                self.wait_to_route(src=sender, dest=receiver, amount_msat=amount_msat)
+                self.make_payments(
+                    sender=sender,
+                    receiver=receiver,
                     num_payments=payments_per_channel,
                     amount_msat=amount_msat,
                 )
-                self.__maybe_info(f"number of HTLCs node {receiver} has on each channel:")
-                receiver_client.print_node_htlcs()
-                
-                self.__maybe_info(f"stopping {sender}")
-                sender_client.stop()
-                self.__maybe_info(f"revealing preimages by node {receiver}")
-                receiver_client.reveal_preimages()
-                self.__maybe_info(f"closing channels of {receiver}")
-                receiver_client.close_all_channels()
-                self.__maybe_info(f"stopping {victim} and {receiver}")
-                victim_client.stop()
-                receiver_client.stop()
+                self.print_node_htlcs(receiver)
+            
+            self.print_receiving_nodes_htlcs()
+            self.__maybe_info(f"stopping {sender}")
+            sender_client.stop()
+            self.reveal_preimages()
+            self.close_all_receiving_channels()
+            self.mine(10)
+            self.wait(60)
         
-        self.__maybe_info("starting all sending-nodes in silent mode")
-        for sender in senders:
-            self.lightning_clients[sender].start_silent()
-        
-        self.__maybe_info("starting all victim nodes")
-        for victim in victims:
-            self.lightning_clients[victim].start()
+        self.start_sending_nodes_silent()
     
     def reveal_preimages(self):
         """
         make all receiving-nodes reveal any preimages they hold.
         if 'peer_idx' is given, reveal only preimages held up from that peer
         """
-        for receiver in self.get_all_attacker_receiving_nodes():
+        for receiver in self.receivers():
             self.__maybe_info(f"Revealing preimages by node {receiver}")
             self.lightning_clients[receiver].reveal_preimages()
     
+    def print_node_htlcs(self, node_idx: NodeIndex) -> None:
+        """
+        print the number htlcs the given node has on its channels
+        """
+        self.__maybe_info(f"number of HTLCs node {node_idx} has on each channel:")
+        self.lightning_clients[node_idx].print_node_htlcs()
+    
     def print_receiving_nodes_htlcs(self):
         """
-        print the number of htlcs that the receiving nodes have on their channels
+        print the number of htlcs on each of the receiving-nodes' channels
         """
-        for receiver in self.get_all_attacker_receiving_nodes():
-            self.__maybe_info(f"number of HTLCs node {receiver} has on each channel:")
-            self.lightning_clients[receiver].print_node_htlcs()
+        for receiver in self.receivers():
+            self.print_node_htlcs(receiver)
     
     def dump_channels_info(self, dir_path: str):
         """
@@ -526,39 +497,21 @@ class CommandsGenerator:
         for node_idx, client in self.lightning_clients.items():
             client.dump_channels_info(filepath=os.path.join(dir_path, f"node_{node_idx}_channels"))
     
-    def stop_sending_nodes(self):
-        for node_idx in self.get_all_attacker_sending_nodes():
-            self.__maybe_info(f"stopping lightning node {node_idx}")
-            self.lightning_clients[node_idx].stop()
-    
     def stop_all_lightning_nodes(self) -> None:
         self.__maybe_info("stopping all lightning nodes")
         for client in self.lightning_clients.values():
             client.stop()
     
     def start_sending_nodes_silent(self):
-        for node_idx in self.get_all_attacker_sending_nodes():
+        for node_idx in self.senders():
             self.__maybe_info(f"starting lightning node {node_idx} in silent mode")
             self.lightning_clients[node_idx].start_silent()
     
     def close_all_receiving_channels(self):
-        for receiver in self.get_all_attacker_receiving_nodes():
+        self.__maybe_info(f"closing all channels of receiving nodes")
+        for receiver in self.receivers():
             self.__maybe_info(f"closing all channels of node {receiver}")
             self.lightning_clients[receiver].close_all_channels()
-    
-    def sweep_funds(self, node_idx: NodeIndex):
-        self.__maybe_info(f"sweeping funds of node {node_idx}")
-        self.lightning_clients[node_idx].sweep_funds()
-    
-    def sweep_funds_all_lightning_nodes(self):
-        """
-        sweep funds for every lightning node.
-        This could be useful to see exactly what outputs belong to the same
-        entity, when analyzing a simulation's blockchain
-        """
-        self.__maybe_info("sweeping funds for every lightning node")
-        for node_idx in self.lightning_clients.keys():
-            self.sweep_funds(node_idx=node_idx)
     
     def advance_blockchain(self, num_blocks: int, block_time_sec: int, dir_path: str = None):
         """
@@ -632,12 +585,11 @@ def parse_args():
     )
     parser.add_argument(
         "--dump-data", type=str, metavar="DIRECTORY",
-        help="generate code that dumps the simulation data to files in the given directory",
+        help="dump simulation data to files in the given directory",
     )
     parser.add_argument(
         "--block-time", type=int, metavar="BLK_TIME_SEC", default=60,
-        help="set the block time in seconds (the time until a new block is mined). "
-             "applies to the attack code generation",
+        help="set the block time for the attack (in seconds)",
     )
     parser.add_argument(
         "--bitcoin-blockmaxweight", type=int, default=3996000,
@@ -681,50 +633,18 @@ def main() -> None:
     cg.start_lightning_nodes()
     cg.fund_nodes()
     cg.wait_for_funds()
-    cg.stop_all_lightning_nodes()
     
     payments_per_channel = args.payments_per_channel
     amount_msat = args.amount_msat
     cg.attack(payments_per_channel=payments_per_channel, amount_msat=amount_msat)
+    if args.dump_data:
+        cg.dump_channels_info(dir_path=args.dump_data)
+    
     cg.advance_blockchain(
         num_blocks=150,
         block_time_sec=args.block_time,
         dir_path=args.dump_data if args.dump_data else None,
     )
-    
-    # if args.establish_channels:
-    #     cg.fund_nodes()
-    #     cg.wait_for_funds()
-    #     cg.establish_channels()
-    #     cg.wait_for_funding_transactions()
-    #     # mine enough blocks so the channels reach NORMAL_STATE
-    #     cg.advance_blockchain(num_blocks=15, block_time_sec=120)
-    #
-    # if args.make_payments:
-    #     # to force channels announcements we restart all lightning nodes
-    #     cg.stop_all_lightning_nodes()
-    #     cg.start_lightning_nodes()
-    #     cg.advance_blockchain(num_blocks=30, block_time_sec=20)
-    #     cg.wait(seconds=100)  # wait a bit so the nodes are synced and see the same blockchain height
-    #     cg.connect_attacker_nodes()  # another speedup for channel announcements
-    #     cg.wait_for_channel_announcements()
-    #
-    #     payments_per_channel, amount_msat = args.make_payments
-    #     cg.make_payments(payments_per_channel=payments_per_channel, amount_msat=amount_msat)
-    #     cg.print_receiving_nodes_htlcs()
-    #     if args.dump_data:
-    #         cg.dump_channels_info(args.dump_data)
-    #
-    # if args.steal_attack:
-    #     cg.stop_sending_nodes()
-    #     cg.start_sending_nodes_silent()
-    #     cg.reveal_preimages()
-    #     cg.close_all_receiving_channels()
-    #     cg.advance_blockchain(
-    #         num_blocks=150,
-    #         block_time_sec=args.block_time,
-    #         dir_path=args.dump_data if args.dump_data else None,
-    #     )
     
     if args.dump_data:
         # before dumping we advance the blockchain by 100 blocks in case some
