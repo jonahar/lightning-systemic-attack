@@ -204,7 +204,9 @@ class LndCommandsGenerator(LightningCommandsGenerator):
         self._write_line("done")
     
     def print_node_htlcs(self) -> None:
-        raise NotImplementedError()
+        self._write_line(
+            f"""{self.__lncli_cmd_prefix()} listchannels | jq ".channels[] | .pending_htlcs" | jq length"""
+        )
     
     def close_all_channels(self) -> None:
         raise NotImplementedError()

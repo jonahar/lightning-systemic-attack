@@ -455,6 +455,7 @@ class CommandsGenerator:
                 self.print_node_htlcs(receiver)
             
             self.print_receiving_nodes_htlcs()
+            self.print_victims_htlcs()
             self.__maybe_info(f"stopping {sender}")
             sender_client.stop()
             self.reveal_preimages()
@@ -486,6 +487,13 @@ class CommandsGenerator:
         """
         for receiver in self.receivers():
             self.print_node_htlcs(receiver)
+    
+    def print_victims_htlcs(self):
+        """
+        print the number of htlcs on each of the victim nodes' channels
+        """
+        for victim in self.victims():
+            self.print_node_htlcs(victim)
     
     def dump_channels_info(self, dir_path: str):
         """
