@@ -9,7 +9,7 @@ blockmaxweight_values = [1_000_000, 2_000_000, 4_000_000]
 
 min_simulation_num = 1
 max_simulation_num = 5
-num_payments_multiplier = 2
+payments_per_channel = int(483 * 1.25)  # multiply by 1.25 because some payments randomly fail
 
 for num_victims in num_victims_values:
     num_receiving_nodes = num_victims
@@ -54,7 +54,6 @@ for num_victims in num_victims_values:
         json.dump(topology, f, sort_keys=True, indent=4)
     
     # generate simulation script
-    num_payments = int(483 * num_payments_multiplier)
     for blockmaxweight in blockmaxweight_values:
         script_name = (
             f"steal-attack-{num_sending_nodes}-{num_victims}-{num_receiving_nodes}-blockmaxweight={blockmaxweight}"
@@ -73,7 +72,7 @@ COMMANDS_FILE=$LN/generated_commands_$SIMULATION
 cd $LN/py
 python3 -m commands_generator.commands_generator \\
     --topology "$TOPOLOGY" \\
-    --payments-per-channel {num_payments} \\
+    --payments-per-channel {payments_per_channel} \\
     --amount-msat 11000000 \\
     --dump-data "$DATA_DIR.tmp" \\
     --block-time 240 \\
