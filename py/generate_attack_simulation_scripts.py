@@ -1,24 +1,25 @@
 import json
 import os
 
+from commands_generator.commands_generator import generate_attack_file
 from paths import LN
 
 num_sending_nodes = 10
+num_receiving_nodes = num_sending_nodes
 num_victims_values = [10]
-blockmaxweight_values = [1_000_000, 2_000_000, 4_000_000]
+blockmaxweight_values = [2_000_000, 4_000_000]
 
 min_simulation_num = 1
 max_simulation_num = 5
-payments_per_channel = int(483 * 1.25)  # multiply by 1.25 because some payments randomly fail
+payments_per_channel = int(483 * 1.5)  # increase number of payments a little bit because some payments randomly fail
 
 for num_victims in num_victims_values:
-    num_receiving_nodes = num_victims
     # generate topology
     # sending-node ids start with 1
     # receiving-node ids start with 3
     # victim ids start with 4
     
-    sending_node_ids = [f"1{i}" for i in range(1, num_receiving_nodes + 1)]
+    sending_node_ids = [f"1{i}" for i in range(1, num_sending_nodes + 1)]
     receiving_node_ids = [f"3{i}" for i in range(1, num_receiving_nodes + 1)]
     victim_node_ids = [f"4{i}" for i in range(1, num_victims + 1)]
     
@@ -58,33 +59,19 @@ for num_victims in num_victims_values:
         script_name = (
             f"steal-attack-{num_sending_nodes}-{num_victims}-{num_receiving_nodes}-blockmaxweight={blockmaxweight}"
         )
-        script_path = os.path.join(LN, "simulations", f"{script_name}.sh")
+        outfile = os.path.join(LN, "simulations", f"{script_name}.sh")
+        datadir = os.path.join(LN, "simulations", f"{script_name}")
         simulation_num = (
             min_simulation_num + (int(num_victims / 10) % (max_simulation_num - min_simulation_num + 1))
         )
-        script = f"""#!/usr/bin/env bash
-SCRIPT_NAME="{script_name}"
-TOPOLOGY="$LN/topologies/{topology_filename}"
-DATA_DIR="$LN/simulations/$SCRIPT_NAME"
-OUTPUT_FILE="$LN/simulations/$SCRIPT_NAME.out"
-SIMULATION={simulation_num}
-COMMANDS_FILE=$LN/generated_commands_$SIMULATION
-cd $LN/py
-python3 -m commands_generator.commands_generator \\
-    --topology "$TOPOLOGY" \\
-    --payments-per-channel {payments_per_channel} \\
-    --amount-msat 11000000 \\
-    --dump-data "$DATA_DIR.tmp" \\
-    --block-time 240 \\
-    --bitcoin-blockmaxweight {blockmaxweight} \\
-    --simulation-number $SIMULATION \\
-    --outfile $COMMANDS_FILE
-
-rm -rf /tmp/lightning-simulations/$SIMULATION
-rm -rf "$DATA_DIR"
-bash $COMMANDS_FILE 2>&1 | tee "$OUTPUT_FILE.tmp"
-mv "$OUTPUT_FILE.tmp" "$OUTPUT_FILE"
-mv "$DATA_DIR.tmp" "$DATA_DIR"
-"""
-        with open(script_path, mode="w") as f:
-            f.write(script)
+        
+        generate_attack_file(
+            topology_file=topology_fullpath,
+            simulation_number=simulation_num,
+            bitcoin_blockmaxweight=blockmaxweight,
+            payments_per_channel=payments_per_channel,
+            amount_msat=11000000,
+            datadir=datadir,
+            block_time_sec=240,  # 5 minutes
+            outfile=outfile,
+        )

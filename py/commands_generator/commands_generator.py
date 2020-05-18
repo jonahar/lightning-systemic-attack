@@ -582,19 +582,27 @@ def parse_args():
     return parser.parse_args()
 
 
-def main() -> None:
-    args = parse_args()
-    with open(args.topology) as f:
+def generate_attack_file(
+    topology_file: str,
+    simulation_number: int,
+    bitcoin_blockmaxweight: int,
+    payments_per_channel: int,
+    amount_msat: int,
+    datadir: str,
+    block_time_sec: int,
+    outfile=None,
+) -> None:
+    with open(topology_file) as f:
         topology = json.load(f)
     
-    outfile = open(args.outfile, mode="w") if args.outfile else sys.stdout
+    outfile = open(outfile, mode="w") if outfile else sys.stdout
     
     cg = CommandsGenerator(
         file=outfile,
         topology=topology,
-        bitcoin_block_max_weight=args.bitcoin_blockmaxweight,
+        bitcoin_block_max_weight=bitcoin_blockmaxweight,
         verbose=True,
-        simulation_number=args.simulation_number,
+        simulation_number=simulation_number,
     )
     
     cg.start_bitcoin_nodes()
@@ -607,23 +615,23 @@ def main() -> None:
     cg.fund_nodes()
     cg.wait_for_funds()
     
-    payments_per_channel = args.payments_per_channel
-    amount_msat = args.amount_msat
+    payments_per_channel = payments_per_channel
+    amount_msat = amount_msat
     cg.attack(payments_per_channel=payments_per_channel, amount_msat=amount_msat)
-    if args.dump_data:
-        cg.dump_channels_info(dir_path=args.dump_data)
+    if datadir:
+        cg.dump_channels_info(dir_path=datadir)
     
     cg.advance_blockchain(
         num_blocks=150,
-        block_time_sec=args.block_time,
-        dir_path=args.dump_data if args.dump_data else None,
+        block_time_sec=block_time_sec,
+        dir_path=datadir if datadir else None,
     )
     
-    if args.dump_data:
+    if datadir:
         # before dumping we advance the blockchain by 100 blocks in case some
         # nodes are still waiting to forget a peer
         cg.advance_blockchain(num_blocks=100, block_time_sec=5)
-        cg.dump_simulation_data(dir_path=args.dump_data)
+        cg.dump_simulation_data(dir_path=datadir)
     
     cg.stop_all_lightning_nodes()
     cg.stop_bitcoin_nodes()
@@ -632,6 +640,20 @@ def main() -> None:
     
     # NOTE: we close outfile which may be stdout
     outfile.close()
+
+
+def main() -> None:
+    args = parse_args()
+    generate_attack_file(
+        topology_file=args.topology,
+        simulation_number=args.simulation_number,
+        bitcoin_blockmaxweight=args.bitcoin_blockmaxweight,
+        payments_per_channel=args.payments_per_channel,
+        amount_msat=args.amount_msat,
+        datadir=args.dump_data,
+        block_time_sec=args.block_time,
+        outfile=args.outfile,
+    )
 
 
 if __name__ == "__main__":
