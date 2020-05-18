@@ -17,11 +17,11 @@ class PlotData:
     label: str
 
 
-def plot_figure(title: str, plot_data_list: List[PlotData]) -> Figure:
+def plot_figure(title: str, plot_data_list: List[PlotData], **fig_kw) -> Figure:
     """
     add the given plot data to a new figure. all graphs on the same figure
     """
-    fig = plt.figure()
+    fig = plt.figure(**fig_kw)
     for plot_data in plot_data_list:
         plt.plot(plot_data.timestamps, plot_data.feerates, label=plot_data.label)
     
@@ -41,7 +41,7 @@ def plot_figure(title: str, plot_data_list: List[PlotData]) -> Figure:
         ticks=xticks,
         labels=[timestamp_to_date_str(t) for t in xticks]
     )
-    plt.xlabel("timestamp")
+    plt.xlabel("time")
     
     plt.yticks(ticks=yticks)
     plt.ylabel("feerate")

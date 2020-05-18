@@ -102,12 +102,13 @@ def plot_attack_start_time_vs_confirmed_htlcs(timestamp_values: List[Timestamp])
     timestamp_to_date_str = lambda t: datetime.utcfromtimestamp(t).strftime('%Y-%m-%d')
     xlabels = [timestamp_to_date_str(t) for t in xticks]
     
-    plt.figure()
-    plt.plot(timestamp_values, max_confirmed_htlcs_values)
-    plt.grid()
-    plt.xlabel("Attack start time")
-    plt.ylabel("Maximum #HTLC-success to be confirmed before expiration")
-    plt.xticks(ticks=xticks, labels=xlabels)
+    # plt.figure()
+    # plt.plot(timestamp_values, max_confirmed_htlcs_values)
+    # plt.grid()
+    # plt.xlabel("Attack start time")
+    # plt.ylabel("Maximum #HTLC-success to be confirmed before expiration")
+    # plt.xticks(ticks=xticks, labels=xlabels)
+    # plt.savefig("max-htlcs-to-be-confirmed-before-exp.svg")
     
     # ----------------
     
@@ -116,12 +117,13 @@ def plot_attack_start_time_vs_confirmed_htlcs(timestamp_values: List[Timestamp])
         for max_confirmed_htlcs in max_confirmed_htlcs_values
     ]
     
-    plt.figure()
+    plt.figure(figsize=(16.00, 9.00))
     plt.plot(timestamp_values, num_channels_values)
     plt.grid()
     plt.xlabel("Attack start time")
     plt.ylabel("Minimum #attacked-channels required for stealing")
     plt.xticks(ticks=xticks, labels=xlabels)
+    plt.savefig("min-required-channels-for-stealing.svg", bbox_inches='tight')
     
     # ----------------
     
@@ -132,11 +134,12 @@ def plot_attack_start_time_vs_confirmed_htlcs(timestamp_values: List[Timestamp])
     num_channels_hist_cumsum = np.cumsum(num_channels_hist)
     num_channels_hist_cumsum_normalized = (num_channels_hist_cumsum * 100) / len(timestamp_values)
     
-    plt.figure()
+    plt.figure(figsize=(7.00, 7.00))
     plt.plot(num_channels_range, num_channels_hist_cumsum_normalized)
     plt.grid()
     plt.xlabel("number of victims")
     plt.ylabel("Percent of time-points in which X victims is enough for successful attack")
+    plt.savefig("min-required-channels-for-stealing-hist-cum.svg", bbox_inches='tight')
     
     plt.show()
 

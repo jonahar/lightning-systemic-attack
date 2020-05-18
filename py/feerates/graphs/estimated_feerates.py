@@ -81,18 +81,18 @@ def main():
     p_values = [0.2, 0.5, 0.8]
     for num_blocks, plot_data_list in data.items():
         for plot_data in plot_data_list:
-            fig = plot_figure(title="", plot_data_list=[plot_data])
+            fig = plot_figure(title="", plot_data_list=[plot_data], figsize=(16.00, 9.00))
             plt.figure(fig.number)
-            for p in p_values:
-                percentile = get_feerates_percentile(plot_data.feerates, p=p)
-                plt.hlines(
-                    y=percentile,
-                    xmin=plot_data.timestamps[0],
-                    xmax=plot_data.timestamps[-1],
-                    label=f"{int(p * 100)}'th percentile ({round(percentile, 1)})",
-                )
+            # for p in p_values:
+            #     percentile = get_feerates_percentile(plot_data.feerates, p=p)
+            #     plt.hlines(
+            #         y=percentile,
+            #         xmin=plot_data.timestamps[0],
+            #         xmax=plot_data.timestamps[-1],
+            #         label=f"{int(p * 100)}'th percentile ({round(percentile, 1)})",
+            #     )
             plt.legend(loc="best")
-    
+    plt.savefig("estimated-feerates.svg", bbox_inches='tight')
     plt.show()
 
 
