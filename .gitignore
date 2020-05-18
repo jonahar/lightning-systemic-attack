@@ -2,7 +2,6 @@
 bin
 data
 py/venv
-simulations
 *.jpg
 *.dot
 **/__pycache__/
