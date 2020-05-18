@@ -2178,6 +2178,9 @@ echo "waiting for funding transactions to enter miner's mempool"
         done
         
 /home/jona/ln/bin/bitcoin-cli  -conf=/home/jona/ln/conf/bitcoin.conf  -rpcport=24000  generatetoaddress  10 $(/home/jona/ln/bin/bitcoin-cli  -conf=/home/jona/ln/conf/bitcoin.conf  -rpcport=24000  getnewaddress) >/dev/null
+echo "connecting 11 to 31"
+ID_31=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/31"  getinfo | jq -r '.id')
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/11"  connect $ID_31 127.0.0.1:20031
 echo "waiting for a known route from 11 to 31"
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/31"  getinfo | jq -r '.id')
@@ -2220,6 +2223,9 @@ done
 echo
 echo "number of HTLCs node 31 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/31"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "connecting 110 to 310"
+ID_310=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/310"  getinfo | jq -r '.id')
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/110"  connect $ID_310 127.0.0.1:20310
 echo "waiting for a known route from 110 to 310"
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/310"  getinfo | jq -r '.id')
@@ -2262,6 +2268,9 @@ done
 echo
 echo "number of HTLCs node 310 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/310"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "connecting 12 to 32"
+ID_32=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/32"  getinfo | jq -r '.id')
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/12"  connect $ID_32 127.0.0.1:20032
 echo "waiting for a known route from 12 to 32"
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/32"  getinfo | jq -r '.id')
@@ -2304,6 +2313,9 @@ done
 echo
 echo "number of HTLCs node 32 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/32"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "connecting 13 to 33"
+ID_33=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/33"  getinfo | jq -r '.id')
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/13"  connect $ID_33 127.0.0.1:20033
 echo "waiting for a known route from 13 to 33"
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/33"  getinfo | jq -r '.id')
@@ -2346,6 +2358,9 @@ done
 echo
 echo "number of HTLCs node 33 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/33"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "connecting 14 to 34"
+ID_34=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/34"  getinfo | jq -r '.id')
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/14"  connect $ID_34 127.0.0.1:20034
 echo "waiting for a known route from 14 to 34"
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/34"  getinfo | jq -r '.id')
@@ -2388,6 +2403,9 @@ done
 echo
 echo "number of HTLCs node 34 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/34"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "connecting 15 to 35"
+ID_35=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/35"  getinfo | jq -r '.id')
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/15"  connect $ID_35 127.0.0.1:20035
 echo "waiting for a known route from 15 to 35"
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/35"  getinfo | jq -r '.id')
@@ -2430,6 +2448,9 @@ done
 echo
 echo "number of HTLCs node 35 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/35"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "connecting 16 to 36"
+ID_36=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/36"  getinfo | jq -r '.id')
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/16"  connect $ID_36 127.0.0.1:20036
 echo "waiting for a known route from 16 to 36"
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/36"  getinfo | jq -r '.id')
@@ -2472,6 +2493,9 @@ done
 echo
 echo "number of HTLCs node 36 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/36"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "connecting 17 to 37"
+ID_37=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/37"  getinfo | jq -r '.id')
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/17"  connect $ID_37 127.0.0.1:20037
 echo "waiting for a known route from 17 to 37"
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/37"  getinfo | jq -r '.id')
@@ -2514,6 +2538,9 @@ done
 echo
 echo "number of HTLCs node 37 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/37"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "connecting 18 to 38"
+ID_38=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/38"  getinfo | jq -r '.id')
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/18"  connect $ID_38 127.0.0.1:20038
 echo "waiting for a known route from 18 to 38"
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/38"  getinfo | jq -r '.id')
@@ -2556,6 +2583,9 @@ done
 echo
 echo "number of HTLCs node 38 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/38"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "connecting 19 to 39"
+ID_39=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/39"  getinfo | jq -r '.id')
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/19"  connect $ID_39 127.0.0.1:20039
 echo "waiting for a known route from 19 to 39"
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/39"  getinfo | jq -r '.id')

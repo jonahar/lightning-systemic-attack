@@ -421,6 +421,7 @@ class CommandsGenerator:
         self.mine(10)
         
         for sender, receiver in zip(self.senders(), self.receivers()):
+            self.connect_nodes(sender, receiver)  # to speedup channel announcement
             self.wait_to_route(src=sender, dest=receiver, amount_msat=amount_msat)
             self.make_payments(
                 sender=sender,
