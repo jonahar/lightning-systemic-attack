@@ -1,0 +1,227 @@
+{
+    "11": {
+        "client": "c-lightning",
+        "evil": true,
+        "peers": [
+            "41",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47",
+            "48",
+            "49",
+            "410"
+        ],
+        "type": "attacker-sending"
+    },
+    "12": {
+        "client": "c-lightning",
+        "evil": true,
+        "peers": [
+            "41",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47",
+            "48",
+            "49",
+            "410"
+        ],
+        "type": "attacker-sending"
+    },
+    "13": {
+        "client": "c-lightning",
+        "evil": true,
+        "peers": [
+            "41",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47",
+            "48",
+            "49",
+            "410"
+        ],
+        "type": "attacker-sending"
+    },
+    "14": {
+        "client": "c-lightning",
+        "evil": true,
+        "peers": [
+            "41",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47",
+            "48",
+            "49",
+            "410"
+        ],
+        "type": "attacker-sending"
+    },
+    "15": {
+        "client": "c-lightning",
+        "evil": true,
+        "peers": [
+            "41",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47",
+            "48",
+            "49",
+            "410"
+        ],
+        "type": "attacker-sending"
+    },
+    "31": {
+        "client": "c-lightning",
+        "evil": true,
+        "peers": [],
+        "type": "attacker-receiving"
+    },
+    "32": {
+        "client": "c-lightning",
+        "evil": true,
+        "peers": [],
+        "type": "attacker-receiving"
+    },
+    "33": {
+        "client": "c-lightning",
+        "evil": true,
+        "peers": [],
+        "type": "attacker-receiving"
+    },
+    "34": {
+        "client": "c-lightning",
+        "evil": true,
+        "peers": [],
+        "type": "attacker-receiving"
+    },
+    "35": {
+        "client": "c-lightning",
+        "evil": true,
+        "peers": [],
+        "type": "attacker-receiving"
+    },
+    "41": {
+        "client": "lnd",
+        "peers": [
+            "31",
+            "32",
+            "33",
+            "34",
+            "35"
+        ],
+        "type": "victim"
+    },
+    "410": {
+        "client": "lnd",
+        "peers": [
+            "31",
+            "32",
+            "33",
+            "34",
+            "35"
+        ],
+        "type": "victim"
+    },
+    "42": {
+        "client": "lnd",
+        "peers": [
+            "31",
+            "32",
+            "33",
+            "34",
+            "35"
+        ],
+        "type": "victim"
+    },
+    "43": {
+        "client": "lnd",
+        "peers": [
+            "31",
+            "32",
+            "33",
+            "34",
+            "35"
+        ],
+        "type": "victim"
+    },
+    "44": {
+        "client": "lnd",
+        "peers": [
+            "31",
+            "32",
+            "33",
+            "34",
+            "35"
+        ],
+        "type": "victim"
+    },
+    "45": {
+        "client": "lnd",
+        "peers": [
+            "31",
+            "32",
+            "33",
+            "34",
+            "35"
+        ],
+        "type": "victim"
+    },
+    "46": {
+        "client": "lnd",
+        "peers": [
+            "31",
+            "32",
+            "33",
+            "34",
+            "35"
+        ],
+        "type": "victim"
+    },
+    "47": {
+        "client": "lnd",
+        "peers": [
+            "31",
+            "32",
+            "33",
+            "34",
+            "35"
+        ],
+        "type": "victim"
+    },
+    "48": {
+        "client": "lnd",
+        "peers": [
+            "31",
+            "32",
+            "33",
+            "34",
+            "35"
+        ],
+        "type": "victim"
+    },
+    "49": {
+        "client": "lnd",
+        "peers": [
+            "31",
+            "32",
+            "33",
+            "34",
+            "35"
+        ],
+        "type": "victim"
+    }
+}
