@@ -302,6 +302,10 @@ class CommandsGenerator:
         for client in self.lightning_clients.values():
             client.stop()
     
+    def stop_lightning_node(self, node_idx: NodeIndex) -> None:
+        self.__maybe_info(f"stopping {node_idx}")
+        self.lightning_clients[node_idx].stop()
+    
     def stop_all_sending_nodes(self) -> None:
         self.__maybe_info("stopping all sending nodes")
         for sender in self.senders():
@@ -430,16 +434,14 @@ class CommandsGenerator:
                 amount_msat=amount_msat,
             )
             self.print_node_htlcs(receiver)
+            self.stop_lightning_node(sender)
+            self.__maybe_info(f"Revealing preimages by node {receiver}")
+            self.lightning_clients[receiver].reveal_preimages()
+            self.__maybe_info(f"closing all channels of node {receiver}")
+            self.lightning_clients[receiver].close_all_channels()
         
-        self.print_receiving_nodes_htlcs()
         self.print_victims_htlcs()
-        
-        self.stop_all_sending_nodes()
-        
         self.start_sending_nodes_silent()
-        self.reveal_preimages()
-        self.close_all_receiving_channels()
-        self.mine(10)
     
     def reveal_preimages(self):
         """
