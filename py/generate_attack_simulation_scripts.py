@@ -11,7 +11,7 @@ blockmaxweight_values = [2_000_000, 4_000_000]
 
 min_simulation_num = 1
 max_simulation_num = 5
-payments_per_channel = int(483 * 1.5)  # increase number of payments a little bit because some payments randomly fail
+payments_per_channel = int(483 * 2)  # increase number of payments a little bit because some payments randomly fail
 
 for num_victims in num_victims_values:
     # generate topology

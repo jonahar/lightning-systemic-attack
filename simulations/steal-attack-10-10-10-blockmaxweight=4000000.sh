@@ -2189,7 +2189,7 @@ RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightn
         sleep 1;
     done
         
-echo "making 7240 payments from 11 to 31"
+echo "making 9660 payments from 11 to 31"
 
         show-progress-bar(){
             PERCENT=$1
@@ -2203,7 +2203,7 @@ echo "making 7240 payments from 11 to 31"
             printf "] ${PERCENT}%% "
         }
         
-NUM_PAYMENTS=7240
+NUM_PAYMENTS=9660
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/31"  getinfo | jq -r '.id')
 for i in $(seq 1 $NUM_PAYMENTS); do
@@ -2223,6 +2223,22 @@ done
 echo
 echo "number of HTLCs node 31 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/31"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "stopping 11"
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/11"  stop
+echo "Revealing preimages by node 31"
+PEER_ID=
+
+    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/31"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
+        sleep 1
+    done
+    
+echo "closing all channels of node 31"
+PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/31"  listpeers | jq -r ".peers[] | .id")
+
+    for id in $PEER_IDS; do
+        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/31"  close $id 60
+    done
+        
 echo "connecting 110 to 310"
 ID_310=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/310"  getinfo | jq -r '.id')
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/110"  connect $ID_310 127.0.0.1:20310
@@ -2234,7 +2250,7 @@ RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightn
         sleep 1;
     done
         
-echo "making 7240 payments from 110 to 310"
+echo "making 9660 payments from 110 to 310"
 
         show-progress-bar(){
             PERCENT=$1
@@ -2248,7 +2264,7 @@ echo "making 7240 payments from 110 to 310"
             printf "] ${PERCENT}%% "
         }
         
-NUM_PAYMENTS=7240
+NUM_PAYMENTS=9660
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/310"  getinfo | jq -r '.id')
 for i in $(seq 1 $NUM_PAYMENTS); do
@@ -2268,6 +2284,22 @@ done
 echo
 echo "number of HTLCs node 310 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/310"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "stopping 110"
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/110"  stop
+echo "Revealing preimages by node 310"
+PEER_ID=
+
+    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/310"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
+        sleep 1
+    done
+    
+echo "closing all channels of node 310"
+PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/310"  listpeers | jq -r ".peers[] | .id")
+
+    for id in $PEER_IDS; do
+        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/310"  close $id 60
+    done
+        
 echo "connecting 12 to 32"
 ID_32=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/32"  getinfo | jq -r '.id')
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/12"  connect $ID_32 127.0.0.1:20032
@@ -2279,7 +2311,7 @@ RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightn
         sleep 1;
     done
         
-echo "making 7240 payments from 12 to 32"
+echo "making 9660 payments from 12 to 32"
 
         show-progress-bar(){
             PERCENT=$1
@@ -2293,7 +2325,7 @@ echo "making 7240 payments from 12 to 32"
             printf "] ${PERCENT}%% "
         }
         
-NUM_PAYMENTS=7240
+NUM_PAYMENTS=9660
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/32"  getinfo | jq -r '.id')
 for i in $(seq 1 $NUM_PAYMENTS); do
@@ -2313,6 +2345,22 @@ done
 echo
 echo "number of HTLCs node 32 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/32"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "stopping 12"
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/12"  stop
+echo "Revealing preimages by node 32"
+PEER_ID=
+
+    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/32"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
+        sleep 1
+    done
+    
+echo "closing all channels of node 32"
+PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/32"  listpeers | jq -r ".peers[] | .id")
+
+    for id in $PEER_IDS; do
+        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/32"  close $id 60
+    done
+        
 echo "connecting 13 to 33"
 ID_33=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/33"  getinfo | jq -r '.id')
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/13"  connect $ID_33 127.0.0.1:20033
@@ -2324,7 +2372,7 @@ RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightn
         sleep 1;
     done
         
-echo "making 7240 payments from 13 to 33"
+echo "making 9660 payments from 13 to 33"
 
         show-progress-bar(){
             PERCENT=$1
@@ -2338,7 +2386,7 @@ echo "making 7240 payments from 13 to 33"
             printf "] ${PERCENT}%% "
         }
         
-NUM_PAYMENTS=7240
+NUM_PAYMENTS=9660
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/33"  getinfo | jq -r '.id')
 for i in $(seq 1 $NUM_PAYMENTS); do
@@ -2358,6 +2406,22 @@ done
 echo
 echo "number of HTLCs node 33 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/33"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "stopping 13"
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/13"  stop
+echo "Revealing preimages by node 33"
+PEER_ID=
+
+    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/33"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
+        sleep 1
+    done
+    
+echo "closing all channels of node 33"
+PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/33"  listpeers | jq -r ".peers[] | .id")
+
+    for id in $PEER_IDS; do
+        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/33"  close $id 60
+    done
+        
 echo "connecting 14 to 34"
 ID_34=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/34"  getinfo | jq -r '.id')
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/14"  connect $ID_34 127.0.0.1:20034
@@ -2369,7 +2433,7 @@ RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightn
         sleep 1;
     done
         
-echo "making 7240 payments from 14 to 34"
+echo "making 9660 payments from 14 to 34"
 
         show-progress-bar(){
             PERCENT=$1
@@ -2383,7 +2447,7 @@ echo "making 7240 payments from 14 to 34"
             printf "] ${PERCENT}%% "
         }
         
-NUM_PAYMENTS=7240
+NUM_PAYMENTS=9660
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/34"  getinfo | jq -r '.id')
 for i in $(seq 1 $NUM_PAYMENTS); do
@@ -2403,6 +2467,22 @@ done
 echo
 echo "number of HTLCs node 34 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/34"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "stopping 14"
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/14"  stop
+echo "Revealing preimages by node 34"
+PEER_ID=
+
+    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/34"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
+        sleep 1
+    done
+    
+echo "closing all channels of node 34"
+PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/34"  listpeers | jq -r ".peers[] | .id")
+
+    for id in $PEER_IDS; do
+        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/34"  close $id 60
+    done
+        
 echo "connecting 15 to 35"
 ID_35=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/35"  getinfo | jq -r '.id')
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/15"  connect $ID_35 127.0.0.1:20035
@@ -2414,7 +2494,7 @@ RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightn
         sleep 1;
     done
         
-echo "making 7240 payments from 15 to 35"
+echo "making 9660 payments from 15 to 35"
 
         show-progress-bar(){
             PERCENT=$1
@@ -2428,7 +2508,7 @@ echo "making 7240 payments from 15 to 35"
             printf "] ${PERCENT}%% "
         }
         
-NUM_PAYMENTS=7240
+NUM_PAYMENTS=9660
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/35"  getinfo | jq -r '.id')
 for i in $(seq 1 $NUM_PAYMENTS); do
@@ -2448,6 +2528,22 @@ done
 echo
 echo "number of HTLCs node 35 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/35"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "stopping 15"
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/15"  stop
+echo "Revealing preimages by node 35"
+PEER_ID=
+
+    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/35"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
+        sleep 1
+    done
+    
+echo "closing all channels of node 35"
+PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/35"  listpeers | jq -r ".peers[] | .id")
+
+    for id in $PEER_IDS; do
+        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/35"  close $id 60
+    done
+        
 echo "connecting 16 to 36"
 ID_36=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/36"  getinfo | jq -r '.id')
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/16"  connect $ID_36 127.0.0.1:20036
@@ -2459,7 +2555,7 @@ RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightn
         sleep 1;
     done
         
-echo "making 7240 payments from 16 to 36"
+echo "making 9660 payments from 16 to 36"
 
         show-progress-bar(){
             PERCENT=$1
@@ -2473,7 +2569,7 @@ echo "making 7240 payments from 16 to 36"
             printf "] ${PERCENT}%% "
         }
         
-NUM_PAYMENTS=7240
+NUM_PAYMENTS=9660
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/36"  getinfo | jq -r '.id')
 for i in $(seq 1 $NUM_PAYMENTS); do
@@ -2493,6 +2589,22 @@ done
 echo
 echo "number of HTLCs node 36 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/36"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "stopping 16"
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/16"  stop
+echo "Revealing preimages by node 36"
+PEER_ID=
+
+    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/36"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
+        sleep 1
+    done
+    
+echo "closing all channels of node 36"
+PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/36"  listpeers | jq -r ".peers[] | .id")
+
+    for id in $PEER_IDS; do
+        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/36"  close $id 60
+    done
+        
 echo "connecting 17 to 37"
 ID_37=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/37"  getinfo | jq -r '.id')
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/17"  connect $ID_37 127.0.0.1:20037
@@ -2504,7 +2616,7 @@ RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightn
         sleep 1;
     done
         
-echo "making 7240 payments from 17 to 37"
+echo "making 9660 payments from 17 to 37"
 
         show-progress-bar(){
             PERCENT=$1
@@ -2518,7 +2630,7 @@ echo "making 7240 payments from 17 to 37"
             printf "] ${PERCENT}%% "
         }
         
-NUM_PAYMENTS=7240
+NUM_PAYMENTS=9660
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/37"  getinfo | jq -r '.id')
 for i in $(seq 1 $NUM_PAYMENTS); do
@@ -2538,6 +2650,22 @@ done
 echo
 echo "number of HTLCs node 37 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/37"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "stopping 17"
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/17"  stop
+echo "Revealing preimages by node 37"
+PEER_ID=
+
+    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/37"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
+        sleep 1
+    done
+    
+echo "closing all channels of node 37"
+PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/37"  listpeers | jq -r ".peers[] | .id")
+
+    for id in $PEER_IDS; do
+        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/37"  close $id 60
+    done
+        
 echo "connecting 18 to 38"
 ID_38=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/38"  getinfo | jq -r '.id')
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/18"  connect $ID_38 127.0.0.1:20038
@@ -2549,7 +2677,7 @@ RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightn
         sleep 1;
     done
         
-echo "making 7240 payments from 18 to 38"
+echo "making 9660 payments from 18 to 38"
 
         show-progress-bar(){
             PERCENT=$1
@@ -2563,7 +2691,7 @@ echo "making 7240 payments from 18 to 38"
             printf "] ${PERCENT}%% "
         }
         
-NUM_PAYMENTS=7240
+NUM_PAYMENTS=9660
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/38"  getinfo | jq -r '.id')
 for i in $(seq 1 $NUM_PAYMENTS); do
@@ -2583,6 +2711,22 @@ done
 echo
 echo "number of HTLCs node 38 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/38"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "stopping 18"
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/18"  stop
+echo "Revealing preimages by node 38"
+PEER_ID=
+
+    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/38"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
+        sleep 1
+    done
+    
+echo "closing all channels of node 38"
+PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/38"  listpeers | jq -r ".peers[] | .id")
+
+    for id in $PEER_IDS; do
+        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/38"  close $id 60
+    done
+        
 echo "connecting 19 to 39"
 ID_39=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/39"  getinfo | jq -r '.id')
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/19"  connect $ID_39 127.0.0.1:20039
@@ -2594,7 +2738,7 @@ RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightn
         sleep 1;
     done
         
-echo "making 7240 payments from 19 to 39"
+echo "making 9660 payments from 19 to 39"
 
         show-progress-bar(){
             PERCENT=$1
@@ -2608,7 +2752,7 @@ echo "making 7240 payments from 19 to 39"
             printf "] ${PERCENT}%% "
         }
         
-NUM_PAYMENTS=7240
+NUM_PAYMENTS=9660
 RISKFACTOR=1
 RECEIVER_ID=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/39"  getinfo | jq -r '.id')
 for i in $(seq 1 $NUM_PAYMENTS); do
@@ -2628,26 +2772,22 @@ done
 echo
 echo "number of HTLCs node 39 has on each channel:"
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/39"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
-echo "number of HTLCs node 31 has on each channel:"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/31"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
-echo "number of HTLCs node 310 has on each channel:"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/310"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
-echo "number of HTLCs node 32 has on each channel:"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/32"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
-echo "number of HTLCs node 33 has on each channel:"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/33"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
-echo "number of HTLCs node 34 has on each channel:"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/34"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
-echo "number of HTLCs node 35 has on each channel:"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/35"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
-echo "number of HTLCs node 36 has on each channel:"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/36"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
-echo "number of HTLCs node 37 has on each channel:"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/37"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
-echo "number of HTLCs node 38 has on each channel:"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/38"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
-echo "number of HTLCs node 39 has on each channel:"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/39"  listpeers| jq ".peers[] | .channels[] | .htlcs" | jq length
+echo "stopping 19"
+/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/19"  stop
+echo "Revealing preimages by node 39"
+PEER_ID=
+
+    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/39"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
+        sleep 1
+    done
+    
+echo "closing all channels of node 39"
+PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/39"  listpeers | jq -r ".peers[] | .id")
+
+    for id in $PEER_IDS; do
+        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/39"  close $id 60
+    done
+        
 echo "number of HTLCs node 41 has on each channel:"
 /home/jona/ln/bin/lncli  --rpcserver 127.0.0.1:21041  --lnddir /tmp/lightning-simulations/2/lightning-datadirs/41  --no-macaroons listchannels | jq ".channels[] | .pending_htlcs" | jq length
 echo "number of HTLCs node 410 has on each channel:"
@@ -2668,27 +2808,6 @@ echo "number of HTLCs node 48 has on each channel:"
 /home/jona/ln/bin/lncli  --rpcserver 127.0.0.1:21048  --lnddir /tmp/lightning-simulations/2/lightning-datadirs/48  --no-macaroons listchannels | jq ".channels[] | .pending_htlcs" | jq length
 echo "number of HTLCs node 49 has on each channel:"
 /home/jona/ln/bin/lncli  --rpcserver 127.0.0.1:21049  --lnddir /tmp/lightning-simulations/2/lightning-datadirs/49  --no-macaroons listchannels | jq ".channels[] | .pending_htlcs" | jq length
-echo "stopping all sending nodes"
-echo "stopping 11"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/11"  stop
-echo "stopping 110"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/110"  stop
-echo "stopping 12"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/12"  stop
-echo "stopping 13"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/13"  stop
-echo "stopping 14"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/14"  stop
-echo "stopping 15"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/15"  stop
-echo "stopping 16"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/16"  stop
-echo "stopping 17"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/17"  stop
-echo "stopping 18"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/18"  stop
-echo "stopping 19"
-/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/19"  stop
 echo "starting lightning node 11 in silent mode"
 mkdir -p /tmp/lightning-simulations/2/lightning-datadirs/11
 /home/jona/ln/bin/lightningd-evil   --conf=/home/jona/ln/conf/clightning.conf  --lightning-dir=/tmp/lightning-simulations/2/lightning-datadirs/11  --addr=127.0.0.1:20011  --log-file=log  --alias=11  --evil  --silent  --log-level=DEBUG  --bitcoin-rpcconnect=127.0.0.1  --bitcoin-rpcport=24011  --daemon
@@ -2719,148 +2838,6 @@ mkdir -p /tmp/lightning-simulations/2/lightning-datadirs/18
 echo "starting lightning node 19 in silent mode"
 mkdir -p /tmp/lightning-simulations/2/lightning-datadirs/19
 /home/jona/ln/bin/lightningd-evil   --conf=/home/jona/ln/conf/clightning.conf  --lightning-dir=/tmp/lightning-simulations/2/lightning-datadirs/19  --addr=127.0.0.1:20019  --log-file=log  --alias=19  --evil  --silent  --log-level=DEBUG  --bitcoin-rpcconnect=127.0.0.1  --bitcoin-rpcport=24019  --daemon
-echo "Revealing preimages by node 31"
-PEER_ID=
-
-    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/31"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
-        sleep 1
-    done
-    
-echo "Revealing preimages by node 310"
-PEER_ID=
-
-    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/310"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
-        sleep 1
-    done
-    
-echo "Revealing preimages by node 32"
-PEER_ID=
-
-    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/32"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
-        sleep 1
-    done
-    
-echo "Revealing preimages by node 33"
-PEER_ID=
-
-    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/33"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
-        sleep 1
-    done
-    
-echo "Revealing preimages by node 34"
-PEER_ID=
-
-    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/34"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
-        sleep 1
-    done
-    
-echo "Revealing preimages by node 35"
-PEER_ID=
-
-    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/35"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
-        sleep 1
-    done
-    
-echo "Revealing preimages by node 36"
-PEER_ID=
-
-    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/36"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
-        sleep 1
-    done
-    
-echo "Revealing preimages by node 37"
-PEER_ID=
-
-    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/37"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
-        sleep 1
-    done
-    
-echo "Revealing preimages by node 38"
-PEER_ID=
-
-    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/38"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
-        sleep 1
-    done
-    
-echo "Revealing preimages by node 39"
-PEER_ID=
-
-    while [[ $(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/39"  revealpreimages $PEER_ID | jq -r ".htlcs_processed") != 0 ]]; do
-        sleep 1
-    done
-    
-echo "closing all channels of receiving nodes"
-echo "closing all channels of node 31"
-PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/31"  listpeers | jq -r ".peers[] | .id")
-
-    for id in $PEER_IDS; do
-        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/31"  close $id 60
-    done
-        
-echo "closing all channels of node 310"
-PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/310"  listpeers | jq -r ".peers[] | .id")
-
-    for id in $PEER_IDS; do
-        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/310"  close $id 60
-    done
-        
-echo "closing all channels of node 32"
-PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/32"  listpeers | jq -r ".peers[] | .id")
-
-    for id in $PEER_IDS; do
-        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/32"  close $id 60
-    done
-        
-echo "closing all channels of node 33"
-PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/33"  listpeers | jq -r ".peers[] | .id")
-
-    for id in $PEER_IDS; do
-        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/33"  close $id 60
-    done
-        
-echo "closing all channels of node 34"
-PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/34"  listpeers | jq -r ".peers[] | .id")
-
-    for id in $PEER_IDS; do
-        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/34"  close $id 60
-    done
-        
-echo "closing all channels of node 35"
-PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/35"  listpeers | jq -r ".peers[] | .id")
-
-    for id in $PEER_IDS; do
-        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/35"  close $id 60
-    done
-        
-echo "closing all channels of node 36"
-PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/36"  listpeers | jq -r ".peers[] | .id")
-
-    for id in $PEER_IDS; do
-        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/36"  close $id 60
-    done
-        
-echo "closing all channels of node 37"
-PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/37"  listpeers | jq -r ".peers[] | .id")
-
-    for id in $PEER_IDS; do
-        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/37"  close $id 60
-    done
-        
-echo "closing all channels of node 38"
-PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/38"  listpeers | jq -r ".peers[] | .id")
-
-    for id in $PEER_IDS; do
-        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/38"  close $id 60
-    done
-        
-echo "closing all channels of node 39"
-PEER_IDS=$(/home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/39"  listpeers | jq -r ".peers[] | .id")
-
-    for id in $PEER_IDS; do
-        /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/39"  close $id 60
-    done
-        
-/home/jona/ln/bin/bitcoin-cli  -conf=/home/jona/ln/conf/bitcoin.conf  -rpcport=24000  generatetoaddress  10 $(/home/jona/ln/bin/bitcoin-cli  -conf=/home/jona/ln/conf/bitcoin.conf  -rpcport=24000  getnewaddress) >/dev/null
 echo "dumping channels information of all lightning nodes"
 mkdir -p '/home/jona/ln/simulations/steal-attack-10-10-10-blockmaxweight=4000000'
 /home/jona/ln/bin/lightning-cli --conf="/home/jona/ln/conf/clightning.conf" --lightning-dir="/tmp/lightning-simulations/2/lightning-datadirs/11"  listchannels >> /home/jona/ln/simulations/steal-attack-10-10-10-blockmaxweight=4000000/node_11_channels
