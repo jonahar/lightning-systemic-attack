@@ -9,6 +9,9 @@ from datatypes import Feerate, btc_to_sat
 from feerates import logger
 from feerates.graphs.plot_utils import PlotData, plot_figure
 from paths import FEE_ESTIMATIONS_DIR
+import matplotlib
+
+matplotlib.rcParams.update({'font.size': 10})
 
 BYTE_IN_KBYTE = 1000
 
@@ -81,7 +84,7 @@ def main():
     p_values = [0.2, 0.5, 0.8]
     for num_blocks, plot_data_list in data.items():
         for plot_data in plot_data_list:
-            fig = plot_figure(title="", plot_data_list=[plot_data], figsize=(16.00, 9.00))
+            fig = plot_figure(title="", plot_data_list=[plot_data], figsize=(6.66, 3.75))
             plt.figure(fig.number)
             # for p in p_values:
             #     percentile = get_feerates_percentile(plot_data.feerates, p=p)
@@ -92,8 +95,11 @@ def main():
             #         label=f"{int(p * 100)}'th percentile ({round(percentile, 1)})",
             #     )
             plt.legend(loc="best")
+            plt.grid()
+            plt.xlabel("Estimation time")
+            plt.ylabel("Estimated feerate")
     plt.savefig("estimated-feerates.svg", bbox_inches='tight')
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":
