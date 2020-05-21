@@ -70,7 +70,7 @@ def get_max_confirmed_htlcs(t: Timestamp) -> int:
     """
     return the maximum number of HTLCs that can be confirmed before expiration
     in an attack starting at time t.
-    Assuming the channel's feerate was determined at time x by bitcoind
+    Assuming the channel's feerate was determined at time t by bitcoind
     """
     start_height = get_first_block_after_time_t(t)
     close_height = start_height + 90  # channels will be dropped 90 blocks after the opening time
@@ -98,7 +98,7 @@ def plot_attack_start_time_vs_confirmed_htlcs(timestamp_values: List[Timestamp])
         map(lambda t: get_max_confirmed_htlcs(t), timestamp_values)
     )
     
-    xticks = np.linspace(start=timestamp_values[0], stop=timestamp_values[-1], num=10)
+    xticks = np.linspace(start=timestamp_values[0], stop=timestamp_values[-1], num=5)
     timestamp_to_date_str = lambda t: datetime.utcfromtimestamp(t).strftime('%Y-%m-%d')
     xlabels = [timestamp_to_date_str(t) for t in xticks]
     
@@ -117,11 +117,11 @@ def plot_attack_start_time_vs_confirmed_htlcs(timestamp_values: List[Timestamp])
         for max_confirmed_htlcs in max_confirmed_htlcs_values
     ]
     
-    plt.figure(figsize=(16.00, 9.00))
-    plt.plot(timestamp_values, num_channels_values)
+    plt.figure(figsize=(6.00, 2.14))
+    plt.plot(timestamp_values, num_channels_values, linewidth=0.5)
     plt.grid()
     plt.xlabel("Attack start time")
-    plt.ylabel("Minimum #attacked-channels required for stealing")
+    plt.ylabel("#channels")
     plt.xticks(ticks=xticks, labels=xlabels)
     plt.savefig("min-required-channels-for-stealing.svg", bbox_inches='tight')
     
@@ -134,14 +134,14 @@ def plot_attack_start_time_vs_confirmed_htlcs(timestamp_values: List[Timestamp])
     num_channels_hist_cumsum = np.cumsum(num_channels_hist)
     num_channels_hist_cumsum_normalized = (num_channels_hist_cumsum * 100) / len(timestamp_values)
     
-    plt.figure(figsize=(7.00, 7.00))
+    plt.figure(figsize=(6.66, 3.75))
     plt.plot(num_channels_range, num_channels_hist_cumsum_normalized)
     plt.grid()
-    plt.xlabel("number of victims")
-    plt.ylabel("Percent of time-points in which X victims is enough for successful attack")
+    plt.xlabel("Attacked channels")
+    # plt.ylabel("Percent of attack start points on which attack succeeds")
     plt.savefig("min-required-channels-for-stealing-hist-cum.svg", bbox_inches='tight')
     
-    plt.show()
+    # plt.show()
 
 
 set_bitcoin_cli("user")
