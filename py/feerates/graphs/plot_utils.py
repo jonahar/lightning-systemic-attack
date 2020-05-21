@@ -33,17 +33,16 @@ def plot_figure(title: str, plot_data_list: List[PlotData], **fig_kw) -> Figure:
     plt.legend(loc="best")
     plt.title(title)
     
-    xticks = np.linspace(start=min_timestamp, stop=max_timestamp, num=10)
-    yticks = np.linspace(start=min_feerate, stop=max_feerate, num=10)
+    xticks = np.linspace(start=min_timestamp, stop=max_timestamp, num=5)
+    yticks = np.linspace(start=min_feerate, stop=max_feerate, num=5)
     
     timestamp_to_date_str = lambda t: datetime.utcfromtimestamp(t).strftime('%Y-%m-%d')
     plt.xticks(
         ticks=xticks,
         labels=[timestamp_to_date_str(t) for t in xticks]
     )
-    plt.xlabel("time")
     
     plt.yticks(ticks=yticks)
-    plt.ylabel("feerate")
+    
     
     return fig
