@@ -62,7 +62,11 @@ def is_htlc_script(script_hex: str) -> bool:
         return False
     
     return all(
-        HTLC_SCRIPT_TOKENS[i] is None or tokens[i] == HTLC_SCRIPT_TOKENS[i]
+        HTLC_SCRIPT_TOKENS[i] is None
+        or
+        tokens[i] == HTLC_SCRIPT_TOKENS[i]
+        or
+        (HTLC_SCRIPT_TOKENS[i] == "OP_CHECKLOCKTIMEVERIFY" and tokens[i] == "OP_NOP2")
         for i in range(len(tokens))
     )
 
