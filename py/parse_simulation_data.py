@@ -9,13 +9,14 @@ from typing import Any, Callable, Dict, Iterable, List, Set
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MaxNLocator
+from networkx.readwrite.gpickle import read_gpickle, write_gpickle
 
 from datatypes import BTC, TXID, btc_to_sat
 from paths import SIMULATIONS_DIR
 from txs_graph.txs_graph import TxsGraph
 from utils import setup_logging
 
-GRAPH_FILE = "num-victims-vs-stolen-htlcs.png"
+GRAPH_FILE = "num-victims-vs-stolen-htlcs.svg"
 log = setup_logging()
 
 
@@ -272,6 +273,21 @@ def find_double_spends(txs_graph: TxsGraph) -> Dict[TXID, Dict[int, List[TXID]]]
     return res
 
 
+def get_interesting_commitments(simulation_name: str) -> List[TXID]:
+    """
+    return list of commitment txids corresponding to unilateral channel closure
+    """
+    txs_graph = get_simulation_graph(simulation_name)
+    all_commitments = find_commitments(simulation_name=simulation_name)
+    # only keep commitments that are not graceful closing transactions
+    commitments = filter(
+        lambda commitment_txid: txs_graph.get_minimal_nsequence(commitment_txid) < 0xffffffff,
+        all_commitments,
+    )
+    sorted_commitments = sorted(commitments, key=lambda txid: txs_graph.nodes[txid]["height"])
+    return sorted_commitments
+
+
 def print_double_spends(txs_graph: TxsGraph) -> None:
     double_spends = find_double_spends(txs_graph)
     for parent_txid, output_to_txid_list in double_spends.items():
@@ -325,21 +341,15 @@ def print_commitments_info(commitment_txids: List[TXID], txs_graph: TxsGraph) ->
 
 def print_simulation_stats(simulation_name: str) -> None:
     txs_graph = get_simulation_graph(simulation_name)
-    all_commitments = find_commitments(simulation_name=simulation_name)
-    # only keep commitments who are not graceful closing transactions
-    commitments = filter(
-        lambda commitment_txid: txs_graph.get_minimal_nsequence(commitment_txid) < 0xffffffff,
-        all_commitments,
-    )
-    sorted_commitments = sorted(commitments, key=lambda txid: txs_graph.nodes[txid]["height"])
-    print(f"Total number of commitments: {len(sorted_commitments)}")
+    commitments = get_interesting_commitments(simulation_name)
+    print(f"Total number of commitments: {len(commitments)}")
     print_commitments_info(
-        commitment_txids=sorted_commitments,
+        commitment_txids=commitments,
         txs_graph=txs_graph,
     )
     total_htlcs, stolen_htlcs = get_stolen_htlc_num(
         txs_graph=txs_graph,
-        commitments=sorted_commitments,
+        commitments=commitments,
     )
     print(
         f"Total HTLCs stolen: {stolen_htlcs}/{total_htlcs} "
@@ -347,13 +357,13 @@ def print_simulation_stats(simulation_name: str) -> None:
     )
 
 
-simulation_name_regex = re.compile("steal-attack-(\\d+)-lnd-victims-blockmaxweight=(\\d+)")
+simulation_name_regex = re.compile("steal-attack-(\\d+)-(\\d+)-(\\d+)-blockmaxweight=(\\d+)")
 
 
 def get_num_victims_vs_stolen_htlcs_data(simulation_names: List[str]) -> Dict[int, np.ndarray]:
     """
     return a mapping from blockmaxweight to a numpy matrix with 3 rows:
-    first row with num_victims values
+    first row with num_channels values
     second row with stolen_htlcs values
     third row with stolen_htlcs values in percentages
     """
@@ -365,14 +375,18 @@ def get_num_victims_vs_stolen_htlcs_data(simulation_names: List[str]) -> Dict[in
         m = simulation_name_regex.fullmatch(simulation_name)
         if m is None:
             raise ValueError(f"Unrecognized simulation_name format: {simulation_name}")
-        num_victims = int(m.group(1))
-        blockmaxweight = int(m.group(2))
+        num_senders = int(m.group(1))
+        num_victims = int(m.group(2))
+        num_receivers = int(m.group(3))
+        
+        num_channels = len(get_interesting_commitments(simulation_name))
+        blockmaxweight = int(m.group(4))
         total_htlcs, stolen_htlcs = get_stolen_htlc_num(
             txs_graph=get_simulation_graph(simulation_name),
             commitments=find_commitments(simulation_name),
         )
         stolen_htlcs_percent = (stolen_htlcs * 100 / total_htlcs)
-        data[blockmaxweight][0].append(num_victims)
+        data[blockmaxweight][0].append(num_channels)
         data[blockmaxweight][1].append(stolen_htlcs)
         data[blockmaxweight][2].append(stolen_htlcs_percent)
     
@@ -404,8 +418,8 @@ def plot_num_victims_vs_stolen_htlcs_graph(simulation_names: List[str]) -> None:
     # force integer ticks for the num-victims axis
     fig.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
     
-    plt.xlabel("Number of victims")
-    plt.ylabel("Number of HTLCs stolen")
+    plt.xlabel("Number of attacked channels")
+    plt.ylabel("Total HTLCs stolen")
     plt.legend(loc="best")
     plt.grid()
     plt.savefig(GRAPH_FILE)
@@ -420,11 +434,21 @@ def get_simulation_outfile(simulation_name: str) -> str:
     return os.path.join(SIMULATIONS_DIR, f"{simulation_name}.out")
 
 
-@lru_cache(maxsize=64)
+@lru_cache()
 def get_simulation_graph(simulation_name: str) -> TxsGraph:
-    return TxsGraph.from_datadir(
+    # building the graph is expensive, so we pickle it for faster construction
+    # next time
+    simulation_graph_ser_file = os.path.join(
+        get_simulation_datadir(simulation_name), "graph.pickle"
+    )
+    if os.path.isfile(simulation_graph_ser_file):
+        return read_gpickle(simulation_graph_ser_file)
+    
+    g = TxsGraph.from_datadir(
         datadir=get_simulation_datadir(simulation_name)
     )
+    write_gpickle(g, simulation_graph_ser_file)
+    return g
 
 
 def main(simulation_names: List[str]) -> None:
