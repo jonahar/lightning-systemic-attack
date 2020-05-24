@@ -284,7 +284,10 @@ def get_interesting_commitments(simulation_name: str) -> List[TXID]:
         lambda commitment_txid: txs_graph.get_minimal_nsequence(commitment_txid) < 0xffffffff,
         all_commitments,
     )
-    sorted_commitments = sorted(commitments, key=lambda txid: txs_graph.nodes[txid]["height"])
+    sorted_commitments = sorted(
+        commitments,
+        key=lambda txid: (txs_graph.nodes[txid]["height"])
+    )
     return sorted_commitments
 
 
@@ -357,7 +360,7 @@ def print_simulation_stats(simulation_name: str) -> None:
     )
 
 
-simulation_name_regex = re.compile("steal-attack-(\\d+)-(\\d+)-(\\d+)-blockmaxweight=(\\d+)")
+simulation_name_regex = re.compile("steal-attack-(\\d+)-channels-blockmaxweight=(\\d+)")
 
 
 def get_num_victims_vs_stolen_htlcs_data(simulation_names: List[str]) -> Dict[int, np.ndarray]:
@@ -375,12 +378,11 @@ def get_num_victims_vs_stolen_htlcs_data(simulation_names: List[str]) -> Dict[in
         m = simulation_name_regex.fullmatch(simulation_name)
         if m is None:
             raise ValueError(f"Unrecognized simulation_name format: {simulation_name}")
-        num_senders = int(m.group(1))
-        num_victims = int(m.group(2))
-        num_receivers = int(m.group(3))
+        num_channels = int(m.group(1))
+        blockmaxweight = int(m.group(2))
+        if num_channels != len(get_interesting_commitments(simulation_name)):
+            print("Warning: num_channels doesn't match number of commitments")
         
-        num_channels = len(get_interesting_commitments(simulation_name))
-        blockmaxweight = int(m.group(4))
         total_htlcs, stolen_htlcs = get_stolen_htlc_num(
             txs_graph=get_simulation_graph(simulation_name),
             commitments=find_commitments(simulation_name),
@@ -408,7 +410,7 @@ def plot_num_victims_vs_stolen_htlcs_graph(simulation_names: List[str]) -> None:
     """
     data = get_num_victims_vs_stolen_htlcs_data(simulation_names)
     
-    fig = plt.figure(figsize=[9.6, 7.2])
+    fig = plt.figure(figsize=[6.24, 4.68])
     for blockmaxweight, graph_data in data.items():
         num_victims_values = graph_data[0]
         stolen_htlcs_values = graph_data[1]
