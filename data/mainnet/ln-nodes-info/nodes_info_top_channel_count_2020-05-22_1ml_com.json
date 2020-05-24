@@ -1,0 +1,1084 @@
+[
+    {
+        "last_update": 1590102442,
+        "pub_key": "02ad6fb8d693dc1e4569bcedefadf5f72a931ae027dc0f0c544b34c1c6f3b9a02b",
+        "alias": "rompert.com≡ƒö╡",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "167.99.50.31:9735"
+            }
+        ],
+        "color": "#0000ff",
+        "capacity": 908997655,
+        "channelcount": 1084,
+        "noderank": {
+            "capacity": 47,
+            "channelcount": 1,
+            "age": 596,
+            "growth": 6969,
+            "availability": 54
+        }
+    },
+    {
+        "last_update": 1590128652,
+        "pub_key": "0331f80652fb840239df8dc99205792bba2e559a05469915804c08420230e23c7c",
+        "alias": "LightningPowerUsers.com",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "34.200.181.109:9735"
+            }
+        ],
+        "color": "#000000",
+        "capacity": 2038239514,
+        "channelcount": 1048,
+        "noderank": {
+            "capacity": 16,
+            "channelcount": 2,
+            "age": 2295,
+            "growth": 6893,
+            "availability": 133
+        }
+    },
+    {
+        "last_update": 1589446423,
+        "pub_key": "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f",
+        "alias": "ACINQ",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "34.239.230.56:9735"
+            },
+            {
+                "network": "tcp",
+                "addr": "of7husrflx7sforh3fw6yqlpwstee3wg5imvvmkp4bz6rbjxtg5nljad.onion:9735"
+            }
+        ],
+        "color": "#49daaa",
+        "capacity": 6948598614,
+        "channelcount": 962,
+        "noderank": {
+            "capacity": 1,
+            "channelcount": 3,
+            "age": 796,
+            "growth": 6980,
+            "availability": 16
+        }
+    },
+    {
+        "last_update": 1590104674,
+        "pub_key": "0217890e3aad8d35bc054f43acc00084b25229ecff0ab68debd82883ad65ee8266",
+        "alias": "1ML.com node ALPHA",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "23.237.77.11:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 578421648,
+        "channelcount": 940,
+        "noderank": {
+            "capacity": 63,
+            "channelcount": 4,
+            "age": 1446,
+            "growth": 20,
+            "availability": 49
+        }
+    },
+    {
+        "last_update": 1590101932,
+        "pub_key": "03bb88ccc444534da7b5b64b4f7b15e1eccb18e102db0e400d4b9cfe93763aa26d",
+        "alias": "LightningTo.Me",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "138.68.14.104:9735"
+            }
+        ],
+        "color": "#3dffbe",
+        "capacity": 1271800227,
+        "channelcount": 767,
+        "noderank": {
+            "capacity": 43,
+            "channelcount": 5,
+            "age": 1544,
+            "growth": 143,
+            "availability": 48
+        }
+    },
+    {
+        "last_update": 1590104670,
+        "pub_key": "03abf6f44c355dec0d5aa155bdbdd6e0c8fefe318eff402de65c6eb2e1be55dc3e",
+        "alias": "OpenNode.com",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "18.221.23.28:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 4373632677,
+        "channelcount": 736,
+        "noderank": {
+            "capacity": 2,
+            "channelcount": 6,
+            "age": 1414,
+            "growth": 6974,
+            "availability": 27
+        }
+    },
+    {
+        "last_update": 1590085520,
+        "pub_key": "0242a4ae0c5bef18048fbecf995094b74bfb0f7391418d71ed394784373f41e4f3",
+        "alias": "CoinGate",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "3.124.63.44:9735"
+            }
+        ],
+        "color": "#4169e1",
+        "capacity": 2248034055,
+        "channelcount": 688,
+        "noderank": {
+            "capacity": 10,
+            "channelcount": 7,
+            "age": 1379,
+            "growth": 18,
+            "availability": 20
+        }
+    },
+    {
+        "last_update": 1590130825,
+        "pub_key": "0390b5d4492dc2f5318e5233ab2cebf6d48914881a33ef6a9c6bcdbb433ad986d0",
+        "alias": "LNBIG.com [lnd-01]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "46.229.165.136:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 3052902855,
+        "channelcount": 628,
+        "noderank": {
+            "capacity": 4,
+            "channelcount": 8,
+            "age": 2002,
+            "growth": 6753,
+            "availability": 21
+        }
+    },
+    {
+        "last_update": 1590061664,
+        "pub_key": "0395033b252c6f40e3756984162d68174e2bd8060a129c0d3462a9370471c6d28f",
+        "alias": "BitMEXResearch",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "35.184.216.240:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 762442002,
+        "channelcount": 616,
+        "noderank": {
+            "capacity": 53,
+            "channelcount": 9,
+            "age": 1931,
+            "growth": 6913,
+            "availability": 81
+        }
+    },
+    {
+        "last_update": 1590128686,
+        "pub_key": "0279c22ed7a068d10dc1a38ae66d2d6461e269226c60258c021b1ddcdfe4b00bc4",
+        "alias": "ln1.satoshilabs.com",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "157.230.28.160:9735"
+            }
+        ],
+        "color": "#ff0000",
+        "capacity": 2011810792,
+        "channelcount": 480,
+        "noderank": {
+            "capacity": 18,
+            "channelcount": 10,
+            "age": 1697,
+            "growth": 6982,
+            "availability": 43
+        }
+    },
+    {
+        "last_update": 1590126092,
+        "pub_key": "02913d84886059292845f870c5229f103dd8d7d71d7e9fc6fd52f75a40486d2187",
+        "alias": "btc.lnetwork.tokyo",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "153.126.136.98:9735"
+            }
+        ],
+        "color": "#db245b",
+        "capacity": 219684474,
+        "channelcount": 438,
+        "noderank": {
+            "capacity": 116,
+            "channelcount": 11,
+            "age": 4817,
+            "growth": 393,
+            "availability": 172
+        }
+    },
+    {
+        "last_update": 1590085520,
+        "pub_key": "02a04446caa81636d60d63b066f2814cbd3a6b5c258e3172cbdded7a16e2cfff4c",
+        "alias": "ln.bitstamp.net [Bitstamp]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "3.122.40.122:9735"
+            }
+        ],
+        "color": "#159e49",
+        "capacity": 1466987759,
+        "channelcount": 411,
+        "noderank": {
+            "capacity": 39,
+            "channelcount": 12,
+            "age": 4116,
+            "growth": 6872,
+            "availability": 101
+        }
+    },
+    {
+        "last_update": 1590057089,
+        "pub_key": "021607cfce19a4c5e7e6e738663dfafbbbac262e4ff76c2c9b30dbeefc35c00643",
+        "alias": "ln.BitSoapBox.com",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "95.217.34.109:9735"
+            }
+        ],
+        "color": "#5f04c0",
+        "capacity": 702310927,
+        "channelcount": 397,
+        "noderank": {
+            "capacity": 58,
+            "channelcount": 13,
+            "age": 2084,
+            "growth": 6961,
+            "availability": 187
+        }
+    },
+    {
+        "last_update": 1590061109,
+        "pub_key": "03d37fca0656558de4fd86bbe490a38d84a46228e7ec1361801f54f9437a18d618",
+        "alias": "LNBIG.com [lnd-02]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "46.229.165.138:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 2336385057,
+        "channelcount": 394,
+        "noderank": {
+            "capacity": 7,
+            "channelcount": 14,
+            "age": 2008,
+            "growth": 6955,
+            "availability": 163
+        }
+    },
+    {
+        "last_update": 1588744697,
+        "pub_key": "0298f6074a454a1f5345cb2a7c6f9fce206cd0bf675d177cdbf0ca7508dd28852f",
+        "alias": "BCash_Is_Trash",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "73.119.255.56:9735"
+            },
+            {
+                "network": "tcp",
+                "addr": "[2601:18d:8900:cc0:219:d1ff:fe75:dc2f]:9735"
+            }
+        ],
+        "color": "#ffaa00",
+        "capacity": 908534728,
+        "channelcount": 393,
+        "noderank": {
+            "capacity": 48,
+            "channelcount": 15,
+            "age": 4344,
+            "growth": 6957,
+            "availability": 188
+        }
+    },
+    {
+        "last_update": 1590068853,
+        "pub_key": "03634bda49c9c42afd876d8288802942c49e58fbec3844ff54b46143bfcb6cdfaf",
+        "alias": "Zap Technologies",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "157.230.144.234:9735"
+            }
+        ],
+        "color": "#242632",
+        "capacity": 702705825,
+        "channelcount": 392,
+        "noderank": {
+            "capacity": 57,
+            "channelcount": 16,
+            "age": 2706,
+            "growth": 16,
+            "availability": 76
+        }
+    },
+    {
+        "last_update": 1590100812,
+        "pub_key": "03a503d8e30f2ff407096d235b5db63b4fcf3f89a653acb6f43d3fc492a7674019",
+        "alias": "Sagittarius A",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "5.196.73.52:9735"
+            },
+            {
+                "network": "tcp",
+                "addr": "[2001:41d0:e:734::1]:9735"
+            },
+            {
+                "network": "tcp",
+                "addr": "cvxr5tvyslhf3wf6rovoe3occhbiiykrimwptcflbrm67bh5zo4jtwyd.onion:9735"
+            }
+        ],
+        "color": "#ffffff",
+        "capacity": 631455402,
+        "channelcount": 381,
+        "noderank": {
+            "capacity": 61,
+            "channelcount": 17,
+            "age": 1744,
+            "growth": 6454,
+            "availability": 180
+        }
+    },
+    {
+        "last_update": 1590089143,
+        "pub_key": "02c91d6aa51aa940608b497b6beebcb1aec05be3c47704b682b3889424679ca490",
+        "alias": "LNBIG.com [lnd-21]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "213.174.156.65:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 2231507651,
+        "channelcount": 381,
+        "noderank": {
+            "capacity": 11,
+            "channelcount": 18,
+            "age": 2014,
+            "growth": 6971,
+            "availability": 203
+        }
+    },
+    {
+        "last_update": 1590062902,
+        "pub_key": "032679fec1213e5b0a23e066c019d7b991b95c6e4d28806b9ebd1362f9e32775cf",
+        "alias": "LNBIG.com [lnd-03]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "46.229.165.139:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 2294426320,
+        "channelcount": 376,
+        "noderank": {
+            "capacity": 8,
+            "channelcount": 19,
+            "age": 2009,
+            "growth": 6976,
+            "availability": 179
+        }
+    },
+    {
+        "last_update": 1590120068,
+        "pub_key": "03c2abfa93eacec04721c019644584424aab2ba4dff3ac9bdab4e9c97007491dda",
+        "alias": "tippin.me",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "157.245.68.47:9735"
+            }
+        ],
+        "color": "#ff4681",
+        "capacity": 839484584,
+        "channelcount": 375,
+        "noderank": {
+            "capacity": 51,
+            "channelcount": 20,
+            "age": 2044,
+            "growth": 6459,
+            "availability": 146
+        }
+    },
+    {
+        "last_update": 1590098781,
+        "pub_key": "03fb822818be083e0a954db85257a2911a3d55458b8c1ea4124b157e865a836d12",
+        "alias": "LNBIG.com [lnd-17]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "46.229.165.133:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 2187388690,
+        "channelcount": 373,
+        "noderank": {
+            "capacity": 12,
+            "channelcount": 21,
+            "age": 2016,
+            "growth": 395,
+            "availability": 314
+        }
+    },
+    {
+        "last_update": 1590126021,
+        "pub_key": "030995c0c0217d763c2274aa6ed69a0bb85fa2f7d118f93631550f3b6219a577f5",
+        "alias": "LNBIG.com [lnd-28]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "213.174.156.72:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 2094803071,
+        "channelcount": 362,
+        "noderank": {
+            "capacity": 14,
+            "channelcount": 22,
+            "age": 2015,
+            "growth": 6909,
+            "availability": 279
+        }
+    },
+    {
+        "last_update": 1590056784,
+        "pub_key": "028a8e53d70bc0eb7b5660943582f10b7fd6c727a78ad819ba8d45d6a638432c49",
+        "alias": "LNBIG.com [lnd-33]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "213.174.156.77:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 2035806524,
+        "channelcount": 361,
+        "noderank": {
+            "capacity": 17,
+            "channelcount": 23,
+            "age": 2029,
+            "growth": 88,
+            "availability": 185
+        }
+    },
+    {
+        "last_update": 1590098616,
+        "pub_key": "02247d9db0dfafea745ef8c9e161eb322f73ac3f8858d8730b6fd97254747ce76b",
+        "alias": "LNBIG.com [lnd-26]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "213.174.156.70:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1949720862,
+        "channelcount": 357,
+        "noderank": {
+            "capacity": 23,
+            "channelcount": 24,
+            "age": 2022,
+            "growth": 6922,
+            "availability": 218
+        }
+    },
+    {
+        "last_update": 1590083001,
+        "pub_key": "030c3f19d742ca294a55c00376b3b355c3c90d61c6b6b39554dbc7ac19b141c14f",
+        "alias": "Bitrefill.com/gift-cards",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "52.50.244.44:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 2858147856,
+        "channelcount": 355,
+        "noderank": {
+            "capacity": 5,
+            "channelcount": 25,
+            "age": 1688,
+            "growth": 6978,
+            "availability": 24
+        }
+    },
+    {
+        "last_update": 1590006810,
+        "pub_key": "039edc94987c8f3adc28dab455efc00dea876089a120f573bd0b03c40d9d3fb1e1",
+        "alias": "LNBIG.com [lnd-32]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "213.174.156.76:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 2051394180,
+        "channelcount": 341,
+        "noderank": {
+            "capacity": 15,
+            "channelcount": 26,
+            "age": 2021,
+            "growth": 135,
+            "availability": 284
+        }
+    },
+    {
+        "last_update": 1590050777,
+        "pub_key": "033d8656219478701227199cbd6f670335c8d408a92ae88b962c49d4dc0e83e025",
+        "alias": "bfx-lnd0",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "34.65.85.39:9735"
+            }
+        ],
+        "color": "#16b157",
+        "capacity": 3788585377,
+        "channelcount": 339,
+        "noderank": {
+            "capacity": 3,
+            "channelcount": 27,
+            "age": 5314,
+            "growth": 6965,
+            "availability": 106
+        }
+    },
+    {
+        "last_update": 1590133236,
+        "pub_key": "03bc9337c7a28bb784d67742ebedd30a93bacdf7e4ca16436ef3798000242b2251",
+        "alias": "LNBIG.com [lnd-06]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "46.229.165.141:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1926492804,
+        "channelcount": 337,
+        "noderank": {
+            "capacity": 24,
+            "channelcount": 28,
+            "age": 2020,
+            "growth": 6875,
+            "availability": 221
+        }
+    },
+    {
+        "last_update": 1590111742,
+        "pub_key": "03fce165537aea120bffe8505876b44d5119354f825b3eac329b761fc5636bf334",
+        "alias": "LNBIG.com [lnd-27]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "213.174.156.71:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1958319930,
+        "channelcount": 329,
+        "noderank": {
+            "capacity": 22,
+            "channelcount": 29,
+            "age": 2017,
+            "growth": 39,
+            "availability": 223
+        }
+    },
+    {
+        "last_update": 1590130529,
+        "pub_key": "0303a518845db99994783f606e6629e705cfaf072e5ce9a4d8bf9e249de4fbd019",
+        "alias": "LNBIG.com [lnd-25]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "213.174.156.69:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1969301558,
+        "channelcount": 329,
+        "noderank": {
+            "capacity": 21,
+            "channelcount": 30,
+            "age": 2019,
+            "growth": 38,
+            "availability": 232
+        }
+    },
+    {
+        "last_update": 1590117034,
+        "pub_key": "03da1c27ca77872ac5b3e568af30673e599a47a5e4497f85c7b5da42048807b3ed",
+        "alias": "LNBIG.com [lnd-07]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "46.229.165.142:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1728659167,
+        "channelcount": 325,
+        "noderank": {
+            "capacity": 35,
+            "channelcount": 31,
+            "age": 2018,
+            "growth": 6950,
+            "availability": 251
+        }
+    },
+    {
+        "last_update": 1590035607,
+        "pub_key": "022755c3ff4e5a1d71f573cda4b315887fc00a9e5c9ea9a847d939f3e517e69a70",
+        "alias": "LNBIG.com [lnd-34]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "213.174.156.78:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1755929489,
+        "channelcount": 323,
+        "noderank": {
+            "capacity": 31,
+            "channelcount": 32,
+            "age": 2028,
+            "growth": 6949,
+            "availability": 236
+        }
+    },
+    {
+        "last_update": 1590096371,
+        "pub_key": "031ce29116eab7edd66148f5169f1fb658fad62bdc5091221ab895fe5d36db00b2",
+        "alias": "LNBIG.com [lnd-05]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "46.229.165.140:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1823390272,
+        "channelcount": 321,
+        "noderank": {
+            "capacity": 26,
+            "channelcount": 33,
+            "age": 2026,
+            "growth": 6859,
+            "availability": 215
+        }
+    },
+    {
+        "last_update": 1590048962,
+        "pub_key": "02004c625d622245606a1ea2c1c69cfb4516b703b47945a3647713c05fe4aaeb1c",
+        "alias": "WalletOfSatoshi.com",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "172.81.178.151:9735"
+            },
+            {
+                "network": "tcp",
+                "addr": "yocrhxpg2hkof6xeaz4zsjtwmbbcu6xvwvb7dazf2lkbslwylkqzrwad.onion:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1296509052,
+        "channelcount": 319,
+        "noderank": {
+            "capacity": 41,
+            "channelcount": 34,
+            "age": 1874,
+            "growth": 9,
+            "availability": 51
+        }
+    },
+    {
+        "last_update": 1590104008,
+        "pub_key": "022c260f9ad58196af280c80a96ec9eabf6404df59ff1a7553b0f381c875a29ba0",
+        "alias": "LNBIG.com [lnd-37]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "213.174.156.81:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1982573376,
+        "channelcount": 318,
+        "noderank": {
+            "capacity": 20,
+            "channelcount": 35,
+            "age": 2025,
+            "growth": 53,
+            "availability": 209
+        }
+    },
+    {
+        "last_update": 1590051658,
+        "pub_key": "02d419c9af624d0e7a7c90a60b9ffa35f4934973a9d7d3b4175cc3cc28b7ffcde1",
+        "alias": "stackingsats [TFTC] [NODL] [TOR]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "4k65ti7tyv6ejntpvtxwtzc2ala25fx4bxms2dekax3lb5n2c3rexhid.onion:9735"
+            }
+        ],
+        "color": "#0000ff",
+        "capacity": 904137756,
+        "channelcount": 314,
+        "noderank": {
+            "capacity": 49,
+            "channelcount": 36,
+            "age": 3868,
+            "growth": 6956,
+            "availability": 207
+        }
+    },
+    {
+        "last_update": 1590104669,
+        "pub_key": "02529db69fd2ebd3126fb66fafa234fc3544477a23d509fe93ed229bb0e92e4fb8",
+        "alias": "≡ƒÜÇ≡ƒîæ BOLTENING.club",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "62.210.167.199:9735"
+            },
+            {
+                "network": "tcp",
+                "addr": "qk2ealuaxlfvwd3j.onion:9735"
+            },
+            {
+                "network": "tcp",
+                "addr": "pinnqmvunxzeggwp2ubmlrpo3janirp2ls2aiyc4priq66r45ivxhtid.onion:9735"
+            }
+        ],
+        "color": "#4286f5",
+        "capacity": 732830631,
+        "channelcount": 306,
+        "noderank": {
+            "capacity": 56,
+            "channelcount": 37,
+            "age": 1293,
+            "growth": 6888,
+            "availability": 246
+        }
+    },
+    {
+        "last_update": 1590068459,
+        "pub_key": "031678745383bd273b4c3dbefc8ffbf4847d85c2f62d3407c0c980430b3257c403",
+        "alias": "lightning-roulette.com",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "34.65.32.189:9735"
+            }
+        ],
+        "color": "#11ff22",
+        "capacity": 871692723,
+        "channelcount": 297,
+        "noderank": {
+            "capacity": 50,
+            "channelcount": 38,
+            "age": 1425,
+            "growth": 6951,
+            "availability": 249
+        }
+    },
+    {
+        "last_update": 1590120479,
+        "pub_key": "0311cad0edf4ac67298805cf4407d94358ca60cd44f2e360856f3b1c088bcd4782",
+        "alias": "LNBIG.com [lnd-42]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "213.174.156.86:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1795082385,
+        "channelcount": 291,
+        "noderank": {
+            "capacity": 28,
+            "channelcount": 40,
+            "age": 2030,
+            "growth": 6817,
+            "availability": 248
+        }
+    },
+    {
+        "last_update": 1590068010,
+        "pub_key": "024d2387409269f3b79e2708bb39b895c9f4b6a8322153af54eba487d4993bf60f",
+        "alias": "LNBIG.com [lnd-38]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "213.174.156.82:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1746917538,
+        "channelcount": 291,
+        "noderank": {
+            "capacity": 33,
+            "channelcount": 39,
+            "age": 2027,
+            "growth": 6819,
+            "availability": 260
+        }
+    },
+    {
+        "last_update": 1590057208,
+        "pub_key": "03e5ea100e6b1ef3959f79627cb575606b19071235c48b3e7f9808ebcd6d12e87d",
+        "alias": "LNBIG.com [lnd-31]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "213.174.156.75:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1761330492,
+        "channelcount": 288,
+        "noderank": {
+            "capacity": 30,
+            "channelcount": 41,
+            "age": 2023,
+            "growth": 6915,
+            "availability": 304
+        }
+    },
+    {
+        "last_update": 1590049809,
+        "pub_key": "03dab87ff8635982815c4567eb58af48f9944d11c56beb12b91e1049aaea06e187",
+        "alias": "LNBIG.com [lnd-41]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "213.174.156.85:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1819809568,
+        "channelcount": 288,
+        "noderank": {
+            "capacity": 27,
+            "channelcount": 42,
+            "age": 2024,
+            "growth": 6945,
+            "availability": 212
+        }
+    },
+    {
+        "last_update": 1590116090,
+        "pub_key": "035f5236d7e6c6d16107c1f86e4514e6ccdd6b2c13c2abc1d7a83cd26ecb4c1d0e",
+        "alias": "LNBIG.com [lnd-13]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "46.229.165.152:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 2155277217,
+        "channelcount": 286,
+        "noderank": {
+            "capacity": 13,
+            "channelcount": 43,
+            "age": 3711,
+            "growth": 6801,
+            "availability": 204
+        }
+    },
+    {
+        "last_update": 1590047725,
+        "pub_key": "033e9ce4e8f0e68f7db49ffb6b9eecc10605f3f3fcb3c630545887749ab515b9c7",
+        "alias": "LNBIG.com [lnd-11]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "46.229.165.150:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1985784832,
+        "channelcount": 283,
+        "noderank": {
+            "capacity": 19,
+            "channelcount": 44,
+            "age": 3710,
+            "growth": 6892,
+            "availability": 280
+        }
+    },
+    {
+        "last_update": 1590059316,
+        "pub_key": "032cc4541b25e86e39a7d450a979c1a9adbe2878df3a93fcb59c96c700bfe26aa3",
+        "alias": "glr.com.py",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "181.126.128.128:9736"
+            },
+            {
+                "network": "tcp",
+                "addr": "qt3gn3lzwq5fe5obgo3y7ey3twiq43b7ifb57k666vulp2whe54rboqd.onion:9735"
+            }
+        ],
+        "color": "#5f04c0",
+        "capacity": 413384091,
+        "channelcount": 269,
+        "noderank": {
+            "capacity": 78,
+            "channelcount": 45,
+            "age": 2170,
+            "growth": 6423,
+            "availability": 233
+        }
+    },
+    {
+        "last_update": 1590100569,
+        "pub_key": "02c864dcb28ce0c0ee0b395f7bc047eaf12778912c1d37c42ead40adba36cffafd",
+        "alias": "Babylon-4",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "71.200.89.21:9738"
+            }
+        ],
+        "color": "#49deaa",
+        "capacity": 493948078,
+        "channelcount": 262,
+        "noderank": {
+            "capacity": 69,
+            "channelcount": 46,
+            "age": 2857,
+            "growth": 96,
+            "availability": 210
+        }
+    },
+    {
+        "last_update": 1590058534,
+        "pub_key": "02bb24da3d0fb0793f4918c7599f973cc402f0912ec3fb530470f1fc08bdd6ecb5",
+        "alias": "LNBIG.com [lnd-10]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "46.229.165.147:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1899958609,
+        "channelcount": 255,
+        "noderank": {
+            "capacity": 25,
+            "channelcount": 47,
+            "age": 3708,
+            "growth": 6513,
+            "availability": 201
+        }
+    },
+    {
+        "last_update": 1590094715,
+        "pub_key": "0227230b7b685f1742b944bfc5d79ddc8c5a90b68499775ee10895f87307d8d22e",
+        "alias": "hub-lnd-gar-nodl-it",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "185.150.160.189:9735"
+            }
+        ],
+        "color": "#000000",
+        "capacity": 139785859,
+        "channelcount": 251,
+        "noderank": {
+            "capacity": 172,
+            "channelcount": 48,
+            "age": 5230,
+            "growth": 6972,
+            "availability": 165
+        }
+    },
+    {
+        "last_update": 1590047710,
+        "pub_key": "02de11c748f5b25cfd2ce801176d3926bfde4de23b1ff43e692a5b76cf06805e4a",
+        "alias": "LNBIG.com [lnd-09]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "46.229.165.146:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1780738081,
+        "channelcount": 249,
+        "noderank": {
+            "capacity": 29,
+            "channelcount": 49,
+            "age": 3709,
+            "growth": 6804,
+            "availability": 228
+        }
+    },
+    {
+        "last_update": 1590079947,
+        "pub_key": "034ea80f8b148c750463546bd999bf7321a0e6dfc60aaf84bd0400a2e8d376c0d5",
+        "alias": "LNBIG.com [lnd-12]",
+        "addresses": [
+            {
+                "network": "tcp",
+                "addr": "46.229.165.151:9735"
+            }
+        ],
+        "color": "#3399ff",
+        "capacity": 1748232912,
+        "channelcount": 248,
+        "noderank": {
+            "capacity": 32,
+            "channelcount": 50,
+            "age": 3712,
+            "growth": 6458,
+            "availability": 283
+        }
+    }
+]
