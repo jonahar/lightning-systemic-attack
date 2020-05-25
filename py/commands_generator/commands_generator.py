@@ -199,11 +199,12 @@ class CommandsGenerator:
         }
         
         for idx in self.topology.keys():
-            client = self.topology[idx].get("bitcoin-client", "bitcoin-core")
-            if client == "bitcoin-core":
-                clients[idx] = self.__init_bitcoin_core_client(idx)
-            else:
-                raise TypeError(f"unsupported bitcoin client: {client}")
+            clients[idx] = clients[BITCOIN_MINER_IDX]
+            # client = self.topology[idx].get("bitcoin-client", "bitcoin-core")
+            # if client == "bitcoin-core":
+            #     clients[idx] = self.__init_bitcoin_core_client(idx)
+            # else:
+            #     raise TypeError(f"unsupported bitcoin client: {client}")
         
         return clients
     

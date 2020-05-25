@@ -64,16 +64,20 @@ class ResourcesAllocator:
         return self.__get_port(service=ServiceType.LIGHTNING_LISTEN, node_idx=node_idx)
     
     def get_bitcoin_node_rpc_port(self, node_idx: NodeIndex) -> int:
-        return self.__get_port(service=ServiceType.BITCOIN_RPC, node_idx=node_idx)
+        # return self.__get_port(service=ServiceType.BITCOIN_RPC, node_idx=node_idx)
+        return self.__get_port(service=ServiceType.BITCOIN_RPC, node_idx=0)
     
     def get_bitcoin_node_listen_port(self, node_idx: NodeIndex) -> int:
-        return self.__get_port(service=ServiceType.BITCOIN_LISTEN, node_idx=node_idx)
+        # return self.__get_port(service=ServiceType.BITCOIN_LISTEN, node_idx=node_idx)
+        return self.__get_port(service=ServiceType.BITCOIN_LISTEN, node_idx=0)
     
     def get_bitcoin_node_zmqpubrawblock_port(self, node_idx: NodeIndex) -> int:
-        return self.__get_port(service=ServiceType.BITCOIN_ZMQPUBRAWBLOCK, node_idx=node_idx)
+        # return self.__get_port(service=ServiceType.BITCOIN_ZMQPUBRAWBLOCK, node_idx=node_idx)
+        return self.__get_port(service=ServiceType.BITCOIN_ZMQPUBRAWBLOCK, node_idx=0)
     
     def get_bitcoin_node_zmqpubrawtx_port(self, node_idx: NodeIndex) -> int:
-        return self.__get_port(service=ServiceType.BITCOIN_ZMQPUBRAWTX, node_idx=node_idx)
+        # return self.__get_port(service=ServiceType.BITCOIN_ZMQPUBRAWTX, node_idx=node_idx)
+        return self.__get_port(service=ServiceType.BITCOIN_ZMQPUBRAWTX, node_idx=0)
     
     # Datadirs
     
@@ -84,4 +88,5 @@ class ResourcesAllocator:
         return os.path.join(self.__get_simulation_dir(), "lightning-datadirs", str(node_idx))
     
     def get_bitcoin_node_datadir(self, node_idx: NodeIndex) -> str:
-        return os.path.join(self.__get_simulation_dir(), "bitcoin-datadirs", str(node_idx))
+        # return os.path.join(self.__get_simulation_dir(), "bitcoin-datadirs", str(node_idx))
+        return os.path.join(self.__get_simulation_dir(), "bitcoin-datadirs", "0")

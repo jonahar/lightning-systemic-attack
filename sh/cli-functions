@@ -108,20 +108,17 @@ stat() {
     MAX_NODE_IDX=$1
     for i in $(seq 0 $MAX_NODE_IDX); do
         if [[ $(bcli $i echo "testo" 2>/dev/null | jq -r ".[0]") == "testo" ]]; then
-            printf "bcli $i: height="
-            bcli $i -getinfo | jq -j -r ".blocks"
-            printf " mempool_size="
-            bcli $i getmempoolinfo | jq -j -r ".size"
-            printf "; "
-            printf "ln $i: height="
-            if [[ $(lcli $i getinfo 2>/dev/null | jq -r ".blockheight") -gt 0 ]]; then
-                lcli $i getinfo | jq -j -r ".blockheight"
-            elif [[ $(lncli $i getinfo 2>/dev/null | jq -r ".block_height") -gt 0 ]]; then
-                lncli $i getinfo | jq -j -r ".block_height"
-            elif [[ $(ecli $i getinfo 2>/dev/null | jq -r ".blockHeight") -gt 0 ]]; then
-                ecli $i getinfo | jq -j -r ".blockHeight"
-            fi
-            echo
+            echo "bcli $i: height=$(bcli $i -getinfo | jq -j -r ".blocks") mempool_size=$(bcli $i getmempoolinfo | jq -j -r ".size")"
+        fi
+    done
+
+    for i in $(seq 0 $MAX_NODE_IDX); do
+        if [[ $(lcli $i getinfo 2>/dev/null | jq -r ".blockheight") -gt 0 ]]; then
+            echo "ln $i: height=$(lcli $i getinfo | jq -j -r ".blockheight")"
+        elif [[ $(lncli $i getinfo 2>/dev/null | jq -r ".block_height") -gt 0 ]]; then
+            echo "ln $i: height=$(lncli $i getinfo | jq -j -r ".block_height")"
+        elif [[ $(ecli $i getinfo 2>/dev/null | jq -r ".blockHeight") -gt 0 ]]; then
+            echo "ln $i: height=$(ecli $i getinfo | jq -j -r ".blockHeight")"
         fi
     done
 }
