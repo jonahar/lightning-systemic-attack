@@ -7,8 +7,8 @@ from paths import LN
 num_sending_nodes = 10
 num_receiving_nodes = num_sending_nodes
 num_victims = 10
-blockmaxweight = 2_000_000
-simulation_num = 2
+blockmaxweight = 4_000_000
+simulation_num = 1
 payments_per_channel = int(483 * 2)  # increase number of payments a little bit because some payments randomly fail
 
 num_channels = num_sending_nodes * num_victims
@@ -26,8 +26,7 @@ for sending_node_id in sending_node_ids:
         "client": "c-lightning",
         "evil": True,
         "peers": victim_node_ids,
-        "type": "attacker-sending"
-        
+        "type": "attacker-sending",
     }
 
 for receiving_node_id in receiving_node_ids:
@@ -42,7 +41,7 @@ for victim_node_id in victim_node_ids:
     topology[victim_node_id] = {
         "client": "lnd",
         "peers": receiving_node_ids,
-        "type": "victim"
+        "type": "victim",
     }
 
 topology_filename = f"topology-{num_sending_nodes}-{num_victims}-{num_receiving_nodes}.json"
@@ -59,6 +58,6 @@ generate_attack_file(
     payments_per_channel=payments_per_channel,
     amount_msat=11000000,
     datadir=datadir,
-    block_time_sec=240,  # 5 minutes
+    block_time_sec=300,  # 5 minutes
     outfile=outfile,
 )
