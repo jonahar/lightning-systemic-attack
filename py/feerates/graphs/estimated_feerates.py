@@ -3,13 +3,13 @@ import re
 from collections import defaultdict
 from typing import Dict, Iterable, List
 
+import matplotlib
 import matplotlib.pyplot as plt
 
 from datatypes import Feerate, btc_to_sat
 from feerates import logger
 from feerates.graphs.plot_utils import PlotData, plot_figure
 from paths import FEE_ESTIMATIONS_DIR
-import matplotlib
 
 matplotlib.rcParams.update({'font.size': 10})
 
@@ -38,7 +38,7 @@ def parse_estimation_files() -> Dict[int, List[PlotData]]:
     """
     data = defaultdict(list)
     for entry in os.listdir(FEE_ESTIMATIONS_DIR):
-        match = estimation_sample_file_regex.match(entry)
+        match = estimation_sample_file_regex.fullmatch(entry)
         if not match:
             continue  # not an estimation file
         num_blocks: int = int(match.group(1))
