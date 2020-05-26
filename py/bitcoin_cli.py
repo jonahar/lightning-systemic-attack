@@ -9,8 +9,8 @@ from utils import leveldb_cache
 
 ln = os.path.expandvars("$LN")
 
-BITCOIN_CLI_MASTER = "/cs/usr/jonahar/bitcoin-datadir/bitcoin-cli-master "
-BITCOIN_CLI_USER = "/cs/usr/jonahar/bitcoin-datadir/bitcoin-cli "
+BITCOIN_CLI_MASTER = "/cs/usr/jonahar/mainnet/bitcoin-cli-master.sh "
+BITCOIN_CLI_USER = "/cs/usr/jonahar/mainnet/bitcoin-cli.sh "
 
 BITCOIN_CLI = BITCOIN_CLI_MASTER
 
