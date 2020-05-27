@@ -392,6 +392,12 @@ def get_num_victims_vs_stolen_htlcs_data(simulation_names: List[str]) -> Dict[in
         data[blockmaxweight][1].append(stolen_htlcs)
         data[blockmaxweight][2].append(stolen_htlcs_percent)
     
+    # add 0 point for any blockmaxweight so we have a complete graph
+    for blockmaxweight in data:
+        data[blockmaxweight][0].append(0)  # 0 channels
+        data[blockmaxweight][1].append(0)  # 0 stolen htlcs
+        data[blockmaxweight][2].append(0)  # 0% stolen htlcs
+    
     res = {}
     for blockmaxweight in data:
         graph_data = np.array(data[blockmaxweight])
@@ -411,7 +417,7 @@ def plot_num_victims_vs_stolen_htlcs_graph(simulation_names: List[str]) -> None:
     data = get_num_victims_vs_stolen_htlcs_data(simulation_names)
     
     fig = plt.figure(figsize=[6.24, 4.68])
-    for blockmaxweight, graph_data in data.items():
+    for blockmaxweight, graph_data in sorted(data.items()):
         num_victims_values = graph_data[0]
         stolen_htlcs_values = graph_data[1]
         stolen_htlcs_percent = graph_data[2]
