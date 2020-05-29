@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from datatypes import Feerate, btc_to_sat
 from feerates import logger
-from feerates.graphs.plot_utils import PlotData, plot_figure
+from feerates.graphs.graph_utils import PlotData, plot_figure
 from paths import FEE_ESTIMATIONS_DIR
 
 matplotlib.rcParams.update({'font.size': 10})

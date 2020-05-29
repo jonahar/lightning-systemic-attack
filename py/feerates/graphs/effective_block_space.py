@@ -9,7 +9,7 @@ from bitcoin_cli import get_block_time, get_tx_feerate, get_tx_weight, get_txs_i
 from datatypes import BlockHeight, Feerate, Timestamp
 from feerates import logger
 from feerates.graphs.estimated_feerates import parse_estimation_files
-from feerates.graphs.f_function import get_first_block_after_time_t
+from feerates.graphs.graph_utils import get_first_block_after_time_t
 from utils import leveldb_cache, timeit
 
 set_bitcoin_cli("user")
