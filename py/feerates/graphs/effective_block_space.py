@@ -5,7 +5,7 @@ from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bitcoin_cli import get_tx_feerate, get_tx_weight, get_txs_in_block, set_bitcoin_cli
+from bitcoin_cli import get_block_time, get_tx_feerate, get_tx_weight, get_txs_in_block, set_bitcoin_cli
 from datatypes import BlockHeight, Feerate, Timestamp
 from feerates import logger
 from feerates.graphs.estimated_feerates import parse_estimation_files
@@ -56,7 +56,24 @@ def get_block_space_for_feerate(height: BlockHeight, feerate: Feerate) -> int:
 
 
 @lru_cache()
-@timeit(logger=logger, print_args=True)
+@leveldb_cache(value_to_str=str, str_to_value=float)
+def get_average_block_space_for_feerate(
+    first_block: BlockHeight,
+    last_block: BlockHeight,
+    feerate: Feerate,
+) -> float:
+    """
+    return the average available block space of blocks in the
+    range [first_blocks, last_block) under the given feerate
+    this includes first_blocks and excludes last_block
+    """
+    return np.average([
+        get_block_space_for_feerate(height=h, feerate=feerate)
+        for h in range(first_block, last_block)
+    ])
+
+
+@lru_cache()
 @leveldb_cache(value_to_str=str, str_to_value=float)
 def how_much_space_victims_have(attack_start_timestamp: int) -> float:
     """
@@ -76,12 +93,50 @@ def how_much_space_victims_have(attack_start_timestamp: int) -> float:
     expiration_height = start_height + 100  # HTLCs expire in 100 blocks
     close_height = expiration_height - 10  # victims release 10 blocks before expiration
     
-    available_block_spaces = [
-        get_block_space_for_feerate(height=h, feerate=channel_feerate)
-        for h in range(close_height + 1, expiration_height + 1)
-    ]
+    return get_average_block_space_for_feerate(
+        first_block=close_height + 1,
+        last_block=expiration_height + 1,
+        feerate=channel_feerate,
+    )
+
+
+@lru_cache()
+@leveldb_cache(value_to_str=str, str_to_value=float)
+def how_much_space_victims_have_improved_strategy(
+    attack_start_timestamp: int,
+    pre_payment_period_in_blocks: int,
+) -> float:
+    """
+    In the improved strategy, the attacker tries to minimize the channel's feerate
+    for a period of 'pre_payment_period_in_blocks' blocks, and then makes many
+    payments that will expire in 100 blocks.
     
-    return np.average(available_block_spaces)
+    Other than the way to determine the channel's feerate, this function is similar
+    to 'how_much_space_victims_have()',
+    """
+    # the feerate that will be used is the minimum feerate that was estimated
+    # between time t and t + pre_payment_period_in_blocks blocks
+    channel_open_height = get_first_block_after_time_t(attack_start_timestamp)
+    first_estimation_time = attack_start_timestamp
+    last_estimation_time = get_block_time(channel_open_height + pre_payment_period_in_blocks - 1)
+    # all feerates that were estimated in that period
+    feerates_estimated_in_period = feerates[
+        np.where((timestamps >= first_estimation_time) & (timestamps <= last_estimation_time))
+    ]
+    channel_feerate = round(np.min(feerates_estimated_in_period), 1)
+    
+    payments_height = get_first_block_after_time_t(last_estimation_time)
+    expiration_height = payments_height + 100  # HTLCs expire in 100 blocks
+    close_height = expiration_height - 10  # victims release 10 blocks before expiration
+    
+    return get_average_block_space_for_feerate(
+        first_block=close_height + 1,
+        last_block=expiration_height + 1,
+        feerate=channel_feerate,
+    )
+
+
+# ------------------------------- plot functions -------------------------------
 
 
 def plot_attack_start_time_vs_avg_block_weight_for_victim(
@@ -145,9 +200,16 @@ def plot_avg_block_space_bound_vs_percent_of_time(
     plt.savefig("avg-block-space-bound-vs-percent-of-time.svg", bbox_inches='tight')
 
 
+# ==============================================================================
+
+
 attack_start_timestamps = timestamps[::5]  # attack start times to evaluate
+
 avg_available_space_in_attack = np.array([
-    how_much_space_victims_have(attack_start_timestamp=t)
+    how_much_space_victims_have_improved_strategy(
+        attack_start_timestamp=t,
+        pre_payment_period_in_blocks=100,
+    )
     for t in attack_start_timestamps
 ])
 
