@@ -1,6 +1,6 @@
 from datetime import datetime
 from functools import lru_cache
-from typing import List
+from typing import List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -177,65 +177,91 @@ def plot_avg_block_space_for_victim_vs_number_of_times(
 
 
 def plot_avg_block_space_bound_vs_percent_of_time(
-    avg_available_space_in_attack: np.ndarray,
+    avg_available_space_in_attack_list: List[Tuple[np.ndarray, str]],
     space_ticks: np.ndarray,
     space_ticks_labels: List[str],
 ) -> None:
-    hist, bins = np.histogram(avg_available_space_in_attack, bins=100)
-    bins = bins[1:]
-    cumsum = np.cumsum(hist)
-    # cumsum[i]: number of times that the available block weight
-    # was at most bins[i]
-    
-    cumsum_normalized = (cumsum * 100) / len(avg_available_space_in_attack)
-    cumsum_normalized_2 = (cumsum * 100) / np.sum(hist)
-    assert np.allclose(cumsum_normalized, cumsum_normalized_2)
-    
+    """
+    Each item in avg_available_space_in_attack_list is a 2-elements tuple:
+        1. an array with average available block space value
+        2. label for values of the array
+    """
     plt.figure(figsize=(6.66, 3.75))
-    plt.plot(bins, cumsum_normalized)
+    
+    for avg_available_space_in_attack, label in avg_available_space_in_attack_list:
+        hist, bins = np.histogram(avg_available_space_in_attack, bins=100)
+        bins = bins[1:]
+        cumsum = np.cumsum(hist)
+        # cumsum[i]: number of times that the available block weight
+        # was at most bins[i]
+        
+        cumsum_normalized = (cumsum * 100) / len(avg_available_space_in_attack)
+        cumsum_normalized_2 = (cumsum * 100) / np.sum(hist)
+        assert np.allclose(cumsum_normalized, cumsum_normalized_2)
+        plt.plot(bins, cumsum_normalized, label=label)
+    
     plt.xlabel("Maximum average block weight available for victims")
     plt.xticks(space_ticks, labels=space_ticks_labels)
     plt.ylabel("Percent of time")
     plt.grid()
+    plt.legend(loc="best")
     plt.savefig("avg-block-space-bound-vs-percent-of-time.svg", bbox_inches='tight')
 
 
 # ==============================================================================
 
 
-attack_start_timestamps = timestamps[::5]  # attack start times to evaluate
-
-avg_available_space_in_attack = np.array([
-    how_much_space_victims_have_improved_strategy(
-        attack_start_timestamp=t,
-        pre_payment_period_in_blocks=100,
-    )
-    for t in attack_start_timestamps
-])
-
 time_ticks = np.linspace(start=timestamps[0], stop=timestamps[-1], num=5)
 time_labels = [
     datetime.utcfromtimestamp(t).strftime('%Y-%m-%d')
     for t in time_ticks
 ]
-space_ticks = np.array([1_000_000, 2_000_000, 3_000_000, 4_000_000])
-space_ticks_labels = ["1M", "2M", "3M", "4M"]
+space_ticks = np.array([0, 1_000_000, 2_000_000, 3_000_000, 4_000_000])
+space_ticks_labels = ["0", "1M", "2M", "3M", "4M"]
 
-plot_attack_start_time_vs_avg_block_weight_for_victim(
-    avg_available_space_in_attack=avg_available_space_in_attack,
-    time_values=attack_start_timestamps,
-    time_ticks=time_ticks,
-    time_labels=time_labels,
-)
+attack_start_timestamps = timestamps[::5]  # attack start times to evaluate
 
-plot_avg_block_space_for_victim_vs_number_of_times(
-    avg_available_space_in_attack=avg_available_space_in_attack,
-    space_ticks=space_ticks,
-    space_ticks_labels=space_ticks_labels,
-)
+avg_available_space_in_attack = np.array([
+    how_much_space_victims_have(attack_start_timestamp=t)
+    for t in attack_start_timestamps
+])
+
+avg_available_space_in_attack_improved_200 = np.array([
+    how_much_space_victims_have_improved_strategy(
+        attack_start_timestamp=t,
+        pre_payment_period_in_blocks=200,
+    )
+    for t in attack_start_timestamps
+])
+
+avg_available_space_in_attack_improved_400 = np.array([
+    how_much_space_victims_have_improved_strategy(
+        attack_start_timestamp=t,
+        pre_payment_period_in_blocks=400,
+    )
+    for t in attack_start_timestamps
+])
+
+# plot_attack_start_time_vs_avg_block_weight_for_victim(
+#     avg_available_space_in_attack=avg_available_space_in_attack,
+#     time_values=attack_start_timestamps,
+#     time_ticks=time_ticks,
+#     time_labels=time_labels,
+# )
+#
+# plot_avg_block_space_for_victim_vs_number_of_times(
+#     avg_available_space_in_attack=avg_available_space_in_attack,
+#     space_ticks=space_ticks,
+#     space_ticks_labels=space_ticks_labels,
+# )
+
 
 plot_avg_block_space_bound_vs_percent_of_time(
-    avg_available_space_in_attack=avg_available_space_in_attack,
+    avg_available_space_in_attack_list=[
+        (avg_available_space_in_attack, "naive attack strategy"),
+        (avg_available_space_in_attack_improved_200, "200 blocks fee minimization"),
+        # (avg_available_space_in_attack_improved_400, "400 blocks fee minimization"),
+    ],
     space_ticks=space_ticks,
     space_ticks_labels=space_ticks_labels,
 )
