@@ -16,7 +16,7 @@ from paths import SIMULATIONS_DIR
 from txs_graph.txs_graph import TxsGraph
 from utils import setup_logging
 
-GRAPH_FILE = "num-victims-vs-stolen-htlcs.svg"
+GRAPH_FILE = "num-channels-vs-stolen-htlcs.svg"
 log = setup_logging()
 
 
