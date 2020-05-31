@@ -176,15 +176,15 @@ def plot_avg_block_space_for_victim_vs_number_of_times(
     plt.savefig("avg-block-space-vs-number-of-times.svg", bbox_inches='tight')
 
 
-def plot_avg_block_space_bound_vs_percent_of_time(
+def plot_avg_block_space_vs_percent_of_time(
     avg_available_space_in_attack_list: List[Tuple[np.ndarray, str]],
     space_ticks: np.ndarray,
     space_ticks_labels: List[str],
 ) -> None:
     """
     Each item in avg_available_space_in_attack_list is a 2-elements tuple:
-        1. an array with average available block space value
-        2. label for values of the array
+        1. an array with average available block space values
+        2. label for the data in the array
     """
     plt.figure(figsize=(6.66, 3.75))
     
@@ -192,16 +192,16 @@ def plot_avg_block_space_bound_vs_percent_of_time(
         bins = np.array(range(0, 100 + 1), dtype=np.float) * BLOCK_MAX_WEIGHT / 100
         hist, bins = np.histogram(avg_available_space_in_attack, bins=bins)
         bins = bins[1:]
-        cumsum = np.cumsum(hist)
-        # cumsum[i]: number of times that the available block weight
-        # was at most bins[i]
+        cumsum = np.cumsum(hist[::-1])[::-1]
+        # cumsum[i]: number of times that the average available block weight
+        # was at least bins[i]
         
         cumsum_normalized = (cumsum * 100) / len(avg_available_space_in_attack)
         cumsum_normalized_2 = (cumsum * 100) / np.sum(hist)
         assert np.allclose(cumsum_normalized, cumsum_normalized_2)
         plt.plot(bins, cumsum_normalized, label=label)
     
-    plt.xlabel("Maximum average block weight available for victims")
+    plt.xlabel("Average block weight available for victims")
     plt.xticks(space_ticks, labels=space_ticks_labels)
     plt.ylabel("Percent of time")
     plt.grid()
@@ -257,7 +257,7 @@ avg_available_space_in_attack_improved_400 = np.array([
 # )
 
 
-plot_avg_block_space_bound_vs_percent_of_time(
+plot_avg_block_space_vs_percent_of_time(
     avg_available_space_in_attack_list=[
         (avg_available_space_in_attack, "naive attack strategy"),
         (avg_available_space_in_attack_improved_200, "200 blocks fee minimization"),
