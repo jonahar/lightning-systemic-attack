@@ -189,7 +189,8 @@ def plot_avg_block_space_bound_vs_percent_of_time(
     plt.figure(figsize=(6.66, 3.75))
     
     for avg_available_space_in_attack, label in avg_available_space_in_attack_list:
-        hist, bins = np.histogram(avg_available_space_in_attack, bins=100)
+        bins = np.array(range(0, 100 + 1), dtype=np.float) * BLOCK_MAX_WEIGHT / 100
+        hist, bins = np.histogram(avg_available_space_in_attack, bins=bins)
         bins = bins[1:]
         cumsum = np.cumsum(hist)
         # cumsum[i]: number of times that the available block weight
@@ -260,7 +261,7 @@ plot_avg_block_space_bound_vs_percent_of_time(
     avg_available_space_in_attack_list=[
         (avg_available_space_in_attack, "naive attack strategy"),
         (avg_available_space_in_attack_improved_200, "200 blocks fee minimization"),
-        # (avg_available_space_in_attack_improved_400, "400 blocks fee minimization"),
+        (avg_available_space_in_attack_improved_400, "400 blocks fee minimization"),
     ],
     space_ticks=space_ticks,
     space_ticks_labels=space_ticks_labels,
