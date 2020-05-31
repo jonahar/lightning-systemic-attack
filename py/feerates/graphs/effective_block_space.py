@@ -206,7 +206,7 @@ def plot_avg_block_space_vs_percent_of_time(
     plt.ylabel("Percent of time")
     plt.grid()
     plt.legend(loc="best")
-    plt.savefig("avg-block-space-bound-vs-percent-of-time.svg", bbox_inches='tight')
+    plt.savefig("avg-block-space-vs-percent-of-time.svg", bbox_inches='tight')
 
 
 # ==============================================================================
@@ -260,8 +260,8 @@ avg_available_space_in_attack_improved_400 = np.array([
 plot_avg_block_space_vs_percent_of_time(
     avg_available_space_in_attack_list=[
         (avg_available_space_in_attack, "naive attack strategy"),
-        (avg_available_space_in_attack_improved_200, "200 blocks fee minimization"),
-        (avg_available_space_in_attack_improved_400, "400 blocks fee minimization"),
+        (avg_available_space_in_attack_improved_200, "200 blocks feerate minimization"),
+        (avg_available_space_in_attack_improved_400, "400 blocks feerate minimization"),
     ],
     space_ticks=space_ticks,
     space_ticks_labels=space_ticks_labels,
