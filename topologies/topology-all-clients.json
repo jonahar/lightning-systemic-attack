@@ -1,0 +1,39 @@
+{
+    "1": {
+        "client": "c-lightning",
+        "evil": true,
+        "peers": [
+            "4",
+            "5",
+            "6"
+        ],
+        "type": "attacker-sending"
+    },
+    "3": {
+        "client": "c-lightning",
+        "evil": true,
+        "peers": [],
+        "type": "attacker-receiving"
+    },   
+    "4": {
+        "client": "lnd",
+        "peers": [
+            "3"
+        ],
+        "type": "victim"
+    },
+    "5": {
+        "client": "c-lightning",
+        "peers": [
+            "3"
+        ],
+        "type": "victim"
+    },
+    "6": {
+        "client": "eclair",
+        "peers": [
+            "3"
+        ],
+        "type": "victim"
+    }
+}
