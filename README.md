@@ -20,8 +20,9 @@ ln
 │   ├── lncli
 │   └── lnd
 ├── conf (bitcoin/lightning conf files)
+├── data (extracted data from lightning's mainnet)
 ├── py (python code)
-├── sh (bash scripts)
+├── sh (useful bash scripts)
 ├── simulations (full simulation script examples)
 └── topologies (useful topology files. see commands_generator for more info)
 ```
@@ -36,14 +37,14 @@ Before starting you should set the following things:
 
 
 ## Where to start
-Two main interesting entry points are `setup-env` and `commands_generator.py`.  
-`setup-env` is good for starting an interactive session - it starts bitcoin+lightning nodes
-and create channels, so we can quickly start interacting with the nodes. It generates all the required code
-using the `commands_generator`.  
-`commands_generator` can generate bash commands to start nodes, open channels, 
-make payments between nodes, execute the attack, dump simulation data and more. Its purpose 
-is the automate the process of setting up the environment and to easily and quickly simulate
-our attack. You can see a usage of the `commands_generator` in the simulation scripts, under the `simulations` directory.
+The main entry point is probably the `commands_generator` module. It is responsible for generating
+simulations scripts, which include setting up nodes (lightning+bitcoin), open channels, 
+routing payments, execute the attack, dump simulation data and more.
+Any python code should be run from the root directory `py`.
+For more details on how to use the `commands_generator` use the help menu:
+```
+python3 -m commands_generator.commands_generator --help
+```
 
 
 ## Nodes version
