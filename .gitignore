@@ -1,8 +1,7 @@
-.idea/*
+.idea
 bin
 data/caches
 data/fee-estimations/estimatesmartfee_blocks=*
 py/venv
-*.jpg
-*.dot
+simulations/*/
 **/__pycache__/
