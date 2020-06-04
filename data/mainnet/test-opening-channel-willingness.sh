@@ -45,7 +45,7 @@ connect_and_start_handshake_many "$full_addresses"
 # find all potential peers (remove nodes with unknown/onion/ipv6 ip)
 potential_peers=$(./lightning-cli.sh listnodes |
     jq -r '.nodes[] | "\(.nodeid)@\(.addresses[0].address):\(.addresses[0].port)" ' |
-    grep -v "null" | grep -v "onion" | grep -v ":.*:")
+    grep -v "null")
 
 echo "$(wc -w <<<"$potential_peers") potential peers"
 echo "$potential_peers" >"$RESPONSES_DIR/potential_peers.txt"
