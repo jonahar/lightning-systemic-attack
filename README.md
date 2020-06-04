@@ -1,4 +1,4 @@
-# LN
+# Lightning Systemic Attack
 
 This repository contains code for running and manipulating bitcoin and lightning nodes.
 It was created to support a proposed attack on Bitcoin's Lightning Network.
@@ -35,6 +35,11 @@ Before starting you should set the following things:
 2. `LN/bin` and `LN/sh` are added to `PATH`
 3. `LN/bin` contains the executables (or links to them) as specified in the tree above
 
+You can add these lines into your .bashrc
+```
+export LN="$HOME/lightning-systemic-attack"
+PATH="$LN/sh:$LN/bin:$PATH"
+```
 
 ## Where to start
 The main entry point is probably the `commands_generator` module. It is responsible for generating
