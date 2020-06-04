@@ -13,7 +13,7 @@ ln
 │   ├── bitcoin-cli
 │   ├── bitcoind
 │   ├── eclair-cli
-│   ├── eclair.jar
+│   ├── eclair-node
 │   ├── lightning-cli
 │   ├── lightningd
 │   ├── lightningd-evil (a modified impl of c-lightning)
@@ -60,4 +60,4 @@ The latest bitcoin/lightning versions that were tested and work with our code:
 | bitcoin-core  | 0.19.0.1 |
 | c-lightning   | 0.8.1    |
 | lnd           | 0.9.2    |
-| eclair        | 0.3.3    |
+| eclair        | 0.4      |
