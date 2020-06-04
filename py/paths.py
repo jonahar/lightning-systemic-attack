@@ -21,5 +21,5 @@ LIGHTNING_CLI_BINARY = os.path.join(BIN, "lightning-cli")
 LND_BINARY = os.path.join(BIN, "lnd")
 LND_CLI_BINARY = os.path.join(BIN, "lncli")
 
-ECLAIR_NODE_JAR = os.path.join(BIN, "eclair.jar")
+ECLAIR_NODE = os.path.join(BIN, "eclair-node")
 ECLAIR_CLI = os.path.join(BIN, "eclair-cli")

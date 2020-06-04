@@ -3,7 +3,7 @@ from typing import TextIO
 from commands_generator.bitcoin import BitcoinCommandsGenerator
 from commands_generator.lightning import LightningCommandsGenerator
 from datatypes import NodeIndex
-from paths import ECLAIR_CLI, ECLAIR_NODE_JAR
+from paths import ECLAIR_CLI, ECLAIR_NODE
 
 
 class EclairCommandsGenerator(LightningCommandsGenerator):
@@ -35,8 +35,6 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
     
     def __get_node_pid_file(self) -> str:
         """return the filepath in which the process id of this node is/should be stored"""
-        # TODO this method is not a single source of truth. the kill-daemons script
-        #  also has this filename hardcoded. think how to avoid it
         return f"{self.lightning_dir}/node_pid"
     
     def start(self) -> None:
@@ -62,7 +60,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         """)
         
         self._write_line(
-            f"""java -Declair.datadir="{self.lightning_dir}" -jar {ECLAIR_NODE_JAR} >/dev/null 2>&1 & """
+            f"""{ECLAIR_NODE} -Declair.datadir="{self.lightning_dir}" >/dev/null 2>&1 & """
         )
         self._write_line(f"echo $! >{self.__get_node_pid_file()} # $! the PID of the eclair node")
         
@@ -171,7 +169,7 @@ class EclairCommandsGenerator(LightningCommandsGenerator):
         self._write_line("done")
     
     def print_node_htlcs(self) -> None:
-        raise NotImplementedError()
+        pass
     
     def close_all_channels(self) -> None:
         raise NotImplementedError()
