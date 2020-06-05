@@ -2,12 +2,16 @@ import json
 import os
 from collections import OrderedDict
 
+import matplotlib.pyplot as plt
+
 DIR = "handshake-responses"
 
 attempted_connections = 0
 successful_connections = 0
 failed_connections_timeout = 0
 failed_connections_socket_failed = 0
+failed_connections_unknown = 0
+
 for file in filter(lambda f: f.endswith("connect.json"), os.listdir(DIR)):
     attempted_connections += 1
     with open(os.path.join(DIR, file)) as f:
@@ -19,6 +23,14 @@ for file in filter(lambda f: f.endswith("connect.json"), os.listdir(DIR)):
         failed_connections_timeout += 1
     elif "message" in res and "Connection refused" in res["message"]:
         failed_connections_socket_failed += 1
+    else:
+        failed_connections_unknown += 1
+
+print(f"attempted_connections={attempted_connections}")
+print(f"successful_connections={successful_connections}")
+print(f"failed_connections_timeout={failed_connections_timeout}")
+print(f"failed_connections_socket_failed={failed_connections_socket_failed}")
+print(f"failed_connections_unknown={failed_connections_unknown}")
 
 attempted_handshakes = 0
 successful_handshakes = 0
@@ -44,8 +56,6 @@ for file in filter(lambda f: f.endswith("fundchannel-start.json"), os.listdir(DI
     elif "message" in res and "is below min chan size of" in res["message"]:
         failed_handshakes_unacceptable_balance += 1
     else:
-        print(f"unrecognized response for fundchannel_start in {file}:")
-        print(res)
         failed_handshakes_unknown += 1
 
 assert successful_connections == attempted_handshakes
@@ -66,17 +76,31 @@ value_to_label: dict = {
     failed_handshakes_unacceptable_balance: f"Unacceptable balance ({to_percent(failed_handshakes_unacceptable_balance)}%)",
     failed_handshakes_unknown: f"Unspecified reason ({to_percent(failed_handshakes_unknown)}%)",
 }
+value_to_label: OrderedDict = OrderedDict(sorted(value_to_label.items(), reverse=True))
 
-value_to_label = OrderedDict(sorted(value_to_label.items(), reverse=True))
 
-# only keep 3 top reasons, labeling anything else as 'other'
-to_remove = list(value_to_label.keys())[3:]
-other_count = 0
-for k in to_remove:
-    other_count += k
-    value_to_label.pop(k)
+def aggregate(d: OrderedDict) -> OrderedDict:
+    d_aggregated = d.copy()
+    # only keep 3 top reasons, labeling anything else as 'other'
+    other_count = 0
+    for k in list(d_aggregated.keys())[3:]:
+        other_count += k
+        d_aggregated.pop(k)
+    d_aggregated[other_count] = f"Other ({to_percent(other_count)}%)"
+    return d_aggregated
 
-value_to_label[other_count] = f"Other ({to_percent(other_count)}%)"
 
-for k, v in value_to_label.items():
-    print(f"{k}\t{v}")
+value_to_label_aggregated: OrderedDict = aggregate(value_to_label)
+
+for k, v in value_to_label_aggregated.items():
+    print(k, "\t", v)
+
+plt.figure()
+# plot one without labels so we can design it ourselves
+plt.pie(x=value_to_label_aggregated.keys())
+plt.savefig("handshake-results-pie.svg")
+
+plt.figure()
+plt.pie(x=value_to_label_aggregated.keys(), labels=value_to_label_aggregated.values())
+plt.legend(loc="best")
+plt.show()
