@@ -19,7 +19,7 @@ for file in filter(lambda f: f.endswith("connect.json"), os.listdir(DIR)):
     
     if "id" in res:
         successful_connections += 1
-    elif "timeout" in res:
+    elif "timeout" in res or ("message" in res and "Connection timed out" in res["message"]):
         failed_connections_timeout += 1
     elif "message" in res and "Connection refused" in res["message"]:
         failed_connections_socket_failed += 1
