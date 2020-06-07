@@ -78,29 +78,15 @@ value_to_label: dict = {
 }
 value_to_label: OrderedDict = OrderedDict(sorted(value_to_label.items(), reverse=True))
 
-
-def aggregate(d: OrderedDict) -> OrderedDict:
-    d_aggregated = d.copy()
-    # only keep 3 top reasons, labeling anything else as 'other'
-    other_count = 0
-    for k in list(d_aggregated.keys())[3:]:
-        other_count += k
-        d_aggregated.pop(k)
-    d_aggregated[other_count] = f"Other ({to_percent(other_count)}%)"
-    return d_aggregated
-
-
-value_to_label_aggregated: OrderedDict = aggregate(value_to_label)
-
-for k, v in value_to_label_aggregated.items():
+for k, v in value_to_label.items():
     print(k, "\t", v)
 
 plt.figure()
 # plot one without labels so we can design it ourselves
-plt.pie(x=value_to_label_aggregated.keys())
+plt.pie(x=value_to_label.keys())
 plt.savefig("handshake-results-pie.svg")
 
 plt.figure()
-plt.pie(x=value_to_label_aggregated.keys(), labels=value_to_label_aggregated.values())
+plt.pie(x=value_to_label.keys(), labels=value_to_label.values())
 plt.legend(loc="best")
 plt.show()
