@@ -37,12 +37,11 @@ for json_file in $NODES_INFO_DIR/*; do
     full_addresses="$full_addresses $(cat $json_file | jq -r '.[] | "\(.pub_key)@\(.addresses[0].addr)"')"
 done
 
-# filter onion addresses and duplicate entries
-full_addresses=$(echo $full_addresses | tr ' ' '\n' | sort -u | grep -v "onion" | xargs)
+full_addresses=$(echo $full_addresses | tr ' ' '\n' | sort -u)
 echo "$(wc -w <<<"$full_addresses") unique full_addresses"
 connect_and_start_handshake_many "$full_addresses"
 
-# find all potential peers (remove nodes with unknown/onion/ipv6 ip)
+# find all potential peers
 potential_peers=$(./lightning-cli.sh listnodes |
     jq -r '.nodes[] | "\(.nodeid)@\(.addresses[0].address):\(.addresses[0].port)" ' |
     grep -v "null")
