@@ -227,18 +227,18 @@ avg_available_space_in_attack = np.array([
     for t in attack_start_timestamps
 ])
 
-avg_available_space_in_attack_improved_200 = np.array([
+avg_available_space_in_attack_improved_432 = np.array([
     how_much_space_victims_have_improved_strategy(
         attack_start_timestamp=t,
-        pre_payment_period_in_blocks=200,
+        pre_payment_period_in_blocks=432,
     )
     for t in attack_start_timestamps
 ])
 
-avg_available_space_in_attack_improved_400 = np.array([
+avg_available_space_in_attack_improved_1008 = np.array([
     how_much_space_victims_have_improved_strategy(
         attack_start_timestamp=t,
-        pre_payment_period_in_blocks=400,
+        pre_payment_period_in_blocks=1008,
     )
     for t in attack_start_timestamps
 ])
@@ -260,8 +260,8 @@ avg_available_space_in_attack_improved_400 = np.array([
 plot_avg_block_space_vs_percent_of_time(
     avg_available_space_in_attack_list=[
         (avg_available_space_in_attack, "Naive attack strategy"),
-        (avg_available_space_in_attack_improved_200, "200 blocks feerate minimization"),
-        (avg_available_space_in_attack_improved_400, "400 blocks feerate minimization"),
+        (avg_available_space_in_attack_improved_432, "432 blocks feerate minimization (~3 days)"),
+        (avg_available_space_in_attack_improved_1008, "1008 blocks feerate minimization (~7 days)"),
     ],
     space_ticks=space_ticks,
     space_ticks_labels=space_ticks_labels,
