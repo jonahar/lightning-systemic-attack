@@ -16,7 +16,7 @@ ln
 │   ├── eclair-node
 │   ├── lightning-cli
 │   ├── lightningd
-│   ├── lightningd-evil (a modified impl of c-lightning)
+│   ├── lightningd-evil (a modified implementation of c-lightning)
 │   ├── lncli
 │   └── lnd
 ├── conf (bitcoin/lightning conf files)
