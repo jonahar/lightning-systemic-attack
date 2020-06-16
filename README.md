@@ -1,7 +1,7 @@
 # Lightning Systemic Attack
 
-This repository contains the code that supports a proposed attack on Bitcoin's
-Lightning Network.
+This repository contains the code that supports a possible attack on Bitcoin's
+Lightning Network, as described in this [paper](https://arxiv.org/abs/2006.08513).
 
 ## Project Structure
 This repo is organized in the following way
@@ -27,7 +27,7 @@ ln
 ```
 
 *Note: the `bin` directory is not part of this repo and should be created by the user. The existence of 
-the `bin` directory and its content is assumed by some of the code (specifically, the `commands_generator`. see below)*
+the `bin` directory and its content is assumed by some of the code (specifically, the `commands_generator`. see below)*.
 
 Before starting you should set the following things:
 1. The full path of the root directory is set in the bash variable named `LN`
