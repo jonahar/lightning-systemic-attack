@@ -97,7 +97,7 @@ def main():
             plt.legend(loc="best")
             plt.grid()
             plt.xlabel("Estimation time")
-            plt.ylabel("Estimated feerate")
+            plt.ylabel("Estimated feerate (sat/B)")
     plt.savefig("estimated-feerates.svg", bbox_inches='tight')
     # plt.show()
 
