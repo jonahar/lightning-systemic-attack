@@ -1,6 +1,6 @@
 # Lightning Systemic Attack
 
-This repository contains the code that supports a possible attack on Bitcoin's
+This repository contains the code that demonstrates the _**"Flood & Loot"**_ attack on Bitcoin's
 Lightning Network, as described in this [paper](https://arxiv.org/abs/2006.08513).
 
 ## Project Structure
